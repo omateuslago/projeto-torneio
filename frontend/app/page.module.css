@@ -1,0 +1,188 @@
+.page {
+  min-height: 100vh;
+  background-color: #0d0d1a;
+  color: white;
+}
+
+/* Hero */
+.hero {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 6rem 1rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .hero {
+    padding: 8rem 1.5rem;
+  }
+}
+
+.heroLabel {
+  color: #a78bfa;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .heroTitle {
+    font-size: 3.75rem;
+  }
+}
+
+.heroHighlight {
+  color: #8b5cf6;
+}
+
+.heroSubtitle {
+  color: #a1a1aa;
+  font-size: 1.125rem;
+  max-width: 42rem;
+  margin: 0 auto 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .heroSubtitle {
+    font-size: 1.25rem;
+  }
+}
+
+.heroActions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .heroActions {
+    flex-direction: row;
+  }
+}
+
+.btnPrimary {
+  background-color: #7c3aed;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnPrimary:hover {
+  background-color: #8b5cf6;
+}
+
+.btnSecondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.btnSecondary:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Campeonatos */
+.section {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1rem 6rem;
+}
+
+@media (min-width: 640px) {
+  .section {
+    padding: 0 1.5rem 6rem;
+  }
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #e4e4e7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  font-weight: 600;
+  color: white;
+}
+
+.cardInfo {
+  color: #a1a1aa;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.statusAberto {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  color: #34d399;
+  background-color: rgba(52, 211, 153, 0.1);
+}
+
+.statusEmAndamento {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  color: #fbbf24;
+  background-color: rgba(251, 191, 36, 0.1);
+}

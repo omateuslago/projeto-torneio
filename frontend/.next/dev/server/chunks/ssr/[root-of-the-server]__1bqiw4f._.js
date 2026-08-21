@@ -132,7 +132,7 @@ const campeonatos = [
     {
         id: 3,
         nome: "EA FC League",
-        jogo: "EA FC 25",
+        jogo: "EA FC 27",
         equipes: 32,
         status: "Aberto"
     }
