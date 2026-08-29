@@ -26,5 +26,8 @@ public class Campeonato
 {
     public int Id { get; set; }
     public string Nome { get; set; } = "";
+    public string Jogo { get; set; } = "";
+    public int Equipes { get; set; }
+    public string Status { get; set; } = "";
     public string Modalidade { get; set; } = "";
 }
