@@ -8,3 +8,4 @@ export { default as Badge } from "./ui/Badge";
 // Section Components
 export { default as HeroSection } from "./sections/HeroSection";
 export { default as ChampionshipsGrid } from "./sections/ChampionshipsGrid";
+export { default as CreateCampeonatoSection } from "./sections/CreateCampeonatoSection";

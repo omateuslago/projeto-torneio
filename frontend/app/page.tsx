@@ -1,5 +1,4 @@
-import { Header, HeroSection, ChampionshipsGrid } from "@/components";
-import { MOCKUP_CAMPEONATOS } from "@/constants";
+import { Header, HeroSection, CreateCampeonatoSection } from "@/components";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -8,7 +7,7 @@ export default function Home() {
       <Header />
       <main className={styles.main}>
         <HeroSection />
-        <ChampionshipsGrid campeonatos={MOCKUP_CAMPEONATOS} />
+        <CreateCampeonatoSection />
       </main>
     </div>
   );
