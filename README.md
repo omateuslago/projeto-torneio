@@ -1,7 +1,7 @@
 # Projeto Torneio
 
 Base incremental para organização de campeonatos amadores físicos e eSports.
-O milestone 1 oferece Tournament, Team e Registration em uma API .NET 9 com
+O milestone 1 oferece Tournament, Team e Registration em uma API .NET 10 LTS com
 Controllers, EF Core e PostgreSQL. O frontend Next.js existente foi preservado.
 
 ## Executar com Docker
@@ -19,7 +19,7 @@ O serviço `migrate` aplica migrations antes de iniciar a API. Os dados ficam no
 volume `tournament-data`. `docker compose down` preserva esse volume.
 As portas são expostas somente em localhost para desenvolvimento.
 
-## Desenvolvimento com SDK .NET 9
+## Desenvolvimento com SDK .NET 10 LTS
 
 Na raiz do repositório, com o banco do Compose em execução:
 
