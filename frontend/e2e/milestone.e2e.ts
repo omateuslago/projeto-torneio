@@ -51,6 +51,30 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page.reload();
   await expect(page.getByText('2 de 2 vagas preenchidas')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Inscrever equipe', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Gerar confrontos', exact: true }).click();
+  await expect(
+    page.getByRole('table', { name: 'Partidas do campeonato' }).getByRole('row'),
+  ).toHaveCount(2);
+  await expect(page.getByText('Em andamento', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Registrar resultado', exact: true }).click();
+  await page.getByLabel('Placar mandante').fill('-1');
+  await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Informe placares inteiros');
+  await page.getByLabel('Placar mandante').fill('3');
+  await page.getByLabel('Placar visitante').fill('1');
+  await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
+  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  const standings = page.getByRole('table', { name: 'Classificação do campeonato' });
+  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
+  await page.getByRole('button', { name: 'Corrigir resultado', exact: true }).click();
+  await page.getByLabel('Placar mandante').fill('1');
+  await page.getByLabel('Placar visitante').fill('1');
+  await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
+  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
+  await expect(standings.getByRole('row').nth(2).getByRole('cell').nth(1)).toHaveText('1');
+  await page.reload();
+  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
