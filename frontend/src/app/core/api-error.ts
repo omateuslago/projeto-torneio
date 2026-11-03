@@ -2,6 +2,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ApiProblem } from './models';
 
 const messages: Record<string, string> = {
+  'Close registration before generating matches.':
+    'Encerre as inscrições antes de gerar os confrontos.',
+  'At least two teams are required.':
+    'Inscreva pelo menos duas equipes antes de encerrar as inscrições.',
+  'Only RoundRobin is supported for match generation.':
+    'A geração de confrontos está disponível apenas para pontos corridos.',
+  'Scores cannot be negative.':
+    'Os placares devem ser números inteiros iguais ou maiores que zero.',
+
   'Team is already registered.': 'Esta equipe já está inscrita neste campeonato.',
   'Tournament is full.': 'O campeonato está lotado. Todas as vagas foram preenchidas.',
   'Registration is not open.': 'As inscrições deste campeonato estão fechadas.',
