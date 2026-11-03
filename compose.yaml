@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: tournaments
+      POSTGRES_USER: tournaments
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - tournament-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tournaments -d tournaments"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ConnectionStrings__Tournaments: Host=db;Database=tournaments;Username=tournaments;Password=${POSTGRES_PASSWORD}
+    command: ["--migrate"]
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Tournaments: Host=db;Database=tournaments;Username=tournaments;Password=${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5094:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+volumes:
+  tournament-data:

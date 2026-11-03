@@ -1,10 +1,30 @@
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Projeto_Campeonato.Api.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddDbContext<TournamentDbContext>(options => options.UseNpgsql(
+    builder.Configuration.GetConnectionString("Tournaments")));
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+if (args.Contains("--migrate"))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<TournamentDbContext>().Database.MigrateAsync();
+    return;
+}
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+app.MapControllers();
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -31,3 +51,5 @@ public class Campeonato
     public string Status { get; set; } = "";
     public string Modalidade { get; set; } = "";
 }
+
+public partial class Program { }
