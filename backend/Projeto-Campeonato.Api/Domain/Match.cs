@@ -1,6 +1,6 @@
 namespace Projeto_Campeonato.Api.Domain;
 
-public enum MatchStatus { Pending, Finished }
+public enum MatchStatus { Pending, Finished, AwaitingConfirmation, Disputed }
 
 public sealed class Match
 {
@@ -25,12 +25,20 @@ public sealed class Match
     public int? AwayScore { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? FinishedAt { get; private set; }
+    public string? ResultSource { get; private set; }
 
-    public void RecordResult(int homeScore, int awayScore)
+    public void AwaitConfirmation(bool disputed)
+    {
+        if (Status == MatchStatus.Finished) throw new DomainConflictException("Official result is already final.");
+        Status = disputed ? MatchStatus.Disputed : MatchStatus.AwaitingConfirmation;
+    }
+
+    public void RecordResult(int homeScore, int awayScore, string source = "Manual")
     {
         if (homeScore < 0 || awayScore < 0) throw new ArgumentException("Scores cannot be negative.");
         HomeScore = homeScore;
         AwayScore = awayScore;
+        ResultSource = source;
         Status = MatchStatus.Finished;
         // A correction replaces the result; this timestamp represents the latest recording.
         FinishedAt = DateTime.UtcNow;

@@ -22,6 +22,72 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
+
+                    b.HasIndex("MatchId", "OccurredAt");
+
+                    b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Dispute", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'Open'");
+
+                    b.ToTable("Disputes");
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Match", b =>
                 {
                     b.Property<Guid>("Id")
@@ -46,10 +112,14 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                     b.Property<Guid>("HomeTeamId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ResultSource")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
 
                     b.Property<Guid>("TournamentId")
                         .HasColumnType("uuid");
@@ -63,7 +133,7 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
 
                     b.ToTable("Matches", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Matches_Result", "(\"Status\" = 'Pending' AND \"HomeScore\" IS NULL AND \"AwayScore\" IS NULL AND \"FinishedAt\" IS NULL) OR (\"Status\" = 'Finished' AND \"HomeScore\" IS NOT NULL AND \"AwayScore\" IS NOT NULL AND \"HomeScore\" >= 0 AND \"AwayScore\" >= 0 AND \"FinishedAt\" IS NOT NULL)");
+                            t.HasCheckConstraint("CK_Matches_Result", "(\"Status\" IN ('Pending', 'AwaitingConfirmation', 'Disputed') AND \"HomeScore\" IS NULL AND \"AwayScore\" IS NULL AND \"FinishedAt\" IS NULL) OR (\"Status\" = 'Finished' AND \"HomeScore\" IS NOT NULL AND \"AwayScore\" IS NOT NULL AND \"HomeScore\" >= 0 AND \"AwayScore\" >= 0 AND \"FinishedAt\" IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_Matches_Teams", "\"HomeTeamId\" < \"AwayTeamId\"");
                         });
@@ -89,6 +159,43 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                     b.HasIndex("TeamId");
 
                     b.ToTable("Registrations");
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.ScoreSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AwayScore")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HomeScore")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SubmittedByTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubmittedByTeamId");
+
+                    b.HasIndex("MatchId", "SubmittedByTeamId")
+                        .IsUnique();
+
+                    b.ToTable("ScoreSubmissions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Submission_Scores", "\"HomeScore\" >= 0 AND \"AwayScore\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Team", b =>
@@ -144,6 +251,29 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.AuditLog", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Dispute", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Match", b =>
                 {
                     b.HasOne("Projeto_Campeonato.Api.Domain.Tournament", null)
@@ -178,6 +308,21 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                     b.HasOne("Projeto_Campeonato.Api.Domain.Tournament", null)
                         .WithMany()
                         .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.ScoreSubmission", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Team", null)
+                        .WithMany()
+                        .HasForeignKey("SubmittedByTeamId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

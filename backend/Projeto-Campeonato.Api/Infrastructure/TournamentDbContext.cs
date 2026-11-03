@@ -10,6 +10,9 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<Registration> Registrations => Set<Registration>();
 
     public DbSet<Match> Matches => Set<Match>();
+    public DbSet<ScoreSubmission> ScoreSubmissions => Set<ScoreSubmission>();
+    public DbSet<Dispute> Disputes => Set<Dispute>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -30,7 +33,8 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
         model.Entity<Match>(entity =>
         {
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(24);
+            entity.Property(x => x.ResultSource).HasMaxLength(32);
             entity.HasIndex(x => new { x.TournamentId, x.HomeTeamId, x.AwayTeamId }).IsUnique();
             entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Registration>().WithMany().HasForeignKey(x => new { x.TournamentId, x.HomeTeamId })
@@ -40,8 +44,33 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
             entity.ToTable("Matches", table =>
             {
                 table.HasCheckConstraint("CK_Matches_Teams", "\"HomeTeamId\" < \"AwayTeamId\"");
-                table.HasCheckConstraint("CK_Matches_Result", "(\"Status\" = 'Pending' AND \"HomeScore\" IS NULL AND \"AwayScore\" IS NULL AND \"FinishedAt\" IS NULL) OR (\"Status\" = 'Finished' AND \"HomeScore\" IS NOT NULL AND \"AwayScore\" IS NOT NULL AND \"HomeScore\" >= 0 AND \"AwayScore\" >= 0 AND \"FinishedAt\" IS NOT NULL)");
+                table.HasCheckConstraint("CK_Matches_Result", "(\"Status\" IN ('Pending', 'AwaitingConfirmation', 'Disputed') AND \"HomeScore\" IS NULL AND \"AwayScore\" IS NULL AND \"FinishedAt\" IS NULL) OR (\"Status\" = 'Finished' AND \"HomeScore\" IS NOT NULL AND \"AwayScore\" IS NOT NULL AND \"HomeScore\" >= 0 AND \"AwayScore\" >= 0 AND \"FinishedAt\" IS NOT NULL)");
             });
+        });
+        model.Entity<ScoreSubmission>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.MatchId, x.SubmittedByTeamId }).IsUnique();
+            entity.HasOne<Match>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.SubmittedByTeamId).OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable("ScoreSubmissions", t => t.HasCheckConstraint("CK_Submission_Scores", "\"HomeScore\" >= 0 AND \"AwayScore\" >= 0"));
+        });
+        model.Entity<Dispute>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasOne<Match>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+            entity.Property(x => x.ResolutionNote).HasMaxLength(2000);
+            entity.HasIndex(x => x.MatchId).IsUnique().HasFilter("\"Status\" = 'Open'");
+        });
+        model.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasOne<Match>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(x => x.EventType).HasMaxLength(64);
+            entity.Property(x => x.Data).HasColumnType("text");
+            entity.HasIndex(x => new { x.MatchId, x.OccurredAt });
         });
         model.Entity<Registration>(entity =>
         {
