@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ApiProblem } from './models';
 
 const messages: Record<string, string> = {
+  'Official result is already final.': 'O resultado já foi confirmado. Somente uma correção administrativa pode alterá-lo.',
+  'Dispute is already resolved.': 'Esta disputa já foi resolvida. Atualize as partidas.',
+  'Only a participating team can submit a score.': 'Somente uma das equipes desta partida pode enviar um placar.',
   'Close registration before generating matches.':
     'Encerre as inscrições antes de gerar os confrontos.',
   'At least two teams are required.':

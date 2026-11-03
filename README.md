@@ -5,7 +5,8 @@ usa Angular 22, ASP.NET Core 10 LTS, EF Core 10 e PostgreSQL 17.
 
 A interface permite criar e listar campeonatos e equipes, consultar detalhes,
 abrir/fechar inscrições, gerenciar participantes, gerar confrontos de pontos corridos,
-registrar/corrigir resultados e consultar a classificação. Os dados vêm da API real e
+enviar resultados por equipe, confirmar placares concordantes, resolver disputas,
+consultar pendências e classificação, além de corrigir resultados administrativamente. Os dados vêm da API real e
 persistem no PostgreSQL. O frontend Next.js anterior está preservado em
 `frontend-legacy/`; os 39 arquivos originais foram mantidos sem alterações.
 
@@ -74,9 +75,12 @@ O proxy do `ng serve` é exclusivo do desenvolvimento.
 4. Abra as inscrições, selecione a equipe e clique em **Inscrever equipe**.
 5. Inscreva pelo menos duas equipes e encerre as inscrições.
 6. Clique em **Gerar confrontos** (somente pontos corridos).
-7. Registre os placares e confira a classificação atualizada. A última partida
-   finalizada encerra o campeonato automaticamente.
-8. Use **Corrigir resultado** se necessário; recarregue para conferir a persistência.
+7. Use **Enviar como** para simular cada equipe. Ambas informam o placar na ordem
+   mandante × visitante. Placares iguais confirmam o resultado e atualizam a classificação.
+8. Placares divergentes abrem uma disputa em **Pendências**. Use **Resolver disputa**,
+   informe o placar oficial e o motivo. Recarregue para conferir a persistência.
+9. A última partida oficialmente finalizada encerra o campeonato, sem disputas abertas.
+   O registro/correção manual continua em **Ação administrativa**.
 
 Para conferir diretamente no banco:
 
@@ -97,6 +101,9 @@ docker compose exec db psql -U tournaments -d tournaments -c 'SELECT "Id", "Name
 | Gerar confrontos | POST `/api/tournaments/{id}/matches/generate` |
 | Listar partidas | GET `/api/tournaments/{id}/matches` |
 | Registrar/corrigir placar | PUT `/api/matches/{id}/result` |
+| Enviar/corrigir submissão da equipe | PUT `/api/matches/{id}/score-submissions/{teamId}` |
+| Resolver disputa | PUT `/api/disputes/{id}/resolve` |
+| Consultar histórico da partida | GET `/api/matches/{id}/audit-log` |
 | Consultar classificação | GET `/api/tournaments/{id}/standings` |
 
 Torneios começam em `Draft`; as transições são `Draft → Open → Closed → InProgress → Finished`. Closed
@@ -105,9 +112,15 @@ Capacidade entre 2 e 128, com uma inscrição por equipe em cada campeonato.
 O cadastro aceita `SingleElimination` e `RoundRobin` por compatibilidade, mas
 somente `RoundRobin` gera partidas e classificação. A geração inicia o campeonato;
 a última partida finalizada o encerra. Vitória vale 3 pontos, empate 1 e derrota 0.
-As regras continuam no backend. Veja [o ciclo de vida](docs/tournament-lifecycle.md).
+As regras continuam no backend. Veja [o ciclo de vida](docs/tournament-lifecycle.md)
+e [resultados bilaterais e disputas](docs/bilateral-results.md).
 
-Erros usam ProblemDetails: 400 para validação, 404 para recurso inexistente e 409
+A identidade da equipe é declarada na rota, sem autenticação: a API valida se ela
+participa da partida, mas não comprova quem fez a chamada. A UI apresenta isso como
+simulação. Operações administrativas também não têm controle de acesso neste MVP.
+
+Erros usam ProblemDetails: 400 para validação, 403 para equipe externa à partida,
+404 para recurso inexistente e 409
 para conflito de domínio ou concorrência. O Angular mostra mensagens para
 inscrição duplicada, lotação e inscrições fechadas, sem apagar os formulários
 após falhas. PostgreSQL Serializable e o índice único protegem as inscrições
@@ -126,15 +139,16 @@ npm run build
 npm test -- --watch=false
 ```
 
-Os 51 testes de backend usam um banco isolado por execução, com migration aplicada
+Os 73 testes de backend incluem testes HTTP com PostgreSQL real em banco isolado por execução, com migrations aplicadas
 e remoção ao terminar. O usuário precisa de CREATEDB; o usuário local do Compose
 já possui. Para executar somente domínio sem banco:
 `dotnet test backend/Projeto-Campeonato.sln --filter FullyQualifiedName~DomainTests`.
 
-Os 16 testes Angular cobrem criação, validação, erros de inscrição e recuperação
-após falha HTTP, além de partidas, resultados e classificação. Não dependem de backend em execução.
+Os 24 testes Angular cobrem criação, validação, erros de inscrição e recuperação
+após falha HTTP, partidas, classificação, submissões, disputas, pendências e respostas
+atrasadas de status. Não dependem de backend em execução.
 
-Para os dois testes de navegador, mantenha a API e o banco de desenvolvimento
+Para os quatro testes de navegador, mantenha a API e o banco de desenvolvimento
 iniciados e, dentro de `frontend`, execute:
 
 ```bash
@@ -147,7 +161,7 @@ já instalado: `CHROMIUM_PATH=/usr/bin/chromium npm run e2e` (Bash).
 Esses testes usam a API real, criam dados identificados por timestamp no banco de
 desenvolvimento e verificam persistência após recarregar, duplicidade, lotação,
 fechamento concorrente, geração de confrontos, registro/correção de placares,
-classificação atualizada e layout em tela pequena. Não há limpeza de registros
+confirmação bilateral, resolução de disputa, classificação atualizada e layout em tela pequena. Não há limpeza de registros
 por API, pois exclusão ainda não faz parte do produto. Screenshots e traces
 ficam em `frontend/test-results/` (ignorado pelo Git).
 
@@ -174,8 +188,8 @@ acesso a esse domínio. Consulte [a migração .NET 10](docs/dotnet10-upgrade.md
 `GET/POST /campeonatos` permanece compatível com o protótipo antigo e continua
 em memória, independente da API persistida. O Angular usa somente `/api`.
 A aplicação atual é destinada a desenvolvimento local e ainda não tem autenticação.
-Não foram adicionados scheduler, IA, notificações, WhatsApp, autenticação, disputas ou pagamentos.
+Não foram adicionados scheduler, IA, notificações, WhatsApp, autenticação, evidências ou pagamentos.
 
 Documentação: [arquitetura inicial](docs/architecture.md),
 [recuperação do milestone 1](docs/recovery-milestone-1.md) e
-[base Angular](docs/angular-foundation.md).
+[base Angular](docs/angular-foundation.md) e [milestone 4](docs/bilateral-results.md).

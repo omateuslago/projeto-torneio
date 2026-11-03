@@ -45,3 +45,11 @@ Esta decisão registra a base histórica do milestone 1. O estado atual usa .NET
 e Angular; veja [base Angular](angular-foundation.md) e
 [ciclo de vida do campeonato](tournament-lifecycle.md) para o milestone de partidas,
 resultados e classificação.
+
+No milestone 4, [resultados bilaterais e disputas](bilateral-results.md) acrescentam
+ScoreSubmission, Dispute e AuditLog no mesmo projeto. O pequeno ResultWorkflow
+centraliza aplicação do resultado oficial, encerramento da disputa e do campeonato
+para os fluxos bilateral, resolução e override. Os controllers mantêm transações e
+bloqueio do campeonato; não há repository genérico nem infraestrutura de eventos.
+Pendências e classificação são leituras derivadas. A identidade enviada é simulada,
+com futura substituição pela equipe do usuário autenticado na entrada do caso de uso.

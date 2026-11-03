@@ -295,6 +295,25 @@ dd {
 .match-panel {
   margin-top: 24px;
 }
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #91a3b7;
+  border-radius: 5px;
+  resize: vertical;
+}
+.admin-action {
+  margin-top: 18px;
+}
+.match-submissions {
+  min-width: 18rem;
+}
+.admin-action summary {
+  cursor: pointer;
+  padding-block: 10px;
+  color: var(--blue);
+}
 .result-form {
   margin-top: 24px;
   border-top: 1px solid var(--line);

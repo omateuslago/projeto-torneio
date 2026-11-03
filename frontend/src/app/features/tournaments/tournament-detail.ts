@@ -66,10 +66,20 @@ export class TournamentDetail {
       .subscribe({
         next: (updated) => {
           if (this.tournament()?.id !== updated.id) return;
-          this.tournament.set(updated);
+          this.updateTournament(updated);
           this.message.set(status === 'Open' ? 'Inscrições abertas.' : 'Inscrições encerradas.');
         },
         error: (error) => this.actionError.set(apiError(error)),
       });
+  }
+
+  updateTournament(updated: Tournament) {
+    const current = this.tournament();
+    if (!current || current.id !== updated.id) return;
+    // Lifecycle transitions only move forward. A delayed child refresh must not
+    // undo a more recent status mutation in the parent.
+    const order: TournamentStatus[] = ['Draft', 'Open', 'Closed', 'InProgress', 'Finished'];
+    if (order.indexOf(updated.status) < order.indexOf(current.status)) return;
+    this.tournament.set(updated);
   }
 }
