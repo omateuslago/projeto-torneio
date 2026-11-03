@@ -19,3 +19,16 @@ npm test -- --watch=false
 ```
 
 Veja o README da raiz para iniciar PostgreSQL e backend.
+
+## Testes de navegador
+
+Com a API e o PostgreSQL de desenvolvimento iniciados:
+
+```bash
+npx playwright install chromium
+npm run e2e
+```
+
+O runner inicia o servidor Angular. Para usar um Chromium do sistema, defina
+CHROMIUM_PATH com o caminho do executável. Os cenários usam endpoints reais e
+criam registros de teste no banco; detalhes no README da raiz.
