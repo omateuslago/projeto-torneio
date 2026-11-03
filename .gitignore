@@ -46,3 +46,7 @@ next-env.d.ts
 bin/
 obj/
 env/
+
+!.env.example
+**/TestResults/
+*.user
