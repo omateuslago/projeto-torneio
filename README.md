@@ -1,94 +1,168 @@
 # Projeto Torneio
 
-Base incremental para organização de campeonatos amadores físicos e eSports.
-O milestone 1 oferece Tournament, Team e Registration em uma API .NET 9 com
-Controllers, EF Core e PostgreSQL. O frontend Next.js existente foi preservado.
+Plataforma incremental para campeonatos amadores físicos e eSports. A base atual
+usa Angular 22, ASP.NET Core 10 LTS, EF Core 10 e PostgreSQL 17.
 
-## Executar com Docker
+A interface permite criar e listar campeonatos e equipes, consultar detalhes,
+abrir/fechar inscrições e gerenciar participantes. Os dados vêm da API real e
+persistem no PostgreSQL. O frontend Next.js anterior está preservado em
+`frontend-legacy/`; os 39 arquivos originais foram mantidos sem alterações.
 
-Requisitos: Docker Engine e Docker Compose v2.
+## Requisitos
+
+- SDK .NET 10 estável (selecionado por `global.json`).
+- Node.js 24.15 ou superior da linha 24 (ou uma versão compatível com `frontend/package.json`).
+- npm e Docker com Compose v2.
+
+## Iniciar localmente
+
+### 1. PostgreSQL
+
+Na raiz do repositório:
 
 ```bash
 cp .env.example .env
-# Defina POSTGRES_PASSWORD em .env antes de iniciar.
-docker compose up --build -d
+# Edite POSTGRES_PASSWORD em .env e use essa mesma senha na conexão abaixo.
+docker compose up -d db
 ```
 
-API: http://localhost:5094 — Swagger: http://localhost:5094/swagger
-O serviço `migrate` aplica migrations antes de iniciar a API. Os dados ficam no
-volume `tournament-data`. `docker compose down` preserva esse volume.
-As portas são expostas somente em localhost para desenvolvimento.
+O banco usa a porta 5432 em localhost e persiste no volume `tournament-data`.
+`docker compose down` preserva o volume.
 
-## Desenvolvimento com SDK .NET 9
+### 2. API .NET 10
 
-Na raiz do repositório, com o banco do Compose em execução:
+Ainda na raiz, em um terminal (exemplo para Bash):
 
 ```bash
-docker compose up -d db
 dotnet tool restore
 export ConnectionStrings__Tournaments='Host=localhost;Database=tournaments;Username=tournaments;Password=SUA_SENHA'
 dotnet ef database update --project backend/Projeto-Campeonato.Api
 dotnet run --project backend/Projeto-Campeonato.Api --launch-profile http
 ```
 
-A conexão é fornecida por configuração; nenhuma credencial é versionada.
-Para uma nova alteração de modelo:
+No PowerShell, defina a variável com
+`$env:ConnectionStrings__Tournaments = 'Host=localhost;Database=tournaments;Username=tournaments;Password=SUA_SENHA'`.
+
+API: http://localhost:5094 — Swagger: http://localhost:5094/swagger.
+Não há credenciais de banco versionadas. Migrations existentes foram preservadas.
+
+### 3. Frontend Angular
+
+Em outro terminal:
 
 ```bash
-dotnet ef migrations add NomeDaAlteracao --project backend/Projeto-Campeonato.Api --output-dir Infrastructure/Migrations
+cd frontend
+npm ci
+npm start
 ```
 
-## Fluxo do milestone 1
+Abra http://localhost:4200. O Angular usa `HttpClient` e a URL base centralizada em
+`frontend/src/environments/environment.ts`. O proxy de desenvolvimento em
+`frontend/proxy.conf.json` encaminha `/api/**` para `http://127.0.0.1:5094`.
+Isso mantém a mesma origem no navegador e dispensa mudanças de CORS no backend.
 
-1. `POST /api/tournaments` com `{"name":"Copa","sport":"Futsal","maxTeams":8,"format":"RoundRobin"}`.
-2. `POST /api/teams` com `{"name":"Equipe Azul"}`.
-3. `PUT /api/tournaments/{id}/status` com `{"status":"Open"}`.
-4. `POST /api/tournaments/{id}/registrations` com `{"teamId":"UUID_DA_EQUIPE"}`.
-5. `GET /api/tournaments/{id}/registrations` lista os participantes.
+Em uma hospedagem futura, sirva o conteúdo de `frontend/dist/tournament-web/browser`,
+encaminhe `/api` ao backend e configure fallback para `index.html` nas rotas Angular.
+O proxy do `ng serve` é exclusivo do desenvolvimento.
 
-Também existem GET de lista e por ID para torneios e equipes. IDs são UUIDs.
-Torneios começam em `Draft`; as transições são `Draft → Open → Closed`.
-Repetir o estado atual é permitido. Inscrições exigem estado `Open`, equipe
-existente e vaga disponível (capacidade entre 2 e 128). Uma equipe só pode se
-inscrever uma vez em cada torneio. Formatos aceitos: `SingleElimination` e
-`RoundRobin`; geração de confrontos pertence ao próximo milestone.
+## Validar a persistência pela interface
 
-Erros retornam ProblemDetails: 400 para dados inválidos, 404 para recurso
-inexistente e 409 para conflito de domínio ou concorrência. Após 409, consulte
-novamente o estado antes de tentar a inscrição. As transações serializáveis do
-PostgreSQL e o índice único protegem vagas e duplicidades entre processos.
+1. Em **Equipes**, cadastre uma equipe.
+2. Em **Campeonatos**, informe nome, modalidade, capacidade e formato e clique em **Criar campeonato**.
+3. Recarregue a página: os detalhes continuam disponíveis, carregados pela API.
+4. Abra as inscrições, selecione a equipe e clique em **Inscrever equipe**.
+5. Recarregue novamente para consultar os participantes persistidos.
 
-## Testes
-
-Os testes de integração usam PostgreSQL real e aplicam a migration em um banco
-isolado, com nome aleatório, removido ao terminar. O usuário de teste precisa de
-permissão CREATEDB (o usuário local do Compose já possui).
+Para conferir diretamente no banco:
 
 ```bash
+docker compose exec db psql -U tournaments -d tournaments -c 'SELECT "Id", "Name", "Status" FROM "Tournaments";'
+```
+
+## API e regras atuais
+
+| Operação | Endpoint |
+| --- | --- |
+| Listar/criar campeonatos | GET/POST `/api/tournaments` |
+| Consultar campeonato | GET `/api/tournaments/{id}` |
+| Alterar estado de inscrições | PUT `/api/tournaments/{id}/status` |
+| Listar/criar equipes | GET/POST `/api/teams` |
+| Consultar equipe | GET `/api/teams/{id}` |
+| Consultar/inscrever participantes | GET/POST `/api/tournaments/{id}/registrations` |
+
+Torneios começam em `Draft`; as transições são `Draft → Open → Closed`. Closed
+significa inscrições encerradas. Não é permitido reabrir um torneio fechado.
+Capacidade entre 2 e 128, com uma inscrição por equipe em cada campeonato.
+Formatos: `SingleElimination` e `RoundRobin`. As regras continuam no backend.
+
+Erros usam ProblemDetails: 400 para validação, 404 para recurso inexistente e 409
+para conflito de domínio ou concorrência. O Angular mostra mensagens para
+inscrição duplicada, lotação e inscrições fechadas, sem apagar os formulários
+após falhas. PostgreSQL Serializable e o índice único protegem as inscrições
+concorrentes. A interface também trata carregamento, listas vazias e falhas de conexão.
+
+## Build e testes
+
+Na raiz, com PostgreSQL iniciado:
+
+```bash
+dotnet build backend/Projeto-Campeonato.sln
 export TEST_POSTGRES_CONNECTION='Host=localhost;Database=postgres;Username=tournaments;Password=SUA_SENHA'
 dotnet test backend/Projeto-Campeonato.sln
+cd frontend
+npm run build
+npm test -- --watch=false
 ```
 
-Para rodar somente regras de domínio sem PostgreSQL:
+Os 25 testes de backend usam um banco isolado por execução, com migration aplicada
+e remoção ao terminar. O usuário precisa de CREATEDB; o usuário local do Compose
+já possui. Para executar somente domínio sem banco:
+`dotnet test backend/Projeto-Campeonato.sln --filter FullyQualifiedName~DomainTests`.
+
+Os 10 testes Angular cobrem criação, validação, erros de inscrição e recuperação
+após falha HTTP. Não dependem de backend em execução.
+
+Para os dois testes de navegador, mantenha a API e o banco de desenvolvimento
+iniciados e, dentro de `frontend`, execute:
 
 ```bash
-dotnet test backend/Projeto-Campeonato.sln --filter FullyQualifiedName~DomainTests
+npx playwright install chromium
+npm run e2e
 ```
 
-A suíte cobre validação, persistência entre requisições, estados, participantes,
-recursos inexistentes, duplicidades, concorrência pela última vaga, migration e
-compatibilidade do endpoint legado.
+O runner inicia o Angular automaticamente. Alternativamente, indique um Chromium
+já instalado: `CHROMIUM_PATH=/usr/bin/chromium npm run e2e` (Bash).
+Esses testes usam a API real, criam dados identificados por timestamp no banco de
+desenvolvimento e verificam persistência após recarregar, duplicidade, lotação,
+fechamento concorrente e layout em tela pequena. Não há limpeza de registros
+por API, pois exclusão ainda não faz parte do produto. Screenshots e traces
+ficam em `frontend/test-results/` (ignorado pelo Git).
 
-## Compatibilidade e próximos passos
+## API inteira via Docker Compose
 
-`GET/POST /campeonatos` mantém o contrato e o armazenamento em memória originais,
-utilizados pelo frontend. Essa coleção legada é independente dos novos torneios
-persistidos em `/api/tournaments`. A integração/migração do frontend deve ser um
-milestone explícito; nenhuma migração para Angular foi feita nesta recuperação.
+```bash
+docker compose up --build -d
+```
 
-A API ainda não tem autenticação. O Compose é destinado a desenvolvimento local.
-Partidas, resultados, autenticação, agendamento Python, disputas, notificações,
-WhatsApp e pagamentos ficam para etapas posteriores.
+O serviço `migrate` aplica migrations antes da API. As imagens usam .NET 10;
+as portas do banco e API ficam restritas a localhost.
+Neste ambiente cloud, o download da imagem oficial foi bloqueado por HTTP 403
+em `westcentralus.data.mcr.microsoft.com`. O PostgreSQL via Compose e a API pelo
+SDK foram validados; a execução completa da imagem API aguarda uma rede com
+acesso a esse domínio. Consulte [a migração .NET 10](docs/dotnet10-upgrade.md).
 
-Veja [decisões de arquitetura](docs/architecture.md) e
-[comparação da recuperação](docs/recovery-milestone-1.md).
+## Escopo e arquitetura
+
+- `backend/`: API com domínio, features, infraestrutura e testes.
+- `frontend/`: Angular standalone, signals, Reactive Forms e rotas por feature.
+- `frontend-legacy/`: Next.js preservado como referência.
+- `docs/`: decisões e histórico dos milestones.
+
+`GET/POST /campeonatos` permanece compatível com o protótipo antigo e continua
+em memória, independente da API persistida. O Angular usa somente `/api`.
+A aplicação atual é destinada a desenvolvimento local e ainda não tem autenticação.
+Não foram adicionados scheduler, partidas, IA, notificações, WhatsApp ou pagamentos.
+
+Documentação: [arquitetura inicial](docs/architecture.md),
+[recuperação do milestone 1](docs/recovery-milestone-1.md) e
+[base Angular](docs/angular-foundation.md).
