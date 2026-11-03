@@ -38,3 +38,10 @@ Não há autenticação, exclusão, partidas ou resultados neste milestone.
 
 O futuro scheduler Python receberá DTOs da API .NET via HTTP e não terá acesso
 direto ao banco. Não há serviço Python vazio nesta etapa.
+
+## Evolução
+
+Esta decisão registra a base histórica do milestone 1. O estado atual usa .NET 10
+e Angular; veja [base Angular](angular-foundation.md) e
+[ciclo de vida do campeonato](tournament-lifecycle.md) para o milestone de partidas,
+resultados e classificação.

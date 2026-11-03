@@ -1,7 +1,7 @@
 namespace Projeto_Campeonato.Api.Domain;
 
 public enum TournamentFormat { SingleElimination, RoundRobin }
-public enum TournamentStatus { Draft, Open, Closed }
+public enum TournamentStatus { Draft, Open, Closed, InProgress, Finished }
 
 public sealed class Tournament
 {
@@ -31,6 +31,20 @@ public sealed class Tournament
               (Status == TournamentStatus.Open && next == TournamentStatus.Closed)))
             throw new DomainConflictException("Allowed transitions: Draft → Open → Closed.");
         Status = next;
+    }
+
+    public void StartCompetition()
+    {
+        if (Format != TournamentFormat.RoundRobin) throw new DomainConflictException("Only RoundRobin is supported for match generation.");
+        if (Status != TournamentStatus.Closed) throw new DomainConflictException("Close registration before generating matches.");
+        Status = TournamentStatus.InProgress;
+    }
+
+    public void FinishCompetition()
+    {
+        if (Status is not (TournamentStatus.InProgress or TournamentStatus.Finished))
+            throw new DomainConflictException("Competition has not started.");
+        Status = TournamentStatus.Finished;
     }
 
     public void EnsureCanRegister(int registeredTeams)

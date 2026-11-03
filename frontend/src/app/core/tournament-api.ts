@@ -1,7 +1,15 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { CreateTournament, Registration, Team, Tournament, TournamentStatus } from './models';
+import {
+  CreateTournament,
+  Match,
+  Standing,
+  Registration,
+  Team,
+  Tournament,
+  TournamentStatus,
+} from './models';
 
 @Injectable({ providedIn: 'root' })
 export class TournamentApi {
@@ -33,5 +41,18 @@ export class TournamentApi {
     return this.http.post<Registration>(`${this.base}/tournaments/${tournamentId}/registrations`, {
       teamId,
     });
+  }
+
+  listMatches(id: string) {
+    return this.http.get<Match[]>(`${this.base}/tournaments/${id}/matches`);
+  }
+  generateMatches(id: string) {
+    return this.http.post<Match[]>(`${this.base}/tournaments/${id}/matches/generate`, {});
+  }
+  recordResult(id: string, homeScore: number, awayScore: number) {
+    return this.http.put<Match>(`${this.base}/matches/${id}/result`, { homeScore, awayScore });
+  }
+  standings(id: string) {
+    return this.http.get<Standing[]>(`${this.base}/tournaments/${id}/standings`);
   }
 }

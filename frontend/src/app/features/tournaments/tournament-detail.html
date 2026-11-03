@@ -46,4 +46,12 @@
     }
   </section>
   <app-registrations [tournament]="current" />
+  @if (current.format === 'RoundRobin') {
+    <app-matches [tournament]="current" (tournamentChanged)="tournament.set($event)" />
+  } @else {
+    <p class="muted">
+      Partidas e classificação estão disponíveis apenas para campeonatos de pontos corridos nesta
+      etapa.
+    </p>
+  }
 }

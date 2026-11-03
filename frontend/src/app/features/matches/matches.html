@@ -1,0 +1,147 @@
+<section class="panel match-panel" aria-labelledby="partidas">
+  <div class="section-heading">
+    <h2 id="partidas">Partidas</h2>
+    <button class="secondary" (click)="load()" [disabled]="loading() || saving()">
+      Atualizar partidas
+    </button>
+  </div>
+  @if (loading()) {
+    <p role="status">Carregando partidas e classificação…</p>
+  } @else if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  } @else if (!matches().length) {
+    <p class="empty">Nenhuma partida gerada. Cada equipe enfrentará todas as outras uma vez.</p>
+    @if (tournament().status === 'Closed') {
+      <button (click)="generate()" [disabled]="saving()">
+        {{ saving() ? 'Gerando…' : 'Gerar confrontos' }}
+      </button>
+    } @else {
+      <p class="muted">
+        Inscreva pelo menos duas equipes e encerre as inscrições para gerar os confrontos.
+      </p>
+    }
+  } @else {
+    <div class="table-wrap">
+      <table aria-label="Partidas do campeonato">
+        <thead>
+          <tr>
+            <th>Confronto</th>
+            <th>Placar</th>
+            <th>Estado</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (match of matches(); track match.id) {
+            <tr>
+              <td>{{ match.homeTeamName }} × {{ match.awayTeamName }}</td>
+              <td>{{ match.homeScore ?? '—' }} × {{ match.awayScore ?? '—' }}</td>
+              <td>{{ match.status === 'Finished' ? 'Finalizada' : 'Pendente' }}</td>
+              <td>
+                <button class="secondary" (click)="edit(match)" [disabled]="saving()">
+                  {{ match.status === 'Finished' ? 'Corrigir resultado' : 'Registrar resultado' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (editing(); as match) {
+    <form
+      class="result-form"
+      [formGroup]="form"
+      (ngSubmit)="saveResult()"
+      aria-label="Resultado da partida"
+    >
+      <h3>{{ match.homeTeamName }} × {{ match.awayTeamName }}</h3>
+      <div class="score-fields">
+        <label
+          >Placar mandante — {{ match.homeTeamName
+          }}<input
+            type="number"
+            formControlName="homeScore"
+            min="0"
+            max="2147483647"
+            step="1"
+            required
+        /></label>
+        <label
+          >Placar visitante — {{ match.awayTeamName
+          }}<input
+            type="number"
+            formControlName="awayScore"
+            min="0"
+            max="2147483647"
+            step="1"
+            required
+        /></label>
+      </div>
+      @if (form.touched && form.invalid) {
+        <p class="error" role="alert">Informe placares inteiros de 0 a 2147483647.</p>
+      }
+      <div class="actions">
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Salvando…' : 'Salvar resultado' }}</button
+        ><button type="button" class="secondary" (click)="editing.set(null)" [disabled]="saving()">
+          Cancelar edição
+        </button>
+      </div>
+    </form>
+  }
+  @if (actionError()) {
+    <p class="error" role="alert">{{ actionError() }}</p>
+  }
+  @if (message()) {
+    <p class="success" role="status">{{ message() }}</p>
+  }
+</section>
+<section class="panel match-panel" aria-labelledby="classificacao">
+  <h2 id="classificacao">Classificação</h2>
+  <p class="muted">
+    Vitória: 3 pontos. Empate: 1 ponto. Desempate por saldo, gols marcados e nome da equipe.
+  </p>
+  @if (loading()) {
+    <p>Carregando classificação…</p>
+  } @else if (loadError()) {
+    <p>Atualize as partidas para tentar carregar a classificação novamente.</p>
+  } @else if (!standings().length) {
+    <p class="empty">A classificação aparecerá quando houver equipes inscritas.</p>
+  } @else {
+    <div class="table-wrap">
+      <table aria-label="Classificação do campeonato">
+        <thead>
+          <tr>
+            <th>Equipe</th>
+            <th>Pontos</th>
+            <th><abbr title="Jogos">J</abbr></th>
+            <th><abbr title="Vitórias">V</abbr></th>
+            <th><abbr title="Empates">E</abbr></th>
+            <th><abbr title="Derrotas">D</abbr></th>
+            <th><abbr title="Gols pró">GP</abbr></th>
+            <th><abbr title="Gols contra">GC</abbr></th>
+            <th><abbr title="Saldo de gols">SG</abbr></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of standings(); track row.teamId) {
+            <tr>
+              <td>{{ row.teamName }}</td>
+              <td>
+                <strong>{{ row.points }}</strong>
+              </td>
+              <td>{{ row.played }}</td>
+              <td>{{ row.wins }}</td>
+              <td>{{ row.draws }}</td>
+              <td>{{ row.losses }}</td>
+              <td>{{ row.goalsFor }}</td>
+              <td>{{ row.goalsAgainst }}</td>
+              <td>{{ row.goalDifference }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

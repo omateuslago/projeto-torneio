@@ -291,3 +291,25 @@ dd {
     padding: 18px;
   }
 }
+
+.match-panel {
+  margin-top: 24px;
+}
+.result-form {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.result-form h3 {
+  margin: 0;
+}
+.score-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 600px) {
+  .score-fields {
+    grid-template-columns: 1fr;
+  }
+}

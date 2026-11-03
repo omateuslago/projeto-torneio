@@ -4,12 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
 import { Tournament, TournamentStatus, formatLabels, statusLabels } from '../../core/models';
+import { Matches } from '../matches/matches';
 import { Registrations } from '../registrations/registrations';
 import { apiError } from '../../core/api-error';
 
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink, Registrations],
+  imports: [RouterLink, Registrations, Matches],
   templateUrl: './tournament-detail.html',
 })
 export class TournamentDetail {

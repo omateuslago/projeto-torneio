@@ -9,6 +9,8 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<Registration> Registrations => Set<Registration>();
 
+    public DbSet<Match> Matches => Set<Match>();
+
     protected override void OnModelCreating(ModelBuilder model)
     {
         model.Entity<Tournament>(entity =>
@@ -25,10 +27,26 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
         });
+        model.Entity<Match>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+            entity.HasIndex(x => new { x.TournamentId, x.HomeTeamId, x.AwayTeamId }).IsUnique();
+            entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Registration>().WithMany().HasForeignKey(x => new { x.TournamentId, x.HomeTeamId })
+                .HasPrincipalKey(x => new { x.TournamentId, x.TeamId }).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Registration>().WithMany().HasForeignKey(x => new { x.TournamentId, x.AwayTeamId })
+                .HasPrincipalKey(x => new { x.TournamentId, x.TeamId }).OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable("Matches", table =>
+            {
+                table.HasCheckConstraint("CK_Matches_Teams", "\"HomeTeamId\" < \"AwayTeamId\"");
+                table.HasCheckConstraint("CK_Matches_Result", "(\"Status\" = 'Pending' AND \"HomeScore\" IS NULL AND \"AwayScore\" IS NULL AND \"FinishedAt\" IS NULL) OR (\"Status\" = 'Finished' AND \"HomeScore\" IS NOT NULL AND \"AwayScore\" IS NOT NULL AND \"HomeScore\" >= 0 AND \"AwayScore\" >= 0 AND \"FinishedAt\" IS NOT NULL)");
+            });
+        });
         model.Entity<Registration>(entity =>
         {
             entity.HasKey(x => x.Id);
-            entity.HasIndex(x => new { x.TournamentId, x.TeamId }).IsUnique();
+            entity.HasAlternateKey(x => new { x.TournamentId, x.TeamId });
             entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.Restrict);
         });
