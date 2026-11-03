@@ -1,0 +1,30 @@
+<h1>Campeonatos</h1>
+<p class="intro">Crie um campeonato e organize a participação das equipes.</p>
+<div class="workspace">
+  <section class="panel" aria-labelledby="lista-campeonatos">
+    <div class="section-heading"><h2 id="lista-campeonatos">Seus campeonatos</h2><button class="secondary" (click)="load()" [disabled]="loading()">Atualizar</button></div>
+    @if (loading()) { <p role="status">Carregando campeonatos…</p> }
+    @else if (loadError()) { <p class="error" role="alert">{{ loadError() }}</p> }
+    @else if (!tournaments().length) { <p class="empty">Nenhum campeonato cadastrado. Crie o primeiro usando o formulário.</p> }
+    @else {
+      <div class="table-wrap"><table>
+        <thead><tr><th>Campeonato</th><th>Modalidade</th><th>Inscrições</th></tr></thead>
+        <tbody>@for (tournament of tournaments(); track tournament.id) {
+          <tr><td><a [routerLink]="['/campeonatos', tournament.id]">{{ tournament.name }}</a><div class="muted">Até {{ tournament.maxTeams }} equipes</div></td><td>{{ tournament.sport }}</td><td><span class="badge" [class.open]="tournament.status === 'Open'">{{ statusLabels[tournament.status] }}</span></td></tr>
+        }</tbody>
+      </table></div>
+    }
+  </section>
+  <section class="panel" aria-labelledby="novo-campeonato">
+    <h2 id="novo-campeonato">Novo campeonato</h2>
+    <form [formGroup]="form" (ngSubmit)="create()">
+      <label>Nome do campeonato<input formControlName="name" maxlength="120" autocomplete="off" required /></label>
+      <label>Modalidade<input formControlName="sport" maxlength="80" placeholder="Ex.: Futsal ou Valorant" required /></label>
+      <label>Limite de equipes<input type="number" formControlName="maxTeams" min="2" max="128" step="1" required /><span class="hint">De 2 a 128 equipes.</span></label>
+      <label>Formato<select formControlName="format"><option value="RoundRobin">Pontos corridos</option><option value="SingleElimination">Mata-mata simples</option></select></label>
+      @if (form.touched && form.invalid) { <p class="error" role="alert">Preencha nome e modalidade. O limite deve ser um número inteiro entre 2 e 128.</p> }
+      @if (saveError()) { <p class="error" role="alert">{{ saveError() }}</p> }
+      <button type="submit" [disabled]="saving()">{{ saving() ? 'Criando…' : 'Criar campeonato' }}</button>
+    </form>
+  </section>
+</div>
