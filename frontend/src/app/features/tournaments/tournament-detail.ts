@@ -4,11 +4,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
 import { Tournament, TournamentStatus, formatLabels, statusLabels } from '../../core/models';
+import { Registrations } from '../registrations/registrations';
 import { apiError } from '../../core/api-error';
 
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, Registrations],
   templateUrl: './tournament-detail.html',
 })
 export class TournamentDetail {
@@ -24,13 +25,29 @@ export class TournamentDetail {
   readonly formatLabels = formatLabels;
 
   constructor() {
-    inject(ActivatedRoute).paramMap.pipe(
-      tap(() => { this.loading.set(true); this.loadError.set(''); this.actionError.set(''); this.message.set(''); this.tournament.set(null); }),
-      switchMap(params => this.api.getTournament(params.get('id')!).pipe(
-        catchError(error => { this.loadError.set(apiError(error)); return of(null); }),
-      )),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(tournament => { this.tournament.set(tournament); this.loading.set(false); });
+    inject(ActivatedRoute)
+      .paramMap.pipe(
+        tap(() => {
+          this.loading.set(true);
+          this.loadError.set('');
+          this.actionError.set('');
+          this.message.set('');
+          this.tournament.set(null);
+        }),
+        switchMap((params) =>
+          this.api.getTournament(params.get('id')!).pipe(
+            catchError((error) => {
+              this.loadError.set(apiError(error));
+              return of(null);
+            }),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((tournament) => {
+        this.tournament.set(tournament);
+        this.loading.set(false);
+      });
   }
 
   changeStatus(status: TournamentStatus) {
@@ -39,15 +56,19 @@ export class TournamentDetail {
     this.saving.set(true);
     this.actionError.set('');
     this.message.set('');
-    this.api.changeStatus(tournament.id, status).pipe(
-      takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)),
-    ).subscribe({
-      next: updated => {
-        if (this.tournament()?.id !== updated.id) return;
-        this.tournament.set(updated);
-        this.message.set(status === 'Open' ? 'Inscrições abertas.' : 'Inscrições encerradas.');
-      },
-      error: error => this.actionError.set(apiError(error)),
-    });
+    this.api
+      .changeStatus(tournament.id, status)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (updated) => {
+          if (this.tournament()?.id !== updated.id) return;
+          this.tournament.set(updated);
+          this.message.set(status === 'Open' ? 'Inscrições abertas.' : 'Inscrições encerradas.');
+        },
+        error: (error) => this.actionError.set(apiError(error)),
+      });
   }
 }

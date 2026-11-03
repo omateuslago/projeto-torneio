@@ -1,19 +1,49 @@
 <a class="back" routerLink="/campeonatos">Voltar aos campeonatos</a>
-@if (loading()) { <p role="status">Carregando campeonato…</p> }
-@else if (loadError()) { <p class="error" role="alert">{{ loadError() }}</p> }
-@else if (tournament(); as current) {
+@if (loading()) {
+  <p role="status">Carregando campeonato…</p>
+} @else if (loadError()) {
+  <p class="error" role="alert">{{ loadError() }}</p>
+} @else if (tournament(); as current) {
   <section class="panel">
     <h1>{{ current.name }}</h1>
-    <span class="badge" [class.open]="current.status === 'Open'">{{ statusLabels[current.status] }}</span>
-    <dl class="detail-grid"><div><dt>Modalidade</dt><dd>{{ current.sport }}</dd></div><div><dt>Formato</dt><dd>{{ formatLabels[current.format] }}</dd></div><div><dt>Capacidade</dt><dd>{{ current.maxTeams }} equipes</dd></div></dl>
+    <span class="badge" [class.open]="current.status === 'Open'">{{
+      statusLabels[current.status]
+    }}</span>
+    <dl class="detail-grid">
+      <div>
+        <dt>Modalidade</dt>
+        <dd>{{ current.sport }}</dd>
+      </div>
+      <div>
+        <dt>Formato</dt>
+        <dd>{{ formatLabels[current.format] }}</dd>
+      </div>
+      <div>
+        <dt>Capacidade</dt>
+        <dd>{{ current.maxTeams }} equipes</dd>
+      </div>
+    </dl>
     @if (current.status === 'Draft') {
       <p class="muted">Abra as inscrições para começar a adicionar equipes.</p>
-      <button (click)="changeStatus('Open')" [disabled]="saving()">{{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}</button>
+      <button (click)="changeStatus('Open')" [disabled]="saving()">
+        {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
+      </button>
     } @else if (current.status === 'Open') {
       <p class="muted">Ao encerrar, não será possível reabrir as inscrições nesta etapa.</p>
-      <button class="secondary" (click)="changeStatus('Closed')" [disabled]="saving()">{{ saving() ? 'Encerrando…' : 'Fechar inscrições' }}</button>
-    } @else { <p class="muted">As inscrições foram encerradas. As equipes inscritas continuam disponíveis para consulta.</p> }
-    @if (actionError()) { <p class="error" role="alert">{{ actionError() }}</p> }
-    @if (message()) { <p class="success" role="status">{{ message() }}</p> }
+      <button class="secondary" (click)="changeStatus('Closed')" [disabled]="saving()">
+        {{ saving() ? 'Encerrando…' : 'Fechar inscrições' }}
+      </button>
+    } @else {
+      <p class="muted">
+        As inscrições foram encerradas. As equipes inscritas continuam disponíveis para consulta.
+      </p>
+    }
+    @if (actionError()) {
+      <p class="error" role="alert">{{ actionError() }}</p>
+    }
+    @if (message()) {
+      <p class="success" role="status">{{ message() }}</p>
+    }
   </section>
+  <app-registrations [tournament]="current" />
 }

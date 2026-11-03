@@ -26,19 +26,30 @@ export class Tournaments {
   readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [trimmedRequired, Validators.maxLength(120)]],
     sport: ['', [trimmedRequired, Validators.maxLength(80)]],
-    maxTeams: [8, [Validators.required, Validators.min(2), Validators.max(128), Validators.pattern(/^\d+$/)]],
+    maxTeams: [
+      8,
+      [Validators.required, Validators.min(2), Validators.max(128), Validators.pattern(/^\d+$/)],
+    ],
     format: ['RoundRobin' as TournamentFormat, Validators.required],
   });
 
-  constructor() { this.load(); }
+  constructor() {
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
     this.loadError.set('');
-    this.api.listTournaments().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false))).subscribe({
-      next: tournaments => this.tournaments.set(tournaments),
-      error: error => this.loadError.set(apiError(error)),
-    });
+    this.api
+      .listTournaments()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (tournaments) => this.tournaments.set(tournaments),
+        error: (error) => this.loadError.set(apiError(error)),
+      });
   }
 
   create() {
@@ -48,10 +59,15 @@ export class Tournaments {
     this.saving.set(true);
     this.saveError.set('');
     const value = this.form.getRawValue();
-    this.api.createTournament({ ...value, name: value.name.trim(), sport: value.sport.trim() })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false))).subscribe({
-        next: tournament => void this.router.navigate(['/campeonatos', tournament.id]),
-        error: error => this.saveError.set(apiError(error)),
+    this.api
+      .createTournament({ ...value, name: value.name.trim(), sport: value.sport.trim() })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (tournament) => void this.router.navigate(['/campeonatos', tournament.id]),
+        error: (error) => this.saveError.set(apiError(error)),
       });
   }
 }

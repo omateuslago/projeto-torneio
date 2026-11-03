@@ -9,7 +9,10 @@ export interface Tournament {
   status: TournamentStatus;
 }
 export type CreateTournament = Pick<Tournament, 'name' | 'sport' | 'maxTeams' | 'format'>;
-export interface Team { id: string; name: string; }
+export interface Team {
+  id: string;
+  name: string;
+}
 export interface Registration {
   id: string;
   tournamentId: string;
@@ -23,8 +26,11 @@ export interface ApiProblem {
   errors?: Record<string, string[]>;
 }
 export const statusLabels: Record<TournamentStatus, string> = {
-  Draft: 'Rascunho', Open: 'Inscrições abertas', Closed: 'Inscrições encerradas',
+  Draft: 'Rascunho',
+  Open: 'Inscrições abertas',
+  Closed: 'Inscrições encerradas',
 };
 export const formatLabels: Record<TournamentFormat, string> = {
-  SingleElimination: 'Mata-mata simples', RoundRobin: 'Pontos corridos',
+  SingleElimination: 'Mata-mata simples',
+  RoundRobin: 'Pontos corridos',
 };

@@ -1,0 +1,60 @@
+<section class="panel" aria-labelledby="participantes" style="margin-top: 24px">
+  <div class="section-heading">
+    <h2 id="participantes">Equipes inscritas</h2>
+    <button class="secondary" (click)="load()" [disabled]="loading()">Atualizar equipes</button>
+  </div>
+  @if (loading()) {
+    <p role="status">Carregando participantes…</p>
+  } @else if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  } @else {
+    <p class="muted">
+      {{ registrations().length }} de {{ tournament().maxTeams }} vagas preenchidas
+    </p>
+    @if (!registrations().length) {
+      <p class="empty">Nenhuma equipe inscrita neste campeonato.</p>
+    } @else {
+      <ul class="participants">
+        @for (registration of registrations(); track registration.id) {
+          <li>{{ registration.teamName }}</li>
+        }
+      </ul>
+    }
+    @if (tournament().status === 'Open') {
+      <h2 style="margin-top: 28px">Inscrever equipe</h2>
+      @if (!teams().length) {
+        <p>
+          Cadastre uma equipe antes de fazer a inscrição.
+          <a routerLink="/equipes">Ir para equipes</a>
+        </p>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="register()">
+          <label
+            >Equipe<select formControlName="teamId" required>
+              <option value="">Selecione uma equipe</option>
+              @for (team of teams(); track team.id) {
+                <option [value]="team.id">{{ team.name }}</option>
+              }
+            </select></label
+          >
+          @if (form.touched && form.invalid) {
+            <p class="error" role="alert">Selecione uma equipe para continuar.</p>
+          }
+          <div>
+            <button type="submit" [disabled]="saving()">
+              {{ saving() ? 'Inscrevendo…' : 'Inscrever equipe' }}
+            </button>
+          </div>
+        </form>
+      }
+    } @else {
+      <p class="muted">As inscrições estão fechadas.</p>
+    }
+  }
+  @if (saveError()) {
+    <p class="error" role="alert">{{ saveError() }}</p>
+  }
+  @if (message()) {
+    <p class="success" role="status">{{ message() }}</p>
+  }
+</section>

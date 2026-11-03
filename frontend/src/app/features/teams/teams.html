@@ -1,0 +1,43 @@
+<h1>Equipes</h1>
+<p class="intro">Cadastre as equipes para inscrevê-las nos campeonatos.</p>
+<div class="workspace">
+  <section class="panel" aria-labelledby="equipes-cadastradas">
+    <div class="section-heading">
+      <h2 id="equipes-cadastradas">Equipes cadastradas</h2>
+      <button class="secondary" (click)="load()" [disabled]="loading()">Atualizar</button>
+    </div>
+    @if (loading()) {
+      <p role="status">Carregando equipes…</p>
+    } @else if (loadError()) {
+      <p class="error" role="alert">{{ loadError() }}</p>
+    } @else if (!teams().length) {
+      <p class="empty">Nenhuma equipe cadastrada. Adicione a primeira usando o formulário.</p>
+    } @else {
+      <ul class="participants">
+        @for (team of teams(); track team.id) {
+          <li>{{ team.name }}</li>
+        }
+      </ul>
+    }
+  </section>
+  <section class="panel" aria-labelledby="nova-equipe">
+    <h2 id="nova-equipe">Nova equipe</h2>
+    <form [formGroup]="form" (ngSubmit)="create()">
+      <label
+        >Nome da equipe<input formControlName="name" maxlength="120" autocomplete="off" required
+      /></label>
+      @if (form.touched && form.invalid) {
+        <p class="error" role="alert">Informe um nome de até 120 caracteres.</p>
+      }
+      @if (saveError()) {
+        <p class="error" role="alert">{{ saveError() }}</p>
+      }
+      <button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Cadastrando…' : 'Criar equipe' }}
+      </button>
+    </form>
+    @if (message()) {
+      <p class="success" role="status">{{ message() }}</p>
+    }
+  </section>
+</div>
