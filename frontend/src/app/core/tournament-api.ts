@@ -9,6 +9,8 @@ import {
   Team,
   Tournament,
   TournamentStatus,
+  ScoreSubmission,
+  Dispute,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -54,5 +56,18 @@ export class TournamentApi {
   }
   standings(id: string) {
     return this.http.get<Standing[]>(`${this.base}/tournaments/${id}/standings`);
+  }
+  submitScore(matchId: string, teamId: string, homeScore: number, awayScore: number) {
+    return this.http.put<ScoreSubmission>(
+      `${this.base}/matches/${matchId}/score-submissions/${teamId}`,
+      { homeScore, awayScore },
+    );
+  }
+  resolveDispute(id: string, homeScore: number, awayScore: number, resolutionNote: string) {
+    return this.http.put<Dispute>(`${this.base}/disputes/${id}/resolve`, {
+      homeScore,
+      awayScore,
+      resolutionNote,
+    });
   }
 }

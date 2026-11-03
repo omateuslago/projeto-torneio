@@ -56,6 +56,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
     page.getByRole('table', { name: 'Partidas do campeonato' }).getByRole('row'),
   ).toHaveCount(2);
   await expect(page.getByText('Em andamento', { exact: true })).toBeVisible();
+  await page.getByText('Ação administrativa', { exact: true }).click();
   await page.getByRole('button', { name: 'Registrar resultado', exact: true }).click();
   await page.getByLabel('Placar mandante').fill('-1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
@@ -66,6 +67,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
   const standings = page.getByRole('table', { name: 'Classificação do campeonato' });
   await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
+  await page.getByText('Ação administrativa', { exact: true }).click();
   await page.getByRole('button', { name: 'Corrigir resultado', exact: true }).click();
   await page.getByLabel('Placar mandante').fill('1');
   await page.getByLabel('Placar visitante').fill('1');

@@ -1,3 +1,26 @@
+<section class="panel match-panel" aria-labelledby="pendencias">
+  <h2 id="pendencias">Pendências ({{ pending().length }})</h2>
+  @if (loading()) {
+    <p role="status">Carregando pendências…</p>
+  } @else if (loadError()) {
+    <p>Atualize as partidas para consultar as pendências.</p>
+  } @else if (!pending().length) {
+    <p class="muted">Nenhuma confirmação pendente ou disputa aberta.</p>
+  } @else {
+    <ul class="participants">
+      @for (match of pending(); track match.id) {
+        <li>
+          {{ match.homeTeamName }} × {{ match.awayTeamName }} —
+          @if (match.dispute?.status === 'Open') {
+            Resultado contestado.
+          } @else {
+            Aguardando resultado de {{ waitingFor(match) }}.
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
 <section class="panel match-panel" aria-labelledby="partidas">
   <div class="section-heading">
     <h2 id="partidas">Partidas</h2>
@@ -26,9 +49,9 @@
         <thead>
           <tr>
             <th>Confronto</th>
-            <th>Placar</th>
+            <th>Resultado oficial</th>
             <th>Estado</th>
-            <th>Resultado</th>
+            <th>Envios e ações</th>
           </tr>
         </thead>
         <tbody>
@@ -36,11 +59,62 @@
             <tr>
               <td>{{ match.homeTeamName }} × {{ match.awayTeamName }}</td>
               <td>{{ match.homeScore ?? '—' }} × {{ match.awayScore ?? '—' }}</td>
-              <td>{{ match.status === 'Finished' ? 'Finalizada' : 'Pendente' }}</td>
-              <td>
-                <button class="secondary" (click)="edit(match)" [disabled]="saving()">
-                  {{ match.status === 'Finished' ? 'Corrigir resultado' : 'Registrar resultado' }}
-                </button>
+              <td>{{ matchLabel(match) }}</td>
+              <td class="match-submissions">
+                <p class="muted">
+                  Envios na ordem {{ match.homeTeamName }} × {{ match.awayTeamName }}:
+                </p>
+                <p>
+                  {{ match.homeTeamName }}:
+                  @if (submission(match, match.homeTeamId); as score) {
+                    {{ score.homeScore }} × {{ score.awayScore }}
+                  } @else {
+                    Aguardando
+                  }
+                </p>
+                <p>
+                  {{ match.awayTeamName }}:
+                  @if (submission(match, match.awayTeamId); as score) {
+                    {{ score.homeScore }} × {{ score.awayScore }}
+                  } @else {
+                    Aguardando
+                  }
+                </p>
+                @if (match.status !== 'Finished') {
+                  <p class="muted">
+                    Simulação de equipe: MVP sem login. A identidade escolhida não é autenticada.
+                  </p>
+                  <div class="actions">
+                    <button (click)="sendAs(match, match.homeTeamId)" [disabled]="saving()">
+                      Enviar como {{ match.homeTeamName }}
+                    </button>
+                    <button (click)="sendAs(match, match.awayTeamId)" [disabled]="saving()">
+                      Enviar como {{ match.awayTeamName }}
+                    </button>
+                  </div>
+                }
+                @if (match.dispute?.status === 'Open') {
+                  <p class="error">
+                    Disputa aberta. Uma correção de envio não encerra a disputa; o organizador deve
+                    decidir.
+                  </p>
+                  <button class="secondary" (click)="resolve(match)" [disabled]="saving()">
+                    Resolver disputa
+                  </button>
+                }
+                @if (match.dispute?.status === 'Resolved') {
+                  <p class="muted">Decisão: {{ match.dispute?.resolutionNote }}</p>
+                }
+                <details class="admin-action">
+                  <summary>Ação administrativa</summary>
+                  <p class="muted">
+                    Define o resultado oficial diretamente e encerra uma eventual disputa aberta. A
+                    ação fica no histórico. MVP sem autenticação.
+                  </p>
+                  <button class="secondary" (click)="edit(match)" [disabled]="saving()">
+                    {{ match.status === 'Finished' ? 'Corrigir resultado' : 'Registrar resultado' }}
+                  </button>
+                </details>
               </td>
             </tr>
           }
@@ -56,6 +130,17 @@
       aria-label="Resultado da partida"
     >
       <h3>{{ match.homeTeamName }} × {{ match.awayTeamName }}</h3>
+      @if (mode() === 'submission') {
+        <p>
+          Enviando como
+          {{ submittingTeam() === match.homeTeamId ? match.homeTeamName : match.awayTeamName }}. Use
+          sempre a ordem mandante × visitante indicada abaixo.
+        </p>
+      } @else if (mode() === 'resolution') {
+        <p>Resolução pelo organizador: informe o placar oficial e o motivo da decisão.</p>
+      } @else {
+        <p>Alteração administrativa do resultado oficial.</p>
+      }
       <div class="score-fields">
         <label
           >Placar mandante — {{ match.homeTeamName
@@ -80,6 +165,19 @@
       </div>
       @if (form.touched && form.invalid) {
         <p class="error" role="alert">Informe placares inteiros de 0 a 2147483647.</p>
+      }
+      @if (mode() === 'resolution') {
+        <label
+          >Motivo da decisão<textarea
+            [formControl]="resolutionNote"
+            maxlength="2000"
+            rows="3"
+            required
+          ></textarea>
+        </label>
+        @if (resolutionNote.touched && resolutionNote.invalid) {
+          <p role="alert" class="error">Informe o motivo da decisão em até 2000 caracteres.</p>
+        }
       }
       <div class="actions">
         <button type="submit" [disabled]="saving()">

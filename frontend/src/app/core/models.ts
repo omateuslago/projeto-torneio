@@ -44,11 +44,31 @@ export interface Match {
   homeTeamName: string;
   awayTeamId: string;
   awayTeamName: string;
-  status: 'Pending' | 'Finished';
+  status: 'Pending' | 'Finished' | 'AwaitingConfirmation' | 'Disputed';
   homeScore: number | null;
   awayScore: number | null;
   createdAt: string;
   finishedAt: string | null;
+  resultSource?: 'Manual' | 'Bilateral' | 'DisputeResolution' | null;
+  submissions?: ScoreSubmission[];
+  dispute?: Dispute | null;
+}
+export interface ScoreSubmission {
+  id: string;
+  matchId: string;
+  submittedByTeamId: string;
+  homeScore: number;
+  awayScore: number;
+  submittedAt: string;
+  updatedAt: string | null;
+}
+export interface Dispute {
+  id: string;
+  matchId: string;
+  status: 'Open' | 'Resolved';
+  openedAt: string;
+  resolvedAt: string | null;
+  resolutionNote: string | null;
 }
 export interface Standing {
   teamId: string;
