@@ -1,5 +1,10 @@
 # Milestone 3 — Partidas, resultados e classificação
 
+Este documento registra a entrega do milestone 3. O milestone 4 preserva a geração,
+classificação e endpoint manual, mas amplia os estados da partida e exige ausência
+de disputas abertas para concluir o campeonato. O fluxo atual está em
+[resultados bilaterais e disputas](bilateral-results.md).
+
 ## Compatibilidade e ciclo de vida
 
 Os estados existentes não foram renomeados: `Draft → Open → Closed` continua
