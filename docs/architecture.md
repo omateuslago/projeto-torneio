@@ -53,3 +53,9 @@ para os fluxos bilateral, resolução e override. Os controllers mantêm transa�
 bloqueio do campeonato; não há repository genérico nem infraestrutura de eventos.
 Pendências e classificação são leituras derivadas. A identidade enviada é simulada,
 com futura substituição pela equipe do usuário autenticado na entrada do caso de uso.
+
+No milestone 5, [Scheduling Foundation](scheduling-foundation.md) acrescenta locais,
+áreas de jogo e árbitros por campeonato, uma tabela simples de disponibilidade com
+FKs explícitas e agendamento manual. ScheduleTime concentra a semântica dos intervalos;
+SchedulingController valida e grava sob transação PostgreSQL. A interface possui
+uma página de agenda vinculada ao campeonato, sem biblioteca de calendário.
