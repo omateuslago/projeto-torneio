@@ -46,6 +46,7 @@
     }
   </section>
   <app-registrations [tournament]="current" />
+  <p><a [routerLink]="['/campeonatos', current.id, 'agenda']">Agenda e disponibilidade</a></p>
   @if (current.format === 'RoundRobin') {
     <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
   } @else {
