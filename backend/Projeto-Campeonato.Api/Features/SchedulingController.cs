@@ -24,7 +24,7 @@ public sealed class SchedulingController(TournamentDbContext db) : ControllerBas
 {
     // All scheduling writes use this transaction-scoped PostgreSQL lock, including
     // availability edits. Global scope also protects teams shared across tournaments.
-    private async Task Lock(CancellationToken ct) => await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(771905)", ct);
+    private async Task Lock(CancellationToken ct) => await ScheduleWriter.Lock(db, ct);
     private async Task<Tournament?> Tournament(Guid id, CancellationToken ct) => await db.Tournaments
         .FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {id} FOR UPDATE").SingleOrDefaultAsync(ct);
 
@@ -51,8 +51,10 @@ public sealed class SchedulingController(TournamentDbContext db) : ControllerBas
     [HttpPost("venues")]
     public async Task<ActionResult<VenueDto>> Venue(Guid tournamentId, VenueRequest request, CancellationToken ct)
     {
+        await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(ct);
         if (!await db.Tournaments.AnyAsync(x => x.Id == tournamentId, ct)) return NotFound();
         var v = new Venue(tournamentId, request.Name, request.Address); db.Venues.Add(v); await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return Created($"/api/tournaments/{tournamentId}/venues", new VenueDto(v.Id, v.Name, v.Address, v.Active));
     }
     [HttpGet("playing-areas")]
@@ -64,8 +66,10 @@ public sealed class SchedulingController(TournamentDbContext db) : ControllerBas
     [HttpPost("venues/{venueId:guid}/playing-areas")]
     public async Task<ActionResult<AreaDto>> Area(Guid tournamentId, Guid venueId, ResourceRequest request, CancellationToken ct)
     {
+        await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(ct);
         if (!await db.Venues.AnyAsync(x => x.Id == venueId && x.TournamentId == tournamentId && x.Active, ct)) return NotFound();
         var a = new PlayingArea(tournamentId, venueId, request.Name); db.PlayingAreas.Add(a); await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return Created($"/api/tournaments/{tournamentId}/playing-areas", new AreaDto(a.Id, a.VenueId, a.Name, a.Active));
     }
     [HttpGet("referees")]
@@ -77,8 +81,10 @@ public sealed class SchedulingController(TournamentDbContext db) : ControllerBas
     [HttpPost("referees")]
     public async Task<ActionResult<RefereeDto>> Referee(Guid tournamentId, ResourceRequest request, CancellationToken ct)
     {
+        await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(ct);
         if (!await db.Tournaments.AnyAsync(x => x.Id == tournamentId, ct)) return NotFound();
         var r = new Referee(tournamentId, request.Name); db.Referees.Add(r); await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return Created($"/api/tournaments/{tournamentId}/referees", new RefereeDto(r.Id, r.Name, r.Active));
     }
     private IQueryable<Availability> Windows(Guid tournament, string kind, Guid resource) => db.Availabilities.Where(x => x.TournamentId == tournament &&
@@ -162,30 +168,7 @@ public sealed class SchedulingController(TournamentDbContext db) : ControllerBas
         if (tId is null) return NotFound();
         var t = (await Tournament(tId.Value, ct))!;
         var m = await db.Matches.SingleAsync(x => x.Id == matchId, ct);
-        var end = start.AddMinutes(t.MatchDurationMinutes);
-        var area = await db.PlayingAreas.SingleOrDefaultAsync(x => x.Id == request.PlayingAreaId && x.TournamentId == t.Id && x.Active, ct);
-        if (area is null || !await db.Venues.AnyAsync(x => x.Id == area.VenueId && x.Active, ct)) return Problem(statusCode: 409, detail: "Área inválida ou inativa para este campeonato.");
-        var referee = request.RefereeId is null ? null : await db.Referees.SingleOrDefaultAsync(x => x.Id == request.RefereeId && x.TournamentId == t.Id && x.Active, ct);
-        if (request.RefereeId.HasValue && referee is null) return Problem(statusCode: 409, detail: "Árbitro inválido ou inativo para este campeonato.");
-        var home = await db.Teams.SingleAsync(x => x.Id == m.HomeTeamId, ct); var away = await db.Teams.SingleAsync(x => x.Id == m.AwayTeamId, ct);
-        var targets = new List<(string Kind, Guid Id, string Name)> { ("teams", home.Id, home.Name), ("teams", away.Id, away.Name), ("playing-areas", area.Id, area.Name) };
-        if (referee is not null) targets.Add(("referees", referee.Id, referee.Name));
-        var problems = new List<string>();
-        foreach (var target in targets)
-            if (!await Windows(t.Id, target.Kind, target.Id).AnyAsync(w => w.StartsAt <= start && w.EndsAt >= end, ct))
-                problems.Add($"{target.Name} não possui disponibilidade para todo o período solicitado.");
-        var candidates = await db.Matches.Where(x => x.Id != m.Id && x.StartsAt != null &&
-            (x.HomeTeamId == home.Id || x.AwayTeamId == home.Id || x.HomeTeamId == away.Id || x.AwayTeamId == away.Id || x.PlayingAreaId == area.Id || (request.RefereeId != null && x.RefereeId == request.RefereeId))).ToListAsync(ct);
-        foreach (var other in candidates.Where(x => ScheduleTime.Overlaps(start, end, x.StartsAt!.Value, x.EndsAt!.Value)))
-        {
-            foreach (var target in targets)
-                if (target.Kind == "teams" && (other.HomeTeamId == target.Id || other.AwayTeamId == target.Id) || target.Kind == "playing-areas" && other.PlayingAreaId == target.Id || target.Kind == "referees" && other.RefereeId == target.Id)
-                    problems.Add($"{target.Name} já possui partida entre {other.StartsAt:O} e {other.EndsAt:O}.");
-        }
-        if (problems.Count > 0) return Problem(statusCode: 409, title: "Schedule conflict", detail: string.Join(" ", problems.Distinct()));
-        var previous = new { m.StartsAt, m.EndsAt, m.PlayingAreaId, m.RefereeId }; var rescheduled = m.StartsAt.HasValue;
-        m.Schedule(start, end, area.Id, referee?.Id);
-        new ResultWorkflow(db).Audit(m, rescheduled ? "MatchRescheduled" : "MatchScheduled", new { previous, m.StartsAt, m.EndsAt, m.PlayingAreaId, m.RefereeId });
+        await new ScheduleWriter(db).Stage(m, t, request, true, ct);
         await db.SaveChangesAsync(ct);
         var result = await Agenda(t.Id, matchId).SingleAsync(ct);
         await tx.CommitAsync(ct);
