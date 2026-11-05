@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Projeto_Campeonato.Api.Infrastructure;
+using Projeto_Campeonato.Api.Features;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,14 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDataProtection().SetApplicationName("projeto-torneio")
+    .PersistKeysToFileSystem(new DirectoryInfo(builder.Configuration["ProposalKeysPath"] ?? Path.Combine(builder.Environment.ContentRootPath, ".keys")));
+builder.Services.AddHttpClient<ISchedulerClient, SchedulerClient>(http =>
+{
+    http.BaseAddress = new Uri((builder.Configuration["Scheduler:BaseUrl"] ?? "http://localhost:8000").TrimEnd('/') + "/");
+    http.Timeout = TimeSpan.FromSeconds(Math.Clamp(builder.Configuration.GetValue("Scheduler:TimeoutSeconds", 10), 1, 60));
+    http.MaxResponseContentBufferSize = 1024 * 1024;
+});
 
 var app = builder.Build();
 
