@@ -59,3 +59,9 @@ No milestone 5, [Scheduling Foundation](scheduling-foundation.md) acrescenta loc
 FKs explícitas e agendamento manual. ScheduleTime concentra a semântica dos intervalos;
 SchedulingController valida e grava sob transação PostgreSQL. A interface possui
 uma página de agenda vinculada ao campeonato, sem biblioteca de calendário.
+
+O [milestone 6](tournament-autopilot.md) introduz FastAPI + OR-Tools como serviço
+stateless de cálculo. O C# monta DTOs, valida com ScheduleWriter compartilhado pelo
+manual, protege a identidade da proposta e aplica atomicamente após conferir o
+snapshot. O Python nunca acessa o banco. O key ring persiste fora do Git; não há
+tabela de propostas. A dependência externa é exclusiva do fluxo Autopilot.
