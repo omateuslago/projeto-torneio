@@ -14,6 +14,15 @@
   <p role="status">Carregando agenda…</p>
 } @else {
   <button class="secondary" (click)="load()" [disabled]="busy()">Atualizar agenda</button>
+  <app-autopilot
+    [tournamentId]="id"
+    [matches]="matches()"
+    [areas]="areas()"
+    [referees]="referees()"
+    [zone]="zone()"
+    [blocked]="busy()"
+    (applied)="message.set('Agenda aplicada.'); load()"
+  />
   <section class="panel match-panel">
     <details>
       <summary>Configuração e recursos</summary>

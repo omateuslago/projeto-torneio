@@ -1,4 +1,12 @@
-import { Component, DestroyRef, ElementRef, afterRenderEffect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  afterRenderEffect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -29,20 +37,34 @@ export class Tournaments {
   private opener: HTMLElement | null = null;
   openCreateModal(event?: Event) {
     this.opener = (event?.currentTarget as HTMLElement) ?? null;
-    this.saveError.set(''); this.isCreateModalOpen.set(true);
+    this.saveError.set('');
+    this.isCreateModalOpen.set(true);
   }
   closeCreateModal() {
     if (this.saving()) return;
-    this.isCreateModalOpen.set(false); this.opener?.focus();
+    this.isCreateModalOpen.set(false);
+    this.opener?.focus();
   }
   onDialogKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') { event.preventDefault(); this.closeCreateModal(); }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeCreateModal();
+    }
     if (event.key !== 'Tab') return;
-    const items = this.dialog()?.nativeElement.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled)');
+    const items = this.dialog()?.nativeElement.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), input:not(:disabled), select:not(:disabled)',
+    );
     if (!items?.length) return;
-    const first = items[0], last = items[items.length - 1];
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-    if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    const first = items[0],
+      last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    }
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
   readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [trimmedRequired, Validators.maxLength(120)]],
@@ -56,7 +78,9 @@ export class Tournaments {
 
   constructor() {
     this.load();
-    afterRenderEffect(() => { if (this.isCreateModalOpen()) this.nameInput()?.nativeElement.focus(); });
+    afterRenderEffect(() => {
+      if (this.isCreateModalOpen()) this.nameInput()?.nativeElement.focus();
+    });
   }
 
   load() {
@@ -89,8 +113,10 @@ export class Tournaments {
       )
       .subscribe({
         next: (tournament) => {
-          this.tournaments.update(rows => [...rows, tournament]);
-          this.saving.set(false); this.closeCreateModal(); this.form.reset();
+          this.tournaments.update((rows) => [...rows, tournament]);
+          this.saving.set(false);
+          this.closeCreateModal();
+          this.form.reset();
         },
         error: (error) => this.saveError.set(apiError(error)),
       });

@@ -6,6 +6,7 @@ import { Observable, forkJoin, finalize } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
 import { Registration } from '../../core/models';
 import { apiError } from '../../core/api-error';
+import { Autopilot } from './autopilot';
 import { trimmedRequired } from '../../shared/trimmed-required';
 import {
   Area,
@@ -19,7 +20,7 @@ import {
 
 @Component({
   selector: 'app-scheduling',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, Autopilot],
   templateUrl: './scheduling.html',
 })
 export class Scheduling {
