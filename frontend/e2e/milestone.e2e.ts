@@ -13,10 +13,12 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
     await expect(page.getByRole('listitem').filter({ hasText: name })).toBeVisible();
   }
   await page.getByRole('link', { name: 'Campeonatos', exact: true }).click();
+  await page.getByRole('button', { name: '+ Criar', exact: true }).click();
   await page.getByLabel('Nome do campeonato').fill(`Copa ${suffix}`);
   await page.getByLabel('Modalidade').fill('Futsal');
   await page.getByLabel('Limite de equipes').fill('2');
   await page.getByRole('button', { name: 'Criar campeonato', exact: true }).click();
+  await page.getByRole('link', { name: `Copa ${suffix}`, exact: true }).click();
   await expect(page.getByRole('heading', { name: `Copa ${suffix}`, exact: true })).toBeVisible();
   const detailUrl = page.url();
   await page.reload();

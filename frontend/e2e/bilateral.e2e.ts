@@ -12,10 +12,12 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
     await expect(page.getByText(`Equipe ${name} cadastrada.`, { exact: true })).toBeVisible();
   }
   await page.getByRole('link', { name: 'Campeonatos', exact: true }).click();
+  await page.getByRole('button', { name: '+ Criar', exact: true }).click();
   await page.getByLabel('Nome do campeonato').fill(`Copa bilateral ${stamp}`);
   await page.getByLabel('Modalidade').fill('Futsal');
   await page.getByLabel('Limite de equipes').fill('2');
   await page.getByRole('button', { name: 'Criar campeonato', exact: true }).click();
+  await page.getByRole('link', { name: `Copa bilateral ${stamp}`, exact: true }).click();
   await page.getByRole('button', { name: 'Abrir inscrições', exact: true }).click();
   for (const [index, name] of teams.entries()) {
     await page.getByRole('combobox', { name: 'Equipe', exact: true }).selectOption({ label: name });

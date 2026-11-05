@@ -1,0 +1,108 @@
+<section class="panel match-panel" aria-labelledby="autopilot-title">
+  <h2 id="autopilot-title">Tournament Autopilot</h2>
+  <p>
+    {{ pending() }} partidas disponíveis para agendamento automático. Partidas com horário serão
+    preservadas.
+  </p>
+  <form [formGroup]="form" (ngSubmit)="generate()">
+    <label
+      >Início do horizonte<input type="datetime-local" formControlName="horizonStart" required
+    /></label>
+    <label
+      >Fim do horizonte<input type="datetime-local" formControlName="horizonEnd" required
+    /></label>
+    <p class="muted">Período de até 31 dias. Fuso dos campos: {{ browserZone }}.</p>
+    <label
+      >Intervalo entre opções de início (minutos)<input
+        type="number"
+        formControlName="granularityMinutes"
+        min="1"
+        max="60"
+        step="1"
+        required
+    /></label>
+    <label
+      >Árbitros no agendamento automático<select formControlName="requireReferee">
+        <option [ngValue]="false">Sem atribuição de árbitros</option>
+        <option [ngValue]="true">Exigir árbitro em todas as partidas</option>
+      </select></label
+    >
+    <p class="muted">
+      A duração de cada partida é preservada, mesmo quando não é múltipla do intervalo entre
+      inícios.
+    </p>
+    <button [disabled]="blocked() || calculating() || applying() || form.invalid || !pending()">
+      {{ calculating() ? 'Calculando agenda…' : 'Gerar agenda automaticamente' }}
+    </button>
+  </form>
+  @if (calculating()) {
+    <p role="status">Buscando uma combinação de horários, áreas e equipes disponíveis…</p>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="success" role="status">{{ message() }}</p>
+  }
+  @if (proposal(); as p) {
+    @if (p.status === 'infeasible') {
+      <p role="status">Não existe agenda compatível com os dados e a grade solicitados.</p>
+    } @else if (p.status === 'timeout') {
+      <p role="status">
+        O limite de cálculo foi atingido sem solução. Isso não significa que a agenda seja
+        impossível.
+      </p>
+    } @else if (p.status === 'error') {
+      <p class="error" role="alert">O cálculo encontrou um erro. Tente novamente.</p>
+    } @else {
+      <h3>Proposta de agenda</h3>
+      <p>
+        Encontrei uma agenda válida para todas as {{ p.metrics.scheduledCount }} partidas pendentes.
+      </p>
+      <p>
+        {{ p.metrics.preservedCount }} partidas preservadas · {{ p.metrics.playingAreasUsed }} áreas
+        utilizadas · {{ p.metrics.refereesUsed }} árbitros utilizados.
+      </p>
+      @if (p.metrics.startsAt && p.metrics.endsAt) {
+        <p>
+          Período: {{ display(p.metrics.startsAt) }} → {{ display(p.metrics.endsAt) }} ({{
+            zone()
+          }}).
+        </p>
+      }
+      <p class="muted">
+        Esta proposta ainda não alterou a agenda. Ao aplicar, a disponibilidade será verificada
+        novamente.
+      </p>
+      @for (group of preview(); track group.date) {
+        <h4>{{ group.date }}</h4>
+        <ul class="participants">
+          @for (row of group.rows; track $index) {
+            <li>
+              <strong>{{ row.time }}</strong>
+              <p>{{ row.match }}</p>
+              <p>{{ row.area }} — {{ row.referee }}</p>
+            </li>
+          }
+        </ul>
+      }
+    }
+    @if (p.warnings.length) {
+      <ul>
+        @for (warning of p.warnings; track $index) {
+          <li>{{ warning }}</li>
+        }
+      </ul>
+    }
+    <div class="actions">
+      @if (p.proposalToken) {
+        <button (click)="apply()" [disabled]="applying() || blocked()">
+          {{ applying() ? 'Aplicando agenda…' : 'Aplicar agenda' }}
+        </button>
+      }
+      <button class="secondary" (click)="discard()" [disabled]="applying()">
+        Descartar proposta
+      </button>
+    </div>
+  }
+</section>

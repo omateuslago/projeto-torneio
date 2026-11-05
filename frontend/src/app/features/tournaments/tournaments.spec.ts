@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { Tournaments } from './tournaments';
 
 describe('Criação de campeonatos', () => {
@@ -14,10 +14,14 @@ describe('Criação de campeonatos', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  function setup() {
+  function setup(openModal = true) {
     const fixture = TestBed.createComponent(Tournaments);
     http.expectOne('/api/tournaments').flush([]);
     fixture.detectChanges();
+    if (openModal) {
+      fixture.componentInstance.openCreateModal();
+      fixture.detectChanges();
+    }
     return fixture;
   }
   it('não envia nomes vazios ou capacidade fracionária', () => {
@@ -33,9 +37,8 @@ describe('Criação de campeonatos', () => {
     http.expectNone((request) => request.method === 'POST');
     expect(fixture.nativeElement.textContent).toContain('número inteiro');
   });
-  it('envia o DTO e navega apenas após a criação confirmada', () => {
+  it('envia o DTO, fecha o modal e atualiza a lista após a criação confirmada', () => {
     const fixture = setup();
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture.componentInstance.form.setValue({
       name: ' Copa ',
       sport: ' Futsal ',
@@ -51,9 +54,10 @@ describe('Criação de campeonatos', () => {
       maxTeams: 8,
       format: 'RoundRobin',
     });
-    expect(navigate).not.toHaveBeenCalled();
     request.flush({ ...request.request.body, id: 'tournament-1', status: 'Draft' });
-    expect(navigate).toHaveBeenCalledWith(['/campeonatos', 'tournament-1']);
+    expect(fixture.componentInstance.tournaments()).toHaveLength(1);
+    expect(fixture.componentInstance.tournaments()[0].name).toBe('Copa');
+    expect(fixture.componentInstance.isCreateModalOpen()).toBe(false);
     expect(fixture.componentInstance.saving()).toBe(false);
   });
   it('preserva o formulário e permite tentar novamente após erro', () => {
@@ -72,5 +76,54 @@ describe('Criação de campeonatos', () => {
     expect(fixture.nativeElement.textContent).toContain('Falha temporária.');
     expect(fixture.componentInstance.form.controls.name.value).toBe('Copa');
     expect(fixture.componentInstance.saving()).toBe(false);
+  });
+
+  it('exibe o estado vazio somente após uma resposta bem-sucedida sem campeonatos', () => {
+    const fixture = setup(false);
+
+    expect(fixture.nativeElement.textContent).toContain('Nenhum campeonato por aqui');
+    expect(fixture.nativeElement.querySelector('img')?.getAttribute('src')).toBe(
+      'assests/brakvyo-trofeu-outline.svg',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain('Não foi possível concluir');
+  });
+
+  it('exibe o erro da API e permite tentar carregar novamente', () => {
+    const fixture = TestBed.createComponent(Tournaments);
+    const initialRequest = http.expectOne('/api/tournaments');
+    initialRequest.flush(
+      { detail: 'Falha temporária.' },
+      { status: 503, statusText: 'Unavailable' },
+    );
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Não foi possível carregar os campeonatos',
+    );
+    expect(fixture.nativeElement.textContent).toContain('Ocorreu um problema. Tente novamente.');
+    expect(
+      fixture.nativeElement
+        .querySelector('.tournaments-state--error img')
+        ?.getAttribute('src'),
+    ).toBe('assests/brakvyo-trofeu-outline.svg');
+    expect(fixture.nativeElement.textContent).toContain('Falha temporária.');
+    expect(fixture.nativeElement.textContent).not.toContain('Nenhum campeonato por aqui');
+
+    fixture.componentInstance.load();
+    const retryRequest = http.expectOne('/api/tournaments');
+    retryRequest.flush([
+      {
+        id: 'tournament-1',
+        name: 'Copa',
+        sport: 'Futsal',
+        maxTeams: 8,
+        format: 'RoundRobin',
+        status: 'Draft',
+      },
+    ]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Copa');
+    expect(fixture.nativeElement.textContent).not.toContain('Falha temporária.');
   });
 });

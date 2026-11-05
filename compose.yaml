@@ -30,11 +30,26 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       ASPNETCORE_URLS: http://+:8080
+      Scheduler__BaseUrl: http://scheduler:8000
+      Scheduler__TimeoutSeconds: 10
+      ProposalKeysPath: /keys
       ConnectionStrings__Tournaments: Host=db;Database=tournaments;Username=tournaments;Password=${POSTGRES_PASSWORD}
     ports:
       - "127.0.0.1:5094:8080"
+    volumes:
+      - proposal-keys:/keys
     depends_on:
       migrate:
         condition: service_completed_successfully
+  scheduler:
+    build: ./scheduler
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 volumes:
   tournament-data:
+  proposal-keys:

@@ -13,9 +13,14 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<ScoreSubmission> ScoreSubmissions => Set<ScoreSubmission>();
     public DbSet<Dispute> Disputes => Set<Dispute>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Venue> Venues => Set<Venue>();
+    public DbSet<PlayingArea> PlayingAreas => Set<PlayingArea>();
+    public DbSet<Referee> Referees => Set<Referee>();
+    public DbSet<Availability> Availabilities => Set<Availability>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        SchedulingMapping.Configure(model);
         model.Entity<Tournament>(entity =>
         {
             entity.HasKey(x => x.Id);
