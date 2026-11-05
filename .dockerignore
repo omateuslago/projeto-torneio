@@ -6,3 +6,7 @@
 .env*
 frontend
 frontend-legacy
+**/.keys
+**/.venv
+**/__pycache__
+**/.pytest_cache

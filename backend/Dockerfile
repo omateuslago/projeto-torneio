@@ -11,6 +11,7 @@ RUN dotnet publish backend/Projeto-Campeonato.Api -c Release --no-restore -o /ap
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app .
+RUN mkdir /keys && chown $APP_UID /keys
 USER $APP_UID
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Projeto-Campeonato.Api.dll"]
