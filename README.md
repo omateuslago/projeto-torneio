@@ -1,5 +1,7 @@
 # Projeto Torneio
 
+[![CI](https://github.com/omateuslago/projeto-torneio/actions/workflows/ci.yml/badge.svg)](https://github.com/omateuslago/projeto-torneio/actions/workflows/ci.yml)
+
 Plataforma incremental para campeonatos amadores físicos e eSports. A base atual
 usa Angular 22, ASP.NET Core 10 LTS, EF Core 10 e PostgreSQL 17.
 
