@@ -1,91 +1,177 @@
-<h1>Campeonatos</h1>
-<p class="intro">Crie um campeonato e organize a participação das equipes.</p>
-<div class="workspace">
-  <section class="panel" aria-labelledby="lista-campeonatos">
-    <div class="section-heading">
-      <h2 id="lista-campeonatos">Seus campeonatos</h2>
-      <button class="secondary" (click)="load()" [disabled]="loading()">Atualizar</button>
+<div class="tournaments-page">
+  <div class="tournaments-page__heading">
+    <div>
+      <h1>Campeonatos</h1>
+      <p class="tournaments-page__intro">Gerencie seus campeonatos em um só lugar.</p>
     </div>
+    <button
+      #createButton
+      type="button"
+      class="tournaments-page__create"
+      (click)="openCreateModal($event)"
+    >
+      + Criar
+    </button>
+  </div>
+
+  <section class="tournaments-list" aria-labelledby="lista-campeonatos">
+    <div class="tournaments-list__heading">
+      <h2 id="lista-campeonatos">Seus campeonatos</h2>
+      <button
+        type="button"
+        class="tournaments-page__refresh"
+        (click)="load()"
+        [disabled]="loading()"
+      >
+        Atualizar
+      </button>
+    </div>
+
     @if (loading()) {
-      <p role="status">Carregando campeonatos…</p>
+      <div class="tournaments-state" role="status">
+        <span class="tournaments-state__spinner" aria-hidden="true"></span>
+        <span>Carregando campeonatos…</span>
+      </div>
     } @else if (loadError()) {
-      <p class="error" role="alert">{{ loadError() }}</p>
+      <div class="tournaments-state tournaments-state--error" role="alert">
+        <div class="tournaments-state__icon">
+          <img src="assests/brakvyo-trofeu-outline.svg" alt="" />
+        </div>
+        <h3>Não foi possível carregar os campeonatos</h3>
+        <p>Ocorreu um problema. Tente novamente.</p>
+        <p class="tournaments-state__technical-error">{{ loadError() }}</p>
+        <button type="button" class="tournaments-page__refresh" (click)="load()">
+          Tentar novamente
+        </button>
+      </div>
     } @else if (!tournaments().length) {
-      <p class="empty">Nenhum campeonato cadastrado. Crie o primeiro usando o formulário.</p>
+      <div class="tournaments-state tournaments-state--empty">
+        <div class="tournaments-state__icon">
+          <img src="assests/brakvyo-trofeu-outline.svg" alt="" />
+        </div>
+        <h3>Nenhum campeonato por aqui</h3>
+        <p>Quando você criar um campeonato, ele aparecerá aqui.</p>
+        <button
+          type="button"
+          class="tournaments-page__secondary"
+          (click)="openCreateModal($event)"
+        >
+          Começar agora
+        </button>
+      </div>
     } @else {
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Campeonato</th>
-              <th>Modalidade</th>
-              <th>Inscrições</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (tournament of tournaments(); track tournament.id) {
-              <tr>
-                <td>
-                  <a [routerLink]="['/campeonatos', tournament.id]">{{ tournament.name }}</a>
-                  <div class="muted">Até {{ tournament.maxTeams }} equipes</div>
-                </td>
-                <td>{{ tournament.sport }}</td>
-                <td>
-                  <span class="badge" [class.open]="tournament.status === 'Open'">{{
-                    statusLabels[tournament.status]
-                  }}</span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div class="tournament-grid">
+        @for (tournament of tournaments(); track tournament.id) {
+          <article class="tournament-card">
+            <div class="tournament-card__topline">
+              <span class="tournament-card__sport">{{ tournament.sport }}</span>
+              <span
+                class="tournament-card__status"
+                [class.tournament-card__status--open]="tournament.status === 'Open'"
+              >
+                {{ statusLabels[tournament.status] }}
+              </span>
+            </div>
+            <h3>
+              <a [routerLink]="['/campeonatos', tournament.id]">{{ tournament.name }}</a>
+            </h3>
+            <dl class="tournament-card__details">
+              <div>
+                <dt>Formato</dt>
+                <dd>{{ formatLabels[tournament.format] }}</dd>
+              </div>
+              <div>
+                <dt>Limite de equipes</dt>
+                <dd>{{ tournament.maxTeams }}</dd>
+              </div>
+            </dl>
+            <a class="tournament-card__link" [routerLink]="['/campeonatos', tournament.id]">
+              Ver campeonato
+            </a>
+          </article>
+        }
       </div>
     }
   </section>
-  <section class="panel" aria-labelledby="novo-campeonato">
-    <h2 id="novo-campeonato">Novo campeonato</h2>
-    <form [formGroup]="form" (ngSubmit)="create()">
-      <label
-        >Nome do campeonato<input
-          formControlName="name"
-          maxlength="120"
-          autocomplete="off"
-          required
-      /></label>
-      <label
-        >Modalidade<input
-          formControlName="sport"
-          maxlength="80"
-          placeholder="Ex.: Futsal ou Valorant"
-          required
-      /></label>
-      <label
-        >Limite de equipes<input
-          type="number"
-          formControlName="maxTeams"
-          min="2"
-          max="128"
-          step="1"
-          required
-        /><span class="hint">De 2 a 128 equipes.</span></label
-      >
-      <label
-        >Formato<select formControlName="format">
-          <option value="RoundRobin">Pontos corridos</option>
-          <option value="SingleElimination">Mata-mata simples</option>
-        </select></label
-      >
-      @if (form.touched && form.invalid) {
-        <p class="error" role="alert">
-          Preencha nome e modalidade. O limite deve ser um número inteiro entre 2 e 128.
-        </p>
-      }
-      @if (saveError()) {
-        <p class="error" role="alert">{{ saveError() }}</p>
-      }
-      <button type="submit" [disabled]="saving()">
-        {{ saving() ? 'Criando…' : 'Criar campeonato' }}
-      </button>
-    </form>
-  </section>
 </div>
+
+@if (isCreateModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <section
+      #dialog
+      class="create-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="novo-campeonato"
+      (click)="$event.stopPropagation()"
+      (keydown)="onDialogKeydown($event)"
+    >
+      <div class="create-modal__heading">
+        <h2 id="novo-campeonato">Novo campeonato</h2>
+        <button
+          type="button"
+          class="create-modal__close"
+          aria-label="Fechar"
+          [disabled]="saving()"
+          (click)="closeCreateModal()"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="create()">
+        <label
+          >Nome do campeonato<input
+            #nameInput
+            formControlName="name"
+            maxlength="120"
+            autocomplete="off"
+            required
+        /></label>
+        <label
+          >Modalidade<input
+            formControlName="sport"
+            maxlength="80"
+            placeholder="Ex.: Futsal ou Valorant"
+            required
+        /></label>
+        <label
+          >Limite de equipes<input
+            type="number"
+            formControlName="maxTeams"
+            min="2"
+            max="128"
+            step="1"
+            required
+          /><span class="hint">De 2 a 128 equipes.</span></label
+        >
+        <label
+          >Formato<select formControlName="format">
+            <option value="RoundRobin">Pontos corridos</option>
+            <option value="SingleElimination">Mata-mata simples</option>
+          </select></label
+        >
+        @if (form.touched && form.invalid) {
+          <p class="error" role="alert">
+            Preencha nome e modalidade. O limite deve ser um número inteiro entre 2 e 128.
+          </p>
+        }
+        @if (saveError()) {
+          <p class="error" role="alert">{{ saveError() }}</p>
+        }
+        <div class="create-modal__actions">
+          <button
+            type="button"
+            class="tournaments-page__secondary"
+            [disabled]="saving()"
+            (click)="closeCreateModal()"
+          >
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="saving()">
+            {{ saving() ? 'Criando…' : 'Criar campeonato' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
