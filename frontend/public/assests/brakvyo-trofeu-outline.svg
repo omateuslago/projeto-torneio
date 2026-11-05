@@ -1,0 +1,16 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#0B7BD8" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <!-- cup body -->
+    <path d="M377 340H647C659 340 669 350 669 362V456C669 546 598 618 512 618C426 618 355 546 355 456V362C355 350 365 340 377 340Z"/>
+
+    <!-- handles -->
+    <path d="M355 397H280C268 397 258 407 258 419V433C258 501 313 556 381 556H392"/>
+    <path d="M669 397H744C756 397 766 407 766 419V433C766 501 711 556 643 556H632"/>
+
+    <!-- stem -->
+    <path d="M512 618V706"/>
+
+    <!-- base -->
+    <path d="M405 738H619C640 738 657 755 657 776V808H367V776C367 755 384 738 405 738Z"/>
+  </g>
+</svg>

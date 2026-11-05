@@ -65,15 +65,12 @@ button:disabled {
 }
 .brand {
   color: #243449;
-  font-size: 1.6rem;
-  font-weight: 750;
   text-decoration: none;
 }
-.brand span {
+.brand-logo {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: #526478;
+  width: 216px;
+  height: 48px;
 }
 nav {
   display: flex;
