@@ -8,6 +8,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/tournaments/tournaments').then((m) => m.Tournaments),
   },
   {
+    path: 'campeonatos/:id/agenda',
+    title: 'Agenda do campeonato | Torneio',
+    loadComponent: () => import('./features/scheduling/scheduling').then((m) => m.Scheduling),
+  },
+  {
     path: 'campeonatos/:id',
     title: 'Detalhes do campeonato | Torneio',
     loadComponent: () =>

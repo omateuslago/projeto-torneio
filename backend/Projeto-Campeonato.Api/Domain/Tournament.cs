@@ -23,6 +23,17 @@ public sealed class Tournament
     public int MaxTeams { get; private set; }
     public TournamentFormat Format { get; private set; }
     public TournamentStatus Status { get; private set; } = TournamentStatus.Draft;
+    public int MatchDurationMinutes { get; private set; } = 60;
+    public string TimeZoneId { get; private set; } = "UTC";
+    public void ConfigureSchedule(int minutes, string zone)
+    {
+        if (minutes is < 5 or > 480) throw new ArgumentException("A duração deve estar entre 5 e 480 minutos.");
+        if (string.IsNullOrWhiteSpace(zone) || zone.Length > 100 || (zone != "UTC" && !zone.Contains('/')))
+            throw new ArgumentException("Informe um fuso IANA válido, como America/Sao_Paulo.");
+        try { TimeZoneInfo.FindSystemTimeZoneById(zone); }
+        catch (TimeZoneNotFoundException) { throw new ArgumentException("Fuso horário desconhecido."); }
+        MatchDurationMinutes = minutes; TimeZoneId = zone;
+    }
 
     public void ChangeStatus(TournamentStatus next)
     {

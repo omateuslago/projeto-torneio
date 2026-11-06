@@ -2,6 +2,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  afterRenderEffect,
   Renderer2,
   ViewChild,
   inject,
@@ -51,6 +52,9 @@ export class Tournaments {
 
   constructor() {
     this.load();
+    afterRenderEffect(() => {
+      if (this.isCreateModalOpen()) this.nameInput?.nativeElement.focus();
+    });
   }
 
   load() {
@@ -75,7 +79,6 @@ export class Tournaments {
     this.isCreateModalOpen.set(true);
     this.saveError.set('');
     this.renderer.setStyle(this.document.body, 'overflow', 'hidden');
-    setTimeout(() => this.nameInput?.nativeElement.focus());
   }
 
   closeCreateModal(force = false) {

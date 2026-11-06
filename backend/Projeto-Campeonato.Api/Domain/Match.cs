@@ -26,6 +26,16 @@ public sealed class Match
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? FinishedAt { get; private set; }
     public string? ResultSource { get; private set; }
+    public DateTime? StartsAt { get; private set; }
+    public DateTime? EndsAt { get; private set; }
+    public Guid? PlayingAreaId { get; private set; }
+    public Guid? RefereeId { get; private set; }
+    public void Schedule(DateTime start, DateTime end, Guid areaId, Guid? refereeId)
+    {
+        if (Status == MatchStatus.Finished) throw new DomainConflictException("Partida finalizada não pode ser reagendada.");
+        ScheduleTime.Validate(start, end);
+        StartsAt = start; EndsAt = end; PlayingAreaId = areaId; RefereeId = refereeId;
+    }
 
     public void AwaitConfirmation(bool disputed)
     {

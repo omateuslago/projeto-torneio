@@ -1,5 +1,7 @@
 # Projeto Torneio
 
+[![CI](https://github.com/omateuslago/projeto-torneio/actions/workflows/ci.yml/badge.svg)](https://github.com/omateuslago/projeto-torneio/actions/workflows/ci.yml)
+
 Plataforma incremental para campeonatos amadores físicos e eSports. A base atual
 usa Angular 22, ASP.NET Core 10 LTS, EF Core 10 e PostgreSQL 17.
 
@@ -9,6 +11,16 @@ enviar resultados por equipe, confirmar placares concordantes, resolver disputas
 consultar pendências e classificação, além de corrigir resultados administrativamente. Os dados vêm da API real e
 persistem no PostgreSQL. O frontend Next.js anterior está preservado em
 `frontend-legacy/`; os 39 arquivos originais foram mantidos sem alterações.
+
+Em **Agenda e disponibilidade**, cada campeonato permite cadastrar locais, áreas
+de jogo e árbitros, informar disponibilidade por data e agendar/reagendar partidas.
+A API verifica disponibilidade e conflitos de equipes, quadra e árbitro. Consulte
+[Scheduling Foundation](docs/scheduling-foundation.md) para contratos e decisões.
+
+O **Tournament Autopilot** gera propostas usando FastAPI e OR-Tools CP-SAT.
+Na agenda, informe horizonte, granularidade e opção de árbitros, gere o preview e
+clique em **Aplicar agenda** para persistir. Partidas já agendadas são preservadas.
+Veja [Autopilot v1](docs/tournament-autopilot.md).
 
 ## Requisitos
 
@@ -128,6 +140,20 @@ concorrentes. A interface também trata carregamento, listas vazias e falhas de 
 
 ## Build e testes
 
+Para geração automática e E2E, inicie também o scheduler em outro terminal:
+
+```bash
+python3 -m venv scheduler/.venv
+scheduler/.venv/bin/pip install -r scheduler/requirements.txt
+cd scheduler
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+A API usa `http://localhost:8000` por padrão; configure `Scheduler__BaseUrl` quando
+necessário. `Scheduler__TimeoutSeconds` tem padrão 10. Scheduler offline afeta
+somente o Autopilot, mantendo cadastro, resultados e agendamento manual disponíveis.
+Saúde: `GET /health` no Python e `GET /api/scheduler/health` na API .NET.
+
 Na raiz, com PostgreSQL iniciado:
 
 ```bash
@@ -139,16 +165,16 @@ npm run build
 npm test -- --watch=false
 ```
 
-Os 73 testes de backend incluem testes HTTP com PostgreSQL real em banco isolado por execução, com migrations aplicadas
+Os 117 testes de backend incluem testes HTTP com PostgreSQL real em banco isolado por execução, com migrations aplicadas
 e remoção ao terminar. O usuário precisa de CREATEDB; o usuário local do Compose
 já possui. Para executar somente domínio sem banco:
 `dotnet test backend/Projeto-Campeonato.sln --filter FullyQualifiedName~DomainTests`.
 
-Os 24 testes Angular cobrem criação, validação, erros de inscrição e recuperação
+Os 40 testes Angular cobrem criação, validação, erros de inscrição e recuperação
 após falha HTTP, partidas, classificação, submissões, disputas, pendências e respostas
-atrasadas de status. Não dependem de backend em execução.
+atrasadas de status, recursos, disponibilidade, agendamento e conflitos. Não dependem de backend em execução.
 
-Para os quatro testes de navegador, mantenha a API e o banco de desenvolvimento
+Para os oito testes de navegador, mantenha API, scheduler e banco de desenvolvimento
 iniciados e, dentro de `frontend`, execute:
 
 ```bash
@@ -161,9 +187,13 @@ já instalado: `CHROMIUM_PATH=/usr/bin/chromium npm run e2e` (Bash).
 Esses testes usam a API real, criam dados identificados por timestamp no banco de
 desenvolvimento e verificam persistência após recarregar, duplicidade, lotação,
 fechamento concorrente, geração de confrontos, registro/correção de placares,
-confirmação bilateral, resolução de disputa, classificação atualizada e layout em tela pequena. Não há limpeza de registros
+confirmação bilateral, resolução de disputa, classificação atualizada, disponibilidade,
+agendamento/reagendamento com conflito real e layout em tela pequena. Não há limpeza de registros
 por API, pois exclusão ainda não faz parte do produto. Screenshots e traces
 ficam em `frontend/test-results/` (ignorado pelo Git).
+
+Testes Python (14 casos, sem PostgreSQL), dentro de `scheduler`:
+`.venv/bin/python -m pytest -q`. Lint: `.venv/bin/ruff check app tests`.
 
 ## API inteira via Docker Compose
 
@@ -178,6 +208,12 @@ em `westcentralus.data.mcr.microsoft.com`. O PostgreSQL via Compose e a API pelo
 SDK foram validados; a execução completa da imagem API aguarda uma rede com
 acesso a esse domínio. Consulte [a migração .NET 10](docs/dotnet10-upgrade.md).
 
+O Compose também inicia `scheduler` com Python 3.12 e healthcheck. A API usa o
+hostname interno `http://scheduler:8000`, sem depender da saúde dele para iniciar.
+O volume `proposal-keys` mantém as chaves dos tokens entre reinicializações. O
+Angular continua rodando via `npm start`. Para redes cloud com proxy TLS, veja o
+[build com CA temporária](scheduler/README.md).
+
 ## Escopo e arquitetura
 
 - `backend/`: API com domínio, features, infraestrutura e testes.
@@ -188,7 +224,7 @@ acesso a esse domínio. Consulte [a migração .NET 10](docs/dotnet10-upgrade.md
 `GET/POST /campeonatos` permanece compatível com o protótipo antigo e continua
 em memória, independente da API persistida. O Angular usa somente `/api`.
 A aplicação atual é destinada a desenvolvimento local e ainda não tem autenticação.
-Não foram adicionados scheduler, IA, notificações, WhatsApp, autenticação, evidências ou pagamentos.
+Não foram adicionados IA generativa, notificações, WhatsApp, autenticação, evidências ou pagamentos.
 
 Documentação: [arquitetura inicial](docs/architecture.md),
 [recuperação do milestone 1](docs/recovery-milestone-1.md) e
