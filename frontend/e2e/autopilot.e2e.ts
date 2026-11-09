@@ -66,6 +66,11 @@ test('gera preview real, preserva reserva fixa e aplica todas as partidas', asyn
   await expect(
     page.getByText('Encontrei uma agenda válida para todas as 5 partidas pendentes.'),
   ).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Fairness Score: \d+\/100/ })).toBeVisible();
+  await expect(page.getByText(/Descanso: \d+\/100/, { exact: true })).toBeVisible();
+  await expect(page.getByText(/Partidas consecutivas: \d+\/100/, { exact: true })).toBeVisible();
+  await expect(page.getByText(/Equilíbrio de horários: \d+\/100/, { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Análise da agenda' })).toBeVisible();
   const before = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(before.filter((m: { startsAt: string | null }) => m.startsAt)).toHaveLength(1);
   await page.getByRole('button', { name: 'Aplicar agenda', exact: true }).click();

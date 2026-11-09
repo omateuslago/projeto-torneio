@@ -41,6 +41,7 @@ class FixedMatch(Window):
     away_team_id: UUID
     playing_area_id: UUID
     referee_id: UUID | None = None
+    counts_for_fairness: bool = False
 
 
 class GenerateRequest(Contract):
@@ -50,6 +51,7 @@ class GenerateRequest(Contract):
     match_duration_minutes: int = Field(ge=5, le=480)
     granularity_minutes: int = Field(default=15, ge=1, le=60)
     require_referee: bool = False
+    preferred_rest_minutes: int = Field(default=60, ge=0, le=240)
     matches: list[Match] = Field(max_length=200)
     teams: list[Resource] = Field(max_length=128)
     playing_areas: list[Resource] = Field(max_length=100)
@@ -92,7 +94,16 @@ class Assignment(Contract):
     referee_id: UUID | None = None
 
 
+class Fairness(Contract):
+    score: int = Field(ge=0, le=100)
+    rest_score: int = Field(ge=0, le=100)
+    back_to_back_score: int = Field(ge=0, le=100)
+    time_balance_score: int = Field(ge=0, le=100)
+    observations: list[str]
+
+
 class Result(Contract):
     status: Literal["optimal", "feasible", "infeasible", "timeout", "error"]
     scheduled_matches: list[Assignment] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+    fairness: Fairness | None = None

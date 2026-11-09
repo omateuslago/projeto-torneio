@@ -1,4 +1,7 @@
-# Milestone 6 — Tournament Autopilot v1
+# Tournament Autopilot — milestones 6 e 7
+
+O milestone 7 acrescenta otimização de fairness e score no preview, preservando
+o fluxo abaixo. Veja [critérios, pesos, fórmula e limitações](fair-scheduling.md).
 
 O organizador solicita uma proposta para todas as partidas pendentes dentro de um
 horizonte, revisa o resultado e aplica explicitamente. C# continua responsável pela
@@ -57,17 +60,21 @@ POST `/api/tournaments/{id}/schedule/generate`:
   "horizonStart": "2026-11-14T08:00:00-03:00",
   "horizonEnd": "2026-11-15T22:00:00-03:00",
   "granularityMinutes": 15,
-  "requireReferee": true
+  "requireReferee": true,
+  "preferredRestMinutes": 60
 }
 ```
 
 O horizonte é obrigatório, com no máximo 31 dias. A granularidade permite 1–60
-minutos e o padrão é 15. O modo sem árbitros não atribui nenhum; o modo obrigatório
+minutos e o padrão é 15. O descanso preferido aceita 0–240 minutos, padrão 60,
+e é uma preferência flexível. O modo sem árbitros não atribui nenhum; o modo obrigatório
 atribui exatamente um árbitro disponível por partida. Árbitros de partidas fixas
 continuam ocupados independentemente da opção.
 
 O retorno `ScheduleProposal` contém status, scheduledMatches, warnings, metrics,
-proposalToken e expiresAt. Cada atribuição tem matchId, startsAt, playingAreaId e
+proposalToken, expiresAt e fairness (score, restScore, backToBackScore,
+timeBalanceScore e observations). Fairness é nulo quando não há solução.
+Cada atribuição tem matchId, startsAt, playingAreaId e
 refereeId. As métricas contam partidas novas, partidas fixas do campeonato,
 período ocupado pelas novas partidas, áreas distintas e árbitros distintos usados.
 Preview converte IDs para nomes já carregados pela tela. Proposta vazia não possui
@@ -89,10 +96,11 @@ Python. Não impede a inicialização nem as outras operações da API.
 ## Contrato interno e modelo temporal
 
 `SolverInput` / `GenerateRequest` contém apenas tournamentId, horizonStart,
-horizonEnd, matchDurationMinutes, granularityMinutes, requireReferee, matches,
+horizonEnd, matchDurationMinutes, granularityMinutes, requireReferee, preferredRestMinutes, matches,
 teams, playingAreas, referees e existingSchedule. Recursos contêm id, name e
 availability (`startsAt`/`endsAt`); alvos contêm id e IDs dos dois times; ocupações
-fixas incluem IDs dos recursos e início/fim reais. Não são entidades EF serializadas.
+fixas incluem IDs dos recursos, início/fim reais e countsForFairness, definido pelo
+C# apenas para partidas do próprio campeonato. Não são entidades EF serializadas.
 Os nomes permitem diagnósticos compreensíveis. O fuso de exibição não é necessário
 ao solver: ele recebe instantes com offset e opera relativos ao início do horizonte.
 
@@ -108,7 +116,8 @@ opcionais por área e árbitro. ExactlyOne escolhe uma área e, quando exigido, 
 árbitro. O domínio de início fica contido em uma janela integral de cada recurso.
 NoOverlap é aplicado às equipes, áreas e árbitros, incluindo intervalos fixos.
 Intervalos são semiabertos, portanto 18–19 e 19–20 são compatíveis. Não há soma
-implícita de duas janelas menores. Não há função objetivo esportiva nem soft constraints.
+implícita de duas janelas menores. A função objetivo de fairness adiciona soft
+constraints sem relaxar essas regras obrigatórias.
 
 O solver usa um worker, seed zero e ordenação de IDs para execução previsível.
 Com o mesmo pacote/ambiente e tempo suficiente, testes verificam determinismo;
@@ -116,8 +125,8 @@ limites de tempo próximos do necessário podem variar conforme a máquina.
 
 | Status | Significado |
 | --- | --- |
-| optimal | CP-SAT concluiu com solução; sem objetivo de qualidade nesta versão |
-| feasible | solução válida encontrada |
+| optimal | solução válida e mínimo da função objetivo provado |
+| feasible | solução válida encontrada; ótimo ainda não provado |
 | infeasible | impossibilidade provada no horizonte e grade solicitados |
 | timeout | limite atingido sem solução; não prova impossibilidade |
 | error | erro do modelo/cálculo, sem proposta aplicável |
@@ -170,7 +179,7 @@ e recebe 409. O replay não sobrescreve partidas existentes.
 - Logs Python registram tournamentId, quantidades, duração e status, sem payloads completos.
 - API e Python seguem restritos a localhost no Compose de desenvolvimento. O
   scheduler é interno; publicação externa/autenticação não fazem parte desta entrega.
-- Não há reordenação automática de partidas existentes, fairness, resiliência,
+- Não há reordenação automática de partidas existentes, resiliência,
   negociação, notificações ou geração de linguagem natural.
 
 ## Validação

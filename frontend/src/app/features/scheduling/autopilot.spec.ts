@@ -8,6 +8,13 @@ const proposal: Proposal = {
   proposalToken: 'protected',
   expiresAt: '2026-11-14T18:10:00Z',
   warnings: [],
+  fairness: {
+    score: 91,
+    restScore: 94,
+    backToBackScore: 100,
+    timeBalanceScore: 82,
+    observations: ['Azul possui apenas 30 minutos de descanso.'],
+  },
   scheduledMatches: [
     { matchId: 'm', startsAt: '2026-11-14T18:00:00Z', playingAreaId: 'a', refereeId: null },
   ],
@@ -42,6 +49,7 @@ describe('Tournament Autopilot', () => {
       horizonStart: '2026-11-14T18:00',
       horizonEnd: '2026-11-15T02:00',
       granularityMinutes: 15,
+      preferredRestMinutes: 60,
       requireReferee: false,
     });
     f.detectChanges();
@@ -54,13 +62,46 @@ describe('Tournament Autopilot', () => {
     expect(c.calculating()).toBe(true);
     const req = http.expectOne('/api/tournaments/cup/schedule/generate');
     expect(req.request.body.horizonStart).toMatch(/Z$/);
+    expect(req.request.body.preferredRestMinutes).toBe(60);
     req.flush(proposal);
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('Azul × Verde');
     expect(f.nativeElement.textContent).toContain('Quadra 1');
     expect(f.nativeElement.textContent).toContain('2 partidas preservadas');
+    expect(f.nativeElement.textContent).toContain('Fairness Score: 91/100');
+    expect(f.nativeElement.textContent).toContain('Descanso: 94/100');
+    expect(f.nativeElement.textContent).toContain('Partidas consecutivas: 100/100');
+    expect(f.nativeElement.textContent).toContain('Equilíbrio de horários: 82/100');
+    expect(f.nativeElement.textContent).toContain('Azul possui apenas 30 minutos de descanso.');
     http.expectNone('/api/tournaments/cup/schedule/apply');
   });
+  it('preserva o fluxo gerar → preview → aplicar com descanso personalizado', () => {
+    const f = setup(),
+      c = f.componentInstance;
+    c.form.controls.preferredRestMinutes.setValue(120);
+    c.generate();
+    const generated = http.expectOne('/api/tournaments/cup/schedule/generate');
+    expect(generated.request.body.preferredRestMinutes).toBe(120);
+    generated.flush(proposal);
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Fairness Score: 91/100');
+    const button = [...f.nativeElement.querySelectorAll('button')] as HTMLButtonElement[];
+    button.find((b) => b.textContent?.includes('Aplicar agenda'))!.click();
+    const apply = http.expectOne('/api/tournaments/cup/schedule/apply');
+    expect(apply.request.body).toEqual({ proposalToken: 'protected' });
+    apply.flush({ appliedCount: 1 });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).not.toContain('Fairness Score:');
+    expect(f.nativeElement.textContent).toContain('Agenda aplicada');
+  });
+  for (const minutes of [-1, 241, 1.5])
+    it(`não gera proposta com descanso inválido: ${minutes}`, () => {
+      const c = setup().componentInstance;
+      c.form.controls.preferredRestMinutes.setValue(minutes);
+      c.generate();
+      http.expectNone(() => true);
+      expect(c.form.invalid).toBe(true);
+    });
   it('aplica somente o token e notifica a agenda', () => {
     const f = setup(),
       c = f.componentInstance;
@@ -86,21 +127,21 @@ describe('Tournament Autopilot', () => {
       const f = setup(),
         c = f.componentInstance;
       c.generate();
-      http
-        .expectOne('/api/tournaments/cup/schedule/generate')
-        .flush({
-          ...proposal,
-          status,
-          proposalToken: null,
-          scheduledMatches: [],
-          warnings: ['Amplie a disponibilidade.'],
-        });
+      http.expectOne('/api/tournaments/cup/schedule/generate').flush({
+        ...proposal,
+        status,
+        proposalToken: null,
+        fairness: null,
+        scheduledMatches: [],
+        warnings: ['Amplie a disponibilidade.'],
+      });
       f.detectChanges();
       expect(f.nativeElement.textContent).toContain('Amplie a disponibilidade.');
       expect(f.nativeElement.textContent).toContain(
         status === 'timeout' ? 'não significa' : 'Não existe',
       );
       expect(f.nativeElement.textContent).not.toContain('Aplicar agenda');
+      expect(f.nativeElement.textContent).not.toContain('Fairness Score:');
     });
   it('explica indisponibilidade do serviço e permite nova tentativa', () => {
     const f = setup(),

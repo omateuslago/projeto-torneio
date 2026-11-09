@@ -12,6 +12,13 @@ export interface Proposal {
   proposalToken: string | null;
   expiresAt: string | null;
   warnings: string[];
+  fairness: {
+    score: number;
+    restScore: number;
+    backToBackScore: number;
+    timeBalanceScore: number;
+    observations: string[];
+  } | null;
   scheduledMatches: {
     matchId: string;
     startsAt: string;
@@ -55,6 +62,10 @@ export class Autopilot {
     horizonStart: ['', Validators.required],
     horizonEnd: ['', Validators.required],
     granularityMinutes: [15, [Validators.required, Validators.min(1), Validators.max(60)]],
+    preferredRestMinutes: [
+      60,
+      [Validators.required, Validators.min(0), Validators.max(240), Validators.pattern(/^\d+$/)],
+    ],
     requireReferee: [false],
   });
   readonly preview = computed(() => {

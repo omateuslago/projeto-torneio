@@ -5,6 +5,7 @@ from datetime import timedelta
 from ortools.sat.python import cp_model
 
 from .models import Assignment, GenerateRequest, Result
+from .fairness import add_objective, assess
 
 
 def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
@@ -15,7 +16,7 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
     duration = request.match_duration_minutes
     step = request.granularity_minutes
     if not request.matches:
-        return Result(status="optimal")
+        return Result(status="optimal", fairness=assess(request, []))
     if horizon < duration:
         return Result(
             status="infeasible",
@@ -97,6 +98,7 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
         decisions.append((match, start, choices))
     for intervals in occupancy.values():
         model.add_no_overlap(intervals)
+    add_objective(model, request, {match.id: start for match, start, _ in decisions})
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = time_limit
     solver.parameters.num_search_workers = 1
@@ -154,4 +156,5 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
         scheduled_matches=sorted(
             assignments, key=lambda a: (a.starts_at, str(a.match_id))
         ),
+        fairness=assess(request, assignments),
     )

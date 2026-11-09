@@ -27,6 +27,16 @@
         <option [ngValue]="true">Exigir árbitro em todas as partidas</option>
       </select></label
     >
+    <label
+      >Descanso preferido entre partidas (minutos)<input
+        type="number"
+        formControlName="preferredRestMinutes"
+        min="0"
+        max="240"
+        step="1"
+        required
+    /></label>
+    <p class="muted">Meta flexível: menos descanso é permitido quando necessário.</p>
     <p class="muted">
       A duração de cada partida é preservada, mesmo quando não é múltipla do intervalo entre
       inícios.
@@ -74,6 +84,20 @@
         Esta proposta ainda não alterou a agenda. Ao aplicar, a disponibilidade será verificada
         novamente.
       </p>
+      @if (p.fairness; as fairness) {
+        <h3>Fairness Score: {{ fairness.score }}/100</h3>
+        <ul>
+          <li>Descanso: {{ fairness.restScore }}/100</li>
+          <li>Partidas consecutivas: {{ fairness.backToBackScore }}/100</li>
+          <li>Equilíbrio de horários: {{ fairness.timeBalanceScore }}/100</li>
+        </ul>
+        <h4>Análise da agenda</h4>
+        <ul>
+          @for (observation of fairness.observations; track $index) {
+            <li>{{ observation }}</li>
+          }
+        </ul>
+      }
       @for (group of preview(); track group.date) {
         <h4>{{ group.date }}</h4>
         <ul class="participants">
