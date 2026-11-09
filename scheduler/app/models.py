@@ -42,6 +42,7 @@ class FixedMatch(Window):
     playing_area_id: UUID
     referee_id: UUID | None = None
     counts_for_fairness: bool = False
+    counts_for_resilience: bool = False
 
 
 class GenerateRequest(Contract):
@@ -107,3 +108,14 @@ class Result(Contract):
     scheduled_matches: list[Assignment] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     fairness: Fairness | None = None
+    resilience: "Resilience | None" = None
+
+
+class Resilience(Contract):
+    score: int
+    delay_score: int
+    area_score: int
+    referee_score: int | None
+    scenarios_evaluated: int
+    vulnerable_scenarios: int
+    observations: list[str]

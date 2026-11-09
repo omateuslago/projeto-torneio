@@ -19,7 +19,7 @@ public sealed class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactor
     private sealed class Stub : ISchedulerClient
     {
         public SolverInput? Last;
-        public Func<SolverInput, SolverResult> Response = input => new("optimal", input.Matches.Select((m, i) => new SolverAssignment(m.Id, input.HorizonStart.AddHours(i).ToString("O"), input.PlayingAreas[0].Id, null)).ToArray(), [], Fairness);
+        public Func<SolverInput, SolverResult> Response = input => new("optimal", input.Matches.Select((m, i) => new SolverAssignment(m.Id, input.HorizonStart.AddHours(i).ToString("O"), input.PlayingAreas[0].Id, null)).ToArray(), [], Fairness, new(80, 90, 70, null, 3, 1, ["Análise determinística."]));
         public Task<SolverResult> Generate(SolverInput input, CancellationToken ct) { Last = input; return Task.FromResult(Response(input)); }
         public Task<bool> Healthy(CancellationToken ct) => Task.FromResult(true);
     }
@@ -54,6 +54,11 @@ public sealed class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactor
         Assert.Equal(3, proposal.Metrics.ScheduledCount); Assert.NotNull(proposal.ProposalToken);
         Assert.Equal(60, stub.Last!.MatchDurationMinutes); Assert.Equal(3, stub.Last.Teams.Length);
         Assert.Equal(60, stub.Last.PreferredRestMinutes);
+        Assert.Equal(80, proposal.Resilience!.Score);
+        Assert.Equal(90, proposal.Resilience.DelayScore);
+        Assert.Equal(70, proposal.Resilience.AreaScore);
+        Assert.Null(proposal.Resilience.RefereeScore);
+        Assert.Equal("Análise determinística.", Assert.Single(proposal.Resilience.Observations));
         Assert.Equal(Fairness.Score, proposal.Fairness!.Score);
         Assert.Equal(Fairness.RestScore, proposal.Fairness.RestScore);
         Assert.Equal(Fairness.BackToBackScore, proposal.Fairness.BackToBackScore);
@@ -90,7 +95,7 @@ public sealed class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactor
             if (mode == "collision") rows[1] = rows[1] with { StartsAt = rows[0].StartsAt };
             if (mode == "outside") rows[0] = rows[0] with { StartsAt = "2027-01-01T00:00:00Z" };
             if (mode == "duplicate") rows[1] = rows[0];
-            return new("feasible", rows, [], Fairness);
+            return new("feasible", rows, [], Fairness, new(80, 90, 70, null, 3, 1, ["Análise determinística."]));
         };
         Assert.Equal(HttpStatusCode.BadGateway, (await Generate(c, t.Id)).StatusCode);
         Assert.All(await Agenda(c, t.Id), m => Assert.Null(m.StartsAt));
@@ -123,6 +128,30 @@ public sealed class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactor
         var p = await Read<ScheduleProposal>(await Generate(c, t.Id)); Assert.Equal(1, p.Metrics.PreservedCount); Assert.Single(stub.Last!.ExistingSchedule);
         Assert.True(stub.Last.ExistingSchedule[0].CountsForFairness);
         (await Apply(c, t.Id, p.ProposalToken!)).EnsureSuccessStatusCode(); Assert.Equal(DateTime.Parse("2026-11-15T01:00:00Z").ToUniversalTime(), (await Agenda(c, t.Id)).Single(x => x.MatchId == first.MatchId).StartsAt);
+    }
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("score")]
+    [InlineData("delay")]
+    [InlineData("area")]
+    [InlineData("referee")]
+    [InlineData("counts")]
+    [InlineData("observations")]
+    public async Task InvalidResilienceRejected(string mode)
+    {
+        var stub = new Stub(); var good = stub.Response;
+        stub.Response = input => { var value = good(input); return value with { Resilience = mode switch {
+            "missing" => null,
+            "score" => value.Resilience! with { Score = 101 },
+            "delay" => value.Resilience! with { DelayScore = -1 },
+            "area" => value.Resilience! with { AreaScore = 101 },
+            "referee" => value.Resilience! with { RefereeScore = 50 },
+            "counts" => value.Resilience! with { VulnerableScenarios = 100 },
+            _ => value.Resilience! with { Observations = null! }
+        } }; };
+        using var c = Client(stub); var t = await Setup(c);
+        Assert.Equal(HttpStatusCode.BadGateway, (await Generate(c, t.Id)).StatusCode);
+        Assert.All(await Agenda(c, t.Id), m => Assert.Null(m.StartsAt));
     }
     [Theory]
     [InlineData(-1)]

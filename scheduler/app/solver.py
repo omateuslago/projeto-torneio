@@ -6,6 +6,7 @@ from ortools.sat.python import cp_model
 
 from .models import Assignment, GenerateRequest, Result
 from .fairness import add_objective, assess
+from .resilience import assess as assess_resilience
 
 
 def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
@@ -16,7 +17,11 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
     duration = request.match_duration_minutes
     step = request.granularity_minutes
     if not request.matches:
-        return Result(status="optimal", fairness=assess(request, []))
+        return Result(
+            status="optimal",
+            fairness=assess(request, []),
+            resilience=assess_resilience(request, []),
+        )
     if horizon < duration:
         return Result(
             status="infeasible",
@@ -157,4 +162,5 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
             assignments, key=lambda a: (a.starts_at, str(a.match_id))
         ),
         fairness=assess(request, assignments),
+        resilience=assess_resilience(request, assignments),
     )

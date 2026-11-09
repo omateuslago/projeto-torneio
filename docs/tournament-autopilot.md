@@ -1,4 +1,6 @@
-# Tournament Autopilot — milestones 6 e 7
+# Tournament Autopilot — milestones 6, 7 e 8
+
+O milestone 8 adiciona [Resilience Score e simulação determinística](resilience-score.md) ao preview, sem alterar a otimização ou aplicação.
 
 O milestone 7 acrescenta otimização de fairness e score no preview, preservando
 o fluxo abaixo. Veja [critérios, pesos, fórmula e limitações](fair-scheduling.md).
@@ -73,7 +75,7 @@ continuam ocupados independentemente da opção.
 
 O retorno `ScheduleProposal` contém status, scheduledMatches, warnings, metrics,
 proposalToken, expiresAt e fairness (score, restScore, backToBackScore,
-timeBalanceScore e observations). Fairness é nulo quando não há solução.
+timeBalanceScore e observations). Fairness é nulo quando não há solução. O retorno inclui também `resilience`, nulo sem solução ou sem alvos operacionais.
 Cada atribuição tem matchId, startsAt, playingAreaId e
 refereeId. As métricas contam partidas novas, partidas fixas do campeonato,
 período ocupado pelas novas partidas, áreas distintas e árbitros distintos usados.

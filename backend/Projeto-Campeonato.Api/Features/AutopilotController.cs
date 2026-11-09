@@ -30,11 +30,16 @@ public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient
             return Problem(statusCode: 502, detail: "Resposta inválida do scheduler.");
         if (result.Status is not ("optimal" or "feasible"))
         {
-            if (result.ScheduledMatches.Length != 0 || result.Fairness is not null) return Problem(statusCode: 502, detail: "Resposta inconsistente do scheduler.");
+            if (result.ScheduledMatches.Length != 0 || result.Fairness is not null || result.Resilience is not null) return Problem(statusCode: 502, detail: "Resposta inconsistente do scheduler.");
             return Ok(new ScheduleProposal(result.Status, [], result.Warnings, new(0, snapshot.PreservedCount, null, null, 0, 0), null, null));
         }
         if (result.Fairness is null || !result.Fairness.IsValid())
             return Problem(statusCode: 502, detail: "Métricas de fairness inválidas do scheduler.");
+        var targets = snapshot.Input.Matches.Length + snapshot.Input.ExistingSchedule.Count(m => m.CountsForResilience && m.StartsAt >= snapshot.Input.HorizonStart && m.EndsAt <= snapshot.Input.HorizonEnd);
+        var hasReferees = snapshot.Input.RequireReferee && snapshot.Input.Matches.Length > 0
+            || snapshot.Input.ExistingSchedule.Any(m => m.CountsForResilience && m.StartsAt >= snapshot.Input.HorizonStart && m.EndsAt <= snapshot.Input.HorizonEnd && m.RefereeId != null);
+        if (targets == 0 ? result.Resilience is not null : result.Resilience is null || !result.Resilience.IsValid() || (result.Resilience.RefereeScore != null) != hasReferees)
+            return Problem(statusCode: 502, detail: "Análise de resiliência inválida do scheduler.");
         await using var validation = await db.Database.BeginTransactionAsync(ct);
         await LockTournament(id, ct);
         var current = (await SchedulingSnapshot.Load(db, id, options, ct))!;
@@ -48,7 +53,7 @@ public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient
         var starts = result.ScheduledMatches.Select(x => ScheduleTime.Parse(x.StartsAt)).ToArray();
         var metrics = new ScheduleMetrics(starts.Length, current.PreservedCount, starts.Length == 0 ? null : starts.Min(), starts.Length == 0 ? null : starts.Max().AddMinutes(current.Input.MatchDurationMinutes),
             result.ScheduledMatches.Select(x => x.PlayingAreaId).Distinct().Count(), result.ScheduledMatches.Where(x => x.RefereeId != null).Select(x => x.RefereeId).Distinct().Count());
-        return Ok(new ScheduleProposal(result.Status, result.ScheduledMatches, result.Warnings, metrics, token, token is null ? null : expiry, result.Fairness));
+        return Ok(new ScheduleProposal(result.Status, result.ScheduledMatches, result.Warnings, metrics, token, token is null ? null : expiry, result.Fairness, result.Resilience));
     }
     [HttpPost("apply")]
     public async Task<IActionResult> Apply(Guid id, ApplyProposalRequest request, CancellationToken ct)

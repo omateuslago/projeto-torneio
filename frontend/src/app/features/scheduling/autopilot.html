@@ -98,6 +98,23 @@
           }
         </ul>
       }
+      @if (p.resilience; as r) {
+        <h3>Resilience Score: {{ r.score }}/100</h3>
+        <ul>
+          <li>Atrasos: {{ r.delayScore }}/100</li>
+          <li>Quadras: {{ r.areaScore }}/100</li>
+          <li>Árbitros: {{ r.refereeScore === null ? 'N/A' : r.refereeScore + '/100' }}</li>
+        </ul>
+        <p>
+          {{ r.scenariosEvaluated }} cenários analisados ·
+          {{ r.vulnerableScenarios }} vulnerabilidades encontradas
+        </p>
+        <ul>
+          @for (observation of r.observations; track $index) {
+            <li>{{ observation }}</li>
+          }
+        </ul>
+      }
       @for (group of preview(); track group.date) {
         <h4>{{ group.date }}</h4>
         <ul class="participants">
