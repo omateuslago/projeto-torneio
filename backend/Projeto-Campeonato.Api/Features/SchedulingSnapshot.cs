@@ -28,7 +28,7 @@ public sealed record SchedulingSnapshot(SolverInput Input, string Hash, int Pres
             teams.Select(x => new SolverResource(x.Id, x.Name, Windows(w => w.TeamId == x.Id))).ToArray(),
             areas.Where(x => x.Active && venues.Any(v => v.Id == x.VenueId && v.Active)).Select(x => new SolverResource(x.Id, x.Name, Windows(w => w.PlayingAreaId == x.Id))).ToArray(),
             referees.Where(x => x.Active).Select(x => new SolverResource(x.Id, x.Name, Windows(w => w.RefereeId == x.Id))).ToArray(),
-            fixedMatches.Select(m => new FixedSchedule(m.Id, m.HomeTeamId, m.AwayTeamId, m.StartsAt!.Value, m.EndsAt!.Value, m.PlayingAreaId!.Value, m.RefereeId, m.TournamentId == id)).ToArray(), options.PreferredRestMinutes);
+            fixedMatches.Select(m => new FixedSchedule(m.Id, m.HomeTeamId, m.AwayTeamId, m.StartsAt!.Value, m.EndsAt!.Value, m.PlayingAreaId!.Value, m.RefereeId, m.TournamentId == id, m.TournamentId == id && m.Status != MatchStatus.Finished)).ToArray(), options.PreferredRestMinutes);
         if (input.Matches.Length > 200 || areas.Length > 100 || referees.Length > 100 || windows.Length > 10000 || fixedMatches.Length > 20000)
             throw new ArgumentException("Limite do Autopilot v1: 200 partidas pendentes, 100 áreas/árbitros, 10000 disponibilidades e 20000 ocupações fixas.");
         if (input.Teams.Concat(input.PlayingAreas).Concat(input.Referees).Any(x => x.Availability.Length > 1000))
