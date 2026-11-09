@@ -11,6 +11,15 @@ export interface Proposal {
   status: 'optimal' | 'feasible' | 'infeasible' | 'timeout' | 'error';
   proposalToken: string | null;
   expiresAt: string | null;
+  resilience: {
+    score: number;
+    delayScore: number;
+    areaScore: number;
+    refereeScore: number | null;
+    scenariosEvaluated: number;
+    vulnerableScenarios: number;
+    observations: string[];
+  } | null;
   warnings: string[];
   fairness: {
     score: number;

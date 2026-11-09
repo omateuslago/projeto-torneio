@@ -7,6 +7,15 @@ const proposal: Proposal = {
   status: 'optimal',
   proposalToken: 'protected',
   expiresAt: '2026-11-14T18:10:00Z',
+  resilience: {
+    score: 80,
+    delayScore: 90,
+    areaScore: 70,
+    refereeScore: null,
+    scenariosEvaluated: 3,
+    vulnerableScenarios: 1,
+    observations: ['Análise determinística.'],
+  },
   warnings: [],
   fairness: {
     score: 91,
@@ -68,6 +77,11 @@ describe('Tournament Autopilot', () => {
     expect(f.nativeElement.textContent).toContain('Azul × Verde');
     expect(f.nativeElement.textContent).toContain('Quadra 1');
     expect(f.nativeElement.textContent).toContain('2 partidas preservadas');
+    expect(f.nativeElement.textContent).toContain('Resilience Score: 80/100');
+    expect(f.nativeElement.textContent).toContain('Árbitros: N/A');
+    expect(f.nativeElement.textContent).toContain('3 cenários analisados');
+    expect(f.nativeElement.textContent).toContain('1 vulnerabilidades encontradas');
+    expect(f.nativeElement.textContent).toContain('Análise determinística.');
     expect(f.nativeElement.textContent).toContain('Fairness Score: 91/100');
     expect(f.nativeElement.textContent).toContain('Descanso: 94/100');
     expect(f.nativeElement.textContent).toContain('Partidas consecutivas: 100/100');
@@ -84,6 +98,11 @@ describe('Tournament Autopilot', () => {
     expect(generated.request.body.preferredRestMinutes).toBe(120);
     generated.flush(proposal);
     f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Resilience Score: 80/100');
+    expect(f.nativeElement.textContent).toContain('Árbitros: N/A');
+    expect(f.nativeElement.textContent).toContain('3 cenários analisados');
+    expect(f.nativeElement.textContent).toContain('1 vulnerabilidades encontradas');
+    expect(f.nativeElement.textContent).toContain('Análise determinística.');
     expect(f.nativeElement.textContent).toContain('Fairness Score: 91/100');
     const button = [...f.nativeElement.querySelectorAll('button')] as HTMLButtonElement[];
     button.find((b) => b.textContent?.includes('Aplicar agenda'))!.click();
@@ -102,6 +121,17 @@ describe('Tournament Autopilot', () => {
       http.expectNone(() => true);
       expect(c.form.invalid).toBe(true);
     });
+  it('exibe componentes e árbitro aplicável', () => {
+    const f = setup();
+    f.componentInstance.proposal.set({
+      ...proposal,
+      resilience: { ...proposal.resilience!, refereeScore: 75 },
+    });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Atrasos: 90/100');
+    expect(f.nativeElement.textContent).toContain('Quadras: 70/100');
+    expect(f.nativeElement.textContent).toContain('Árbitros: 75/100');
+  });
   it('aplica somente o token e notifica a agenda', () => {
     const f = setup(),
       c = f.componentInstance;

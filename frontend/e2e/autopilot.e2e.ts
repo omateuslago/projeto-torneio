@@ -71,6 +71,7 @@ test('gera preview real, preserva reserva fixa e aplica todas as partidas', asyn
   await expect(page.getByText(/Partidas consecutivas: \d+\/100/, { exact: true })).toBeVisible();
   await expect(page.getByText(/Equilíbrio de horários: \d+\/100/, { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Análise da agenda' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Resilience Score: \d+\/100/ })).toBeVisible();
   const before = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(before.filter((m: { startsAt: string | null }) => m.startsAt)).toHaveLength(1);
   await page.getByRole('button', { name: 'Aplicar agenda', exact: true }).click();
