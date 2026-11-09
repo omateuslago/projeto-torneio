@@ -28,12 +28,13 @@ Em outro terminal, dentro de `scheduler`:
 
 O request é documentado em `app/models.py` e no OpenAPI. O prazo CP-SAT é de cinco
 segundos, um worker e seed zero. Status UNKNOWN vira timeout, nunca infeasible.
-`optimal` significa viabilidade provada neste modelo sem função objetivo; não
-promete equilíbrio ou qualidade esportiva. Não existe algoritmo guloso substituindo
+`optimal` significa mínimo provado da função objetivo de fairness; `feasible`
+indica agenda válida sem prova de ótimo. Não existe algoritmo guloso substituindo
 o solver. IDs do contrato são UUIDs, timestamps exigem offset e todos os recursos
 informam suas próprias janelas de disponibilidade.
 
 Veja [contratos e decisões](../docs/tournament-autopilot.md).
+Critérios, pesos e score: [Fair Scheduling](../docs/fair-scheduling.md).
 
 ## Docker
 
