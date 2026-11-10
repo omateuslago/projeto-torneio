@@ -7,11 +7,29 @@
       <button class="secondary" (click)="load()" [disabled]="loading()">Atualizar</button>
     </div>
     @if (loading()) {
-      <p role="status">Carregando equipes…</p>
+      <div class="tournaments-state" role="status">
+        <span class="tournaments-state__spinner" aria-hidden="true"></span>
+        <span>Carregando equipes…</span>
+      </div>
     } @else if (loadError()) {
-      <p class="error" role="alert">{{ loadError() }}</p>
+      <div class="tournaments-state tournaments-state--error" role="alert">
+        <div class="tournaments-state__icon">
+          <img src="assests/brakvyo-equipe-outline.svg" alt="" />
+        </div>
+        <h3>Não foi possível carregar as equipes</h3>
+        <p>Ocorreu um problema. Tente novamente.</p>
+        <button type="button" class="tournaments-page__refresh" (click)="load()">
+          Tentar novamente
+        </button>
+      </div>
     } @else if (!teams().length) {
-      <p class="empty">Nenhuma equipe cadastrada. Adicione a primeira usando o formulário.</p>
+      <div class="tournaments-state tournaments-state--empty">
+        <div class="tournaments-state__icon">
+          <img src="assests/brakvyo-equipe-outline.svg" alt="" />
+        </div>
+        <h3>Nenhuma equipe por aqui</h3>
+        <p>Quando você criar uma equipe, ela aparecerá aqui.</p>
+      </div>
     } @else {
       <ul class="participants">
         @for (team of teams(); track team.id) {

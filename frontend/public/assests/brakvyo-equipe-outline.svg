@@ -1,0 +1,15 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#0B7BD8" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <!-- pessoa central -->
+    <circle cx="512" cy="370" r="78"/>
+    <path d="M382 616C382 534 440 482 512 482C584 482 642 534 642 616V654H382V616Z"/>
+
+    <!-- pessoa esquerda -->
+    <circle cx="320" cy="420" r="54"/>
+    <path d="M232 614C232 557 272 521 320 521C368 521 408 557 408 614V642H232V614Z"/>
+
+    <!-- pessoa direita -->
+    <circle cx="704" cy="420" r="54"/>
+    <path d="M616 614C616 557 656 521 704 521C752 521 792 557 792 614V642H616V614Z"/>
+  </g>
+</svg>
