@@ -9,7 +9,13 @@ from .fairness import add_objective, assess
 from .resilience import assess as assess_resilience
 
 
-def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
+def solve(
+    request: GenerateRequest,
+    time_limit: float = 5.0,
+    *,
+    repair_objective=None,
+    referee_matches=None,
+) -> Result:
     """Integer minutes, grid-aligned starts, exact durations, half-open intervals."""
     model = cp_model.CpModel()
     origin = request.horizon_start
@@ -83,10 +89,15 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
         for team_id in (match.home_team_id, match.away_team_id):
             restrict(start, teams[team_id])
             occupancy["team", team_id].append(interval)
+        needs_referee = (
+            request.require_referee
+            if referee_matches is None
+            else match.id in referee_matches
+        )
         choices = {}
         for kind, resources in [
             ("area", request.playing_areas),
-            ("referee", request.referees if request.require_referee else []),
+            ("referee", request.referees if needs_referee else []),
         ]:
             selected = []
             for resource in sorted(resources, key=lambda r: str(r.id)):
@@ -97,13 +108,18 @@ def solve(request: GenerateRequest, time_limit: float = 5.0) -> Result:
                 restrict(start, resource, enabled)
                 occupancy[kind, resource.id].append(optional)
                 selected.append((resource.id, enabled))
-            if kind == "area" or request.require_referee:
+            if kind == "area" or needs_referee:
                 model.add_exactly_one([enabled for _, enabled in selected])
             choices[kind] = selected
         decisions.append((match, start, choices))
     for intervals in occupancy.values():
         model.add_no_overlap(intervals)
-    add_objective(model, request, {match.id: start for match, start, _ in decisions})
+    if repair_objective is None:
+        add_objective(
+            model, request, {match.id: start for match, start, _ in decisions}
+        )
+    else:
+        repair_objective(model, decisions)
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = time_limit
     solver.parameters.num_search_workers = 1
