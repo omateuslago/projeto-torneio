@@ -43,8 +43,8 @@ async function seed(request: APIRequestContext, unavailable = false) {
 }
 async function generate(page: Page, id: string) {
   await page.goto(`/campeonatos/${id}/agenda`);
-  await page.getByLabel('Início do horizonte').fill('2026-11-14T18:00');
-  await page.getByLabel('Fim do horizonte').fill('2026-11-15T02:00');
+  await page.getByLabel('Início do horizonte', {exact: true}).fill('2026-11-14T18:00');
+  await page.getByLabel('Fim do horizonte', {exact: true}).fill('2026-11-15T02:00');
   await page
     .getByLabel('Árbitros no agendamento automático')
     .selectOption({ label: 'Exigir árbitro em todas as partidas' });
@@ -122,4 +122,52 @@ test('mudança entre preview e aplicação rejeita proposta antiga', async ({ pa
   await expect(page.getByRole('alert')).toContainText('mudaram desde a geração');
   const rows = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(rows.every((m: { startsAt: string | null }) => m.startsAt === null)).toBe(true);
+});
+
+test('Self-Healing troca somente a área após aprovação humana', async ({ page, request }) => {
+  const s = await seed(request);
+  const venues = await (await request.get(`${api}/tournaments/${s.t.id}/venues`)).json();
+  const alternate = await (
+    await request.post(`${api}/tournaments/${s.t.id}/venues/${venues[0].id}/playing-areas`, {
+      data: { name: 'Quadra alternativa' },
+    })
+  ).json();
+  expect(
+    (
+      await request.post(
+        `${api}/tournaments/${s.t.id}/playing-areas/${alternate.id}/availability`,
+        { data: { startsAt: '2026-11-14T18:00:00Z', endsAt: '2026-11-15T02:00:00Z' } },
+      )
+    ).ok(),
+  ).toBe(true);
+  expect(
+    (
+      await request.put(`${api}/matches/${s.matches[0].id}/schedule`, {
+        data: { startsAt: '2026-11-14T18:00:00Z', playingAreaId: s.area.id },
+      })
+    ).ok(),
+  ).toBe(true);
+  await page.goto(`/campeonatos/${s.t.id}/agenda`);
+  await page.getByLabel('Início do horizonte de reparo').fill('2026-11-14T18:00');
+  await page.getByLabel('Fim do horizonte de reparo').fill('2026-11-15T02:00');
+  await page.getByLabel('Recurso afetado').selectOption(s.area.id);
+  await page.getByLabel('Início do incidente').fill('2026-11-14T18:00');
+  await page.getByLabel('Fim do incidente').fill('2026-11-14T19:00');
+  await page.getByRole('button', { name: 'Analisar reparo', exact: true }).click();
+  await expect(page.getByText(/1 partidas precisam mudar/)).toBeVisible();
+  await expect(page.getByText(/Antes:/)).toBeVisible();
+  await expect(page.getByText(/Depois:/)).toContainText('Quadra alternativa');
+  const before = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
+  expect(before.find((m: { matchId: string }) => m.matchId === s.matches[0].id).playingAreaId).toBe(
+    s.area.id,
+  );
+  await page.getByRole('button', { name: 'Aplicar reparo', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Proposta de reparo', exact: true })).toHaveCount(
+    0,
+  );
+  const after = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
+  expect(after.find((m: { matchId: string }) => m.matchId === s.matches[0].id).playingAreaId).toBe(
+    alternate.id,
+  );
+  expect(after.filter((m: { startsAt: string | null }) => m.startsAt)).toHaveLength(1);
 });

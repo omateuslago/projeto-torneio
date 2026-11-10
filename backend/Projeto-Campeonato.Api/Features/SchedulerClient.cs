@@ -4,17 +4,20 @@ namespace Projeto_Campeonato.Api.Features;
 public interface ISchedulerClient
 {
     Task<SolverResult> Generate(SolverInput input, CancellationToken ct);
+    Task<SolverResult> Repair(RepairInput input, CancellationToken ct) => throw new NotSupportedException();
     Task<bool> Healthy(CancellationToken ct);
 }
 public sealed class SchedulerUnavailableException(int status, string message) : Exception(message)
 { public int Status { get; } = status; }
 public sealed class SchedulerClient(HttpClient http) : ISchedulerClient
 {
-    public async Task<SolverResult> Generate(SolverInput input, CancellationToken ct)
+    public Task<SolverResult> Generate(SolverInput input, CancellationToken ct) => Send("schedule/generate", input, ct);
+    public Task<SolverResult> Repair(RepairInput input, CancellationToken ct) => Send("schedule/repair", input, ct);
+    private async Task<SolverResult> Send<T>(string path, T input, CancellationToken ct)
     {
         try
         {
-            using var response = await http.PostAsJsonAsync("schedule/generate", input, ct);
+            using var response = await http.PostAsJsonAsync(path, input, ct);
             if (!response.IsSuccessStatusCode) throw new SchedulerUnavailableException(502, "O scheduler rejeitou o contrato. Nenhuma agenda foi alterada.");
             return await response.Content.ReadFromJsonAsync<SolverResult>(ct) ?? throw new System.Text.Json.JsonException();
         }

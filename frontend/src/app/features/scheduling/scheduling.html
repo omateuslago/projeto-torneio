@@ -14,6 +14,7 @@
   <p role="status">Carregando agenda…</p>
 } @else {
   <button class="secondary" (click)="load()" [disabled]="busy()">Atualizar agenda</button>
+  <app-repair [tournamentId]="id" [matches]="matches()" [areas]="areas()" [referees]="referees()" [teams]="teams()" [zone]="zone()" [blocked]="busy()" (applied)="message.set('Reparo aplicado.'); load()" />
   <app-autopilot
     [tournamentId]="id"
     [matches]="matches()"

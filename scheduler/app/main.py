@@ -1,7 +1,9 @@
 import logging
 import time
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+
+from .repair import RepairRequest, repair
 
 from .models import GenerateRequest, Result
 from .solver import solve
@@ -29,3 +31,13 @@ def generate(request: GenerateRequest):
         result.status,
     )
     return result
+
+
+
+
+@app.post("/schedule/repair", response_model=Result)
+def generate_repair(request: RepairRequest):
+    try:
+        return repair(request)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error

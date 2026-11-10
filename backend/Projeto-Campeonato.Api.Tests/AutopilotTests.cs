@@ -10,7 +10,7 @@ using Projeto_Campeonato.Api.Features;
 
 namespace Projeto_Campeonato.Api.Tests;
 
-public sealed class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactory>
+public sealed partial class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
     private static readonly AutopilotOptions Options = new("2026-11-14T18:00:00Z", "2026-11-15T02:00:00Z", 15, false);
@@ -18,6 +18,8 @@ public sealed class AutopilotTests(ApiFactory factory) : IClassFixture<ApiFactor
     private static async Task<T> Read<T>(HttpResponseMessage r) { r.EnsureSuccessStatusCode(); return (await r.Content.ReadFromJsonAsync<T>(Json))!; }
     private sealed class Stub : ISchedulerClient
     {
+        public Func<RepairInput, SolverResult>? RepairResponse;
+        public Task<SolverResult> Repair(RepairInput input, CancellationToken ct) => Task.FromResult(RepairResponse!(input));
         public SolverInput? Last;
         public Func<SolverInput, SolverResult> Response = input => new("optimal", input.Matches.Select((m, i) => new SolverAssignment(m.Id, input.HorizonStart.AddHours(i).ToString("O"), input.PlayingAreas[0].Id, null)).ToArray(), [], Fairness, new(80, 90, 70, null, 3, 1, ["Análise determinística."]));
         public Task<SolverResult> Generate(SolverInput input, CancellationToken ct) { Last = input; return Task.FromResult(Response(input)); }
