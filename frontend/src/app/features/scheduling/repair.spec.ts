@@ -99,6 +99,32 @@ describe('Self-Healing', () => {
     req.flush({ appliedCount: 1 });
     expect(c.proposal()).toBeNull();
   });
+  it('informa quando o reparo mínimo foi comprovado', () => {
+    const f = setup();
+    f.componentInstance.proposal.set(proposal);
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Reparo mínimo encontrado.');
+    expect(f.nativeElement.textContent).not.toContain('não foi comprovado');
+  });
+  it('avisa quando o mínimo não foi comprovado e mantém a aplicação disponível', () => {
+    const f = setup(),
+      c = f.componentInstance;
+    c.proposal.set({ ...proposal, status: 'feasible' });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain(
+      'Foi encontrado um reparo válido, mas o menor conjunto possível de mudanças não foi comprovado dentro do tempo de cálculo.',
+    );
+    expect(f.nativeElement.textContent).not.toContain('Reparo mínimo encontrado.');
+    const apply = [...f.nativeElement.querySelectorAll('button')].find((button) =>
+      button.textContent?.includes('Aplicar reparo'),
+    ) as HTMLButtonElement | undefined;
+    expect(apply).toBeTruthy();
+    apply!.click();
+    const req = http.expectOne('/api/tournaments/cup/schedule/repair/apply');
+    expect(req.request.body).toEqual({ proposalToken: 'protected' });
+    req.flush({ appliedCount: 1 });
+    expect(c.proposal()).toBeNull();
+  });
   it('descarta sem enviar mudanças', () => {
     const c = setup().componentInstance;
     c.proposal.set(proposal);
