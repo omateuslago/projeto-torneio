@@ -1,4 +1,6 @@
-# Tournament Autopilot — milestones 6, 7 e 8
+# Tournament Autopilot — milestones 6 a 9
+
+O milestone 9 acrescenta [Self-Healing com reparo mínimo e aprovação humana](self-healing-schedule.md), em endpoints separados da geração inicial.
 
 O milestone 8 adiciona [Resilience Score e simulação determinística](resilience-score.md) ao preview, sem alterar a otimização ou aplicação.
 
