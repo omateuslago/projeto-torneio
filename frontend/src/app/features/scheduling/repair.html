@@ -1,6 +1,6 @@
 <section class="panel match-panel" aria-labelledby="repair-title">
   <h2 id="repair-title">Self-Healing</h2>
-  <p>Analise um incidente e revise o menor conjunto de mudanças antes de aplicar.</p>
+  <p>Analise um incidente e revise a proposta de reparo antes de aplicar.</p>
   <form [formGroup]="form" (ngSubmit)="generate()">
     <label
       >Início do horizonte de reparo<input
@@ -92,6 +92,14 @@
     } @else if (p.status === 'error') {
       <p>Não foi possível calcular o reparo.</p>
     } @else {
+      @if (p.status === 'optimal') {
+        <p>Reparo mínimo encontrado.</p>
+      } @else if (p.status === 'feasible') {
+        <p>
+          Foi encontrado um reparo válido, mas o menor conjunto possível de mudanças não foi
+          comprovado dentro do tempo de cálculo.
+        </p>
+      }
       @if (!p.metrics.changedCount) {
         <p>Nenhuma alteração necessária.</p>
       }
