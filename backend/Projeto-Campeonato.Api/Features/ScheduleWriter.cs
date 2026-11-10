@@ -9,7 +9,8 @@ public sealed class ScheduleWriter(TournamentDbContext db)
     public static Task<int> Lock(TournamentDbContext db, CancellationToken ct) => db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(771905)", ct);
     private IQueryable<Availability> Windows(Guid tournament, string kind, Guid resource) => db.Availabilities.Where(x => x.TournamentId == tournament &&
         (kind == "teams" && x.TeamId == resource || kind == "playing-areas" && x.PlayingAreaId == resource || kind == "referees" && x.RefereeId == resource));
-    public async Task Stage(Match m, Tournament t, ScheduleRequest request, bool audit, CancellationToken ct)
+    // replacedIds is used only after RepairController validates the entire final occupancy set.
+    public async Task Stage(Match m, Tournament t, ScheduleRequest request, bool audit, CancellationToken ct, Guid[]? replacedIds = null)
     {
         var start = ScheduleTime.Parse(request.StartsAt);
         var end = start.AddMinutes(t.MatchDurationMinutes);
@@ -27,7 +28,7 @@ public sealed class ScheduleWriter(TournamentDbContext db)
         var candidates = await db.Matches.Where(x => x.Id != m.Id && x.StartsAt != null &&
             (x.HomeTeamId == home.Id || x.AwayTeamId == home.Id || x.HomeTeamId == away.Id || x.AwayTeamId == away.Id || x.PlayingAreaId == area.Id || (request.RefereeId != null && x.RefereeId == request.RefereeId))).ToListAsync(ct);
         candidates.AddRange(db.Matches.Local.Where(x => x.Id != m.Id && x.StartsAt != null && candidates.All(c => c.Id != x.Id)));
-        foreach (var other in candidates.Where(x => ScheduleTime.Overlaps(start, end, x.StartsAt!.Value, x.EndsAt!.Value)))
+        foreach (var other in candidates.Where(x => !(replacedIds ?? []).Contains(x.Id) && ScheduleTime.Overlaps(start, end, x.StartsAt!.Value, x.EndsAt!.Value)))
         {
             foreach (var target in targets)
                 if (target.Kind == "teams" && (other.HomeTeamId == target.Id || other.AwayTeamId == target.Id) || target.Kind == "playing-areas" && other.PlayingAreaId == target.Id || target.Kind == "referees" && other.RefereeId == target.Id)
