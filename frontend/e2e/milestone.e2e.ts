@@ -20,6 +20,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page.getByRole('button', { name: 'Criar campeonato', exact: true }).click();
   await page.getByRole('link', { name: `Copa ${suffix}`, exact: true }).click();
   await expect(page.getByRole('heading', { name: `Copa ${suffix}`, exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/campeonatos\/[0-9a-f-]+$/);
   const detailUrl = page.url();
   await page.reload();
   await expect(page.getByRole('heading', { name: `Copa ${suffix}`, exact: true })).toBeVisible();
