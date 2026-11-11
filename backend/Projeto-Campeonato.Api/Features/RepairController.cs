@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Infrastructure;
 namespace Projeto_Campeonato.Api.Features;
@@ -18,7 +19,7 @@ public sealed record ProtectedRepair(Guid TournamentId, RepairOptions Options, s
 
 [ApiController]
 [Route("api/tournaments/{id:guid}/schedule/repair")]
-public sealed class RepairController(TournamentDbContext db, ISchedulerClient scheduler, IDataProtectionProvider protection) : ControllerBase
+public sealed class RepairController(TournamentDbContext db, ISchedulerClient scheduler, IDataProtectionProvider protection, IAccessControl access) : ControllerBase
 {
     private readonly IDataProtector protector = protection.CreateProtector("ScheduleRepair.v1");
     private static FixedSchedule[] Targets(SolverInput input, RepairIncident incident) => input.ExistingSchedule.Where(m => m.CountsForResilience && m.StartsAt >= input.HorizonStart && m.EndsAt <= input.HorizonEnd && m.MatchId != incident.MatchId).ToArray();
@@ -48,8 +49,10 @@ public sealed class RepairController(TournamentDbContext db, ISchedulerClient sc
         await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {id} FOR UPDATE").SingleOrDefaultAsync(ct);
     }
     [HttpPost("generate")]
+    [Authorize]
     public async Task<ActionResult<RepairProposal>> Generate(Guid id, RepairOptions options, CancellationToken ct)
     {
+        if (!await access.CanManageTournament(User, id, ct)) return Forbid();
         SchedulingSnapshot? snapshot;
         await using (var tx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, ct))
         { snapshot = await SchedulingSnapshot.Load(db, id, options.Horizon, ct); await tx.CommitAsync(ct); }
@@ -87,8 +90,10 @@ public sealed class RepairController(TournamentDbContext db, ISchedulerClient sc
         return Ok(new RepairProposal(result.Status, options.Incident, changes, metrics, result.Warnings, result.Fairness, result.Resilience, token, token == null ? null : expiry));
     }
     [HttpPost("apply")]
+    [Authorize]
     public async Task<IActionResult> Apply(Guid id, ApplyProposalRequest request, CancellationToken ct)
     {
+        if (!await access.CanManageTournament(User, id, ct)) return Forbid();
         ProtectedRepair? p;
         try { p = JsonSerializer.Deserialize<ProtectedRepair>(protector.Unprotect(request.ProposalToken)); }
         catch (Exception e) when (e is CryptographicException or JsonException or ArgumentException) { return Problem(statusCode: 400, detail: "Token de reparo inválido."); }

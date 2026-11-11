@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Infrastructure;
 
@@ -10,15 +11,17 @@ namespace Projeto_Campeonato.Api.Features;
 
 [ApiController]
 [Route("api/tournaments/{id:guid}/schedule")]
-public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient scheduler, IDataProtectionProvider protection) : ControllerBase
+public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient scheduler, IDataProtectionProvider protection, IAccessControl access) : ControllerBase
 {
     private readonly IDataProtector protector = protection.CreateProtector("TournamentAutopilot.v1");
     [HttpGet("/api/scheduler/health")]
     public async Task<IActionResult> Health(CancellationToken ct) => await scheduler.Healthy(ct) ? Ok(new { status = "healthy" }) : Problem(statusCode: 503, detail: "Scheduler indisponível; demais operações continuam disponíveis.");
 
     [HttpPost("generate")]
+    [Authorize]
     public async Task<ActionResult<ScheduleProposal>> Generate(Guid id, AutopilotOptions options, CancellationToken ct)
     {
+        if (!await access.CanManageTournament(User, id, ct)) return Forbid();
         SchedulingSnapshot? snapshot;
         await using (var tx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, ct))
         { snapshot = await SchedulingSnapshot.Load(db, id, options, ct); await tx.CommitAsync(ct); }
@@ -56,8 +59,10 @@ public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient
         return Ok(new ScheduleProposal(result.Status, result.ScheduledMatches, result.Warnings, metrics, token, token is null ? null : expiry, result.Fairness, result.Resilience));
     }
     [HttpPost("apply")]
+    [Authorize]
     public async Task<IActionResult> Apply(Guid id, ApplyProposalRequest request, CancellationToken ct)
     {
+        if (!await access.CanManageTournament(User, id, ct)) return Forbid();
         ProtectedProposal? proposal;
         try { proposal = JsonSerializer.Deserialize<ProtectedProposal>(protector.Unprotect(request.ProposalToken)); }
         catch (Exception ex) when (ex is CryptographicException or JsonException or ArgumentException)

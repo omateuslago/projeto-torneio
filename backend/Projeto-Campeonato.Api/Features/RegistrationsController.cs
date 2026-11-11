@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Infrastructure;
 
@@ -8,7 +9,7 @@ namespace Projeto_Campeonato.Api.Features;
 
 [ApiController]
 [Route("api/tournaments/{tournamentId:guid}/registrations")]
-public sealed class RegistrationsController(TournamentDbContext db) : ControllerBase
+public sealed class RegistrationsController(TournamentDbContext db, IAccessControl access) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RegistrationResponse>>> List(Guid tournamentId, CancellationToken ct)
@@ -23,8 +24,10 @@ public sealed class RegistrationsController(TournamentDbContext db) : Controller
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<RegistrationResponse>> Create(Guid tournamentId, RegisterTeamRequest request, CancellationToken ct)
     {
+        if (!await access.CanManageTournament(User, tournamentId, ct)) return Forbid();
         if (request.TeamId == Guid.Empty) return Problem(statusCode: 400, detail: "TeamId is required.");
         // PostgreSQL SSI prevents two requests from both taking the last available slot.
         // Conflicting transactions return 409; callers may retry after reloading the tournament.
