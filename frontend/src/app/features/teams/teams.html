@@ -38,24 +38,26 @@
       </ul>
     }
   </section>
-  <section class="panel" aria-labelledby="nova-equipe">
-    <h2 id="nova-equipe">Nova equipe</h2>
-    <form [formGroup]="form" (ngSubmit)="create()">
-      <label
-        >Nome da equipe<input formControlName="name" maxlength="120" autocomplete="off" required
-      /></label>
-      @if (form.touched && form.invalid) {
-        <p class="error" role="alert">Informe um nome de até 120 caracteres.</p>
+  @if (auth.isAuthenticated()) {
+    <section class="panel" aria-labelledby="nova-equipe">
+      <h2 id="nova-equipe">Nova equipe</h2>
+      <form [formGroup]="form" (ngSubmit)="create()">
+        <label
+          >Nome da equipe<input formControlName="name" maxlength="120" autocomplete="off" required
+        /></label>
+        @if (form.touched && form.invalid) {
+          <p class="error" role="alert">Informe um nome de até 120 caracteres.</p>
+        }
+        @if (saveError()) {
+          <p class="error" role="alert">{{ saveError() }}</p>
+        }
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Cadastrando…' : 'Criar equipe' }}
+        </button>
+      </form>
+      @if (message()) {
+        <p class="success" role="status">{{ message() }}</p>
       }
-      @if (saveError()) {
-        <p class="error" role="alert">{{ saveError() }}</p>
-      }
-      <button type="submit" [disabled]="saving()">
-        {{ saving() ? 'Cadastrando…' : 'Criar equipe' }}
-      </button>
-    </form>
-    @if (message()) {
-      <p class="success" role="status">{{ message() }}</p>
-    }
-  </section>
+    </section>
+  }
 </div>

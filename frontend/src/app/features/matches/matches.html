@@ -34,7 +34,7 @@
     <p class="error" role="alert">{{ loadError() }}</p>
   } @else if (!matches().length) {
     <p class="empty">Nenhuma partida gerada. Cada equipe enfrentará todas as outras uma vez.</p>
-    @if (tournament().status === 'Closed') {
+    @if (tournament().status === 'Closed' && auth.canManageTournament(tournament().id)) {
       <button (click)="generate()" [disabled]="saving()">
         {{ saving() ? 'Gerando…' : 'Gerar confrontos' }}
       </button>
@@ -80,20 +80,18 @@
                     Aguardando
                   }
                 </p>
-                @if (match.status !== 'Finished') {
-                  <p class="muted">
-                    Simulação de equipe: MVP sem login. A identidade escolhida não é autenticada.
-                  </p>
+                @if (match.status !== 'Finished' && manageableTeams(match).length) {
                   <div class="actions">
-                    <button (click)="sendAs(match, match.homeTeamId)" [disabled]="saving()">
-                      Enviar como {{ match.homeTeamName }}
-                    </button>
-                    <button (click)="sendAs(match, match.awayTeamId)" [disabled]="saving()">
-                      Enviar como {{ match.awayTeamName }}
-                    </button>
+                    @for (team of manageableTeams(match); track team.id) {
+                      <button (click)="sendAs(match, team.id)" [disabled]="saving()">
+                        Enviar resultado como {{ team.name }}
+                      </button>
+                    }
                   </div>
                 }
-                @if (match.dispute?.status === 'Open') {
+                @if (
+                  match.dispute?.status === 'Open' && auth.canManageTournament(tournament().id)
+                ) {
                   <p class="error">
                     Disputa aberta. Uma correção de envio não encerra a disputa; o organizador deve
                     decidir.
@@ -105,16 +103,20 @@
                 @if (match.dispute?.status === 'Resolved') {
                   <p class="muted">Decisão: {{ match.dispute?.resolutionNote }}</p>
                 }
-                <details class="admin-action">
-                  <summary>Ação administrativa</summary>
-                  <p class="muted">
-                    Define o resultado oficial diretamente e encerra uma eventual disputa aberta. A
-                    ação fica no histórico. MVP sem autenticação.
-                  </p>
-                  <button class="secondary" (click)="edit(match)" [disabled]="saving()">
-                    {{ match.status === 'Finished' ? 'Corrigir resultado' : 'Registrar resultado' }}
-                  </button>
-                </details>
+                @if (auth.canManageTournament(tournament().id)) {
+                  <details class="admin-action">
+                    <summary>Ação administrativa</summary>
+                    <p class="muted">
+                      Define o resultado oficial diretamente e encerra uma eventual disputa aberta.
+                      A ação fica no histórico.
+                    </p>
+                    <button class="secondary" (click)="edit(match)" [disabled]="saving()">
+                      {{
+                        match.status === 'Finished' ? 'Corrigir resultado' : 'Registrar resultado'
+                      }}
+                    </button>
+                  </details>
+                }
               </td>
             </tr>
           }

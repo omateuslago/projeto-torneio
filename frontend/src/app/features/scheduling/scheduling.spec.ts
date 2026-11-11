@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Scheduling } from './scheduling';
 import { ScheduledMatch } from './scheduling-api';
+import { AuthService } from '../../core/auth.service';
 
 const match: ScheduledMatch = {
   matchId: 'm',
@@ -44,6 +45,15 @@ describe('Agenda e disponibilidade', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    TestBed.inject(AuthService).user.set({
+      authenticated: true,
+      id: 'admin',
+      email: 'admin@example.com',
+      displayName: 'Admin',
+      isPlatformAdmin: true,
+      organizerTournamentIds: [],
+      managedTeamIds: [],
+    });
   });
   afterEach(() => http.verify());
   function setup(matches: ScheduledMatch[] = [match]) {

@@ -2,9 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ApiProblem } from './models';
 
 const messages: Record<string, string> = {
-  'Official result is already final.': 'O resultado já foi confirmado. Somente uma correção administrativa pode alterá-lo.',
+  'Official result is already final.':
+    'O resultado já foi confirmado. Somente uma correção administrativa pode alterá-lo.',
   'Dispute is already resolved.': 'Esta disputa já foi resolvida. Atualize as partidas.',
-  'Only a participating team can submit a score.': 'Somente uma das equipes desta partida pode enviar um placar.',
+  'Only a participating team can submit a score.':
+    'Somente uma das equipes desta partida pode enviar um placar.',
   'Close registration before generating matches.':
     'Encerre as inscrições antes de gerar os confrontos.',
   'At least two teams are required.':
@@ -28,6 +30,7 @@ export function apiError(error: unknown): string {
     return 'Não foi possível concluir a operação. Tente novamente.';
   if (error.status === 0)
     return 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+  if (error.status === 403) return 'Você não tem permissão para realizar esta ação.';
   if (error.status === 404) return 'O registro solicitado não foi encontrado.';
   const problem: ApiProblem | null =
     error.error && typeof error.error === 'object' ? error.error : null;

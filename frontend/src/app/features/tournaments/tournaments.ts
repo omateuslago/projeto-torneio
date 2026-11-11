@@ -17,6 +17,7 @@ import { TournamentApi } from '../../core/tournament-api';
 import { Tournament, TournamentFormat, formatLabels, statusLabels } from '../../core/models';
 import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-tournaments',
@@ -24,6 +25,7 @@ import { trimmedRequired } from '../../shared/trimmed-required';
   templateUrl: './tournaments.html',
 })
 export class Tournaments {
+  readonly auth = inject(AuthService);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly renderer = inject(Renderer2);
@@ -129,6 +131,7 @@ export class Tournaments {
       .subscribe({
         next: (tournament) => {
           this.tournaments.update((current) => [...current, tournament]);
+          this.auth.recordCreatedTournament(tournament.id);
           this.form.reset({
             name: '',
             sport: '',

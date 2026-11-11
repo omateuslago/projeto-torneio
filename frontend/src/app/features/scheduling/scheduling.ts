@@ -9,6 +9,7 @@ import { apiError } from '../../core/api-error';
 import { Repair } from './repair';
 import { Autopilot } from './autopilot';
 import { trimmedRequired } from '../../shared/trimmed-required';
+import { AuthService } from '../../core/auth.service';
 import {
   Area,
   Availability,
@@ -25,6 +26,7 @@ import {
   templateUrl: './scheduling.html',
 })
 export class Scheduling {
+  readonly auth = inject(AuthService);
   readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id')!;
   private api = inject(SchedulingApi);
   private tournaments = inject(TournamentApi);
@@ -48,9 +50,17 @@ export class Scheduling {
   readonly editingMatch = signal<ScheduledMatch | null>(null);
   readonly kind = signal<ResourceKind>('teams');
   readonly resource = signal('');
+  readonly canManageTournament = computed(() => this.auth.canManageTournament(this.id));
+  readonly canEditAvailability = computed(
+    () =>
+      this.canManageTournament() ||
+      (this.kind() === 'teams' && this.auth.canManageTeam(this.resource())),
+  );
   readonly options = computed(() =>
     this.kind() === 'teams'
-      ? this.teams().map((t) => ({ id: t.teamId, name: t.teamName }))
+      ? this.teams()
+          .filter((t) => this.canManageTournament() || this.auth.canManageTeam(t.teamId))
+          .map((t) => ({ id: t.teamId, name: t.teamName }))
       : this.kind() === 'playing-areas'
         ? this.areas().map((a) => ({
             ...a,

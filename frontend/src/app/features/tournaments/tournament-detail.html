@@ -23,17 +23,17 @@
         <dd>{{ current.maxTeams }} equipes</dd>
       </div>
     </dl>
-    @if (current.status === 'Draft') {
+    @if (auth.canManageTournament(current.id) && current.status === 'Draft') {
       <p class="muted">Abra as inscrições para começar a adicionar equipes.</p>
       <button (click)="changeStatus('Open')" [disabled]="saving()">
         {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
       </button>
-    } @else if (current.status === 'Open') {
+    } @else if (auth.canManageTournament(current.id) && current.status === 'Open') {
       <p class="muted">Ao encerrar, não será possível reabrir as inscrições nesta etapa.</p>
       <button class="secondary" (click)="changeStatus('Closed')" [disabled]="saving()">
         {{ saving() ? 'Encerrando…' : 'Fechar inscrições' }}
       </button>
-    } @else {
+    } @else if (current.status !== 'Draft' && current.status !== 'Open') {
       <p class="muted">
         As inscrições foram encerradas. As equipes inscritas continuam disponíveis para consulta.
       </p>

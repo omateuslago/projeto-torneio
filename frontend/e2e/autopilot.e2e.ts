@@ -1,9 +1,11 @@
 import { expect, test, APIRequestContext, Page } from '@playwright/test';
+import { registerOrganizer, xsrf } from './auth';
 test.use({ timezoneId: 'UTC' });
 const api = 'http://localhost:5094/api';
-async function seed(request: APIRequestContext, unavailable = false) {
+async function seed(request: APIRequestContext, page: Page, unavailable = false) {
+  const token = await registerOrganizer(request, page);
   async function post(path: string, data: unknown) {
-    const r = await request.post(api + path, { data });
+    const r = await request.post(api + path, { headers: xsrf(token), data });
     expect(r.ok()).toBe(true);
     return r.json();
   }
@@ -14,7 +16,12 @@ async function seed(request: APIRequestContext, unavailable = false) {
     format: 'RoundRobin',
   });
   expect(
-    (await request.put(`${api}/tournaments/${t.id}/status`, { data: { status: 'Open' } })).ok(),
+    (
+      await request.put(`${api}/tournaments/${t.id}/status`, {
+        headers: xsrf(token),
+        data: { status: 'Open' },
+      })
+    ).ok(),
   ).toBe(true);
   const window = { startsAt: '2026-11-14T18:00:00Z', endsAt: '2026-11-15T02:00:00Z' };
   let teamId = '';
@@ -26,7 +33,12 @@ async function seed(request: APIRequestContext, unavailable = false) {
       await post(`/tournaments/${t.id}/teams/${team.id}/availability`, window);
   }
   expect(
-    (await request.put(`${api}/tournaments/${t.id}/status`, { data: { status: 'Closed' } })).ok(),
+    (
+      await request.put(`${api}/tournaments/${t.id}/status`, {
+        headers: xsrf(token),
+        data: { status: 'Closed' },
+      })
+    ).ok(),
   ).toBe(true);
   const matches = await post(`/tournaments/${t.id}/matches/generate`, {});
   const venue = await post(`/tournaments/${t.id}/venues`, {
@@ -39,12 +51,12 @@ async function seed(request: APIRequestContext, unavailable = false) {
   const referee = await post(`/tournaments/${t.id}/referees`, { name: 'Árbitro Autopilot' });
   await post(`/tournaments/${t.id}/playing-areas/${area.id}/availability`, window);
   await post(`/tournaments/${t.id}/referees/${referee.id}/availability`, window);
-  return { t, matches, area, referee, teamId };
+  return { t, matches, area, referee, teamId, token };
 }
 async function generate(page: Page, id: string) {
   await page.goto(`/campeonatos/${id}/agenda`);
-  await page.getByLabel('Início do horizonte', {exact: true}).fill('2026-11-14T18:00');
-  await page.getByLabel('Fim do horizonte', {exact: true}).fill('2026-11-15T02:00');
+  await page.getByLabel('Início do horizonte', { exact: true }).fill('2026-11-14T18:00');
+  await page.getByLabel('Fim do horizonte', { exact: true }).fill('2026-11-15T02:00');
   await page
     .getByLabel('Árbitros no agendamento automático')
     .selectOption({ label: 'Exigir árbitro em todas as partidas' });
@@ -54,8 +66,9 @@ test('gera preview real, preserva reserva fixa e aplica todas as partidas', asyn
   page,
   request,
 }, testInfo) => {
-  const s = await seed(request);
+  const s = await seed(request, page);
   const fixed = await request.put(`${api}/matches/${s.matches[0].id}/schedule`, {
+    headers: xsrf(s.token),
     data: { startsAt: '2026-11-14T21:00:00Z', playingAreaId: s.area.id, refereeId: s.referee.id },
   });
   expect(fixed.ok()).toBe(true);
@@ -95,7 +108,7 @@ test('problema impossível explica a equipe indisponível sem gravar agenda', as
   page,
   request,
 }) => {
-  const s = await seed(request, true);
+  const s = await seed(request, page, true);
   await generate(page, s.t.id);
   await expect(
     page.getByText('Não existe agenda compatível com os dados e a grade solicitados.'),
@@ -108,12 +121,13 @@ test('problema impossível explica a equipe indisponível sem gravar agenda', as
   expect(rows.every((m: { startsAt: string | null }) => m.startsAt === null)).toBe(true);
 });
 test('mudança entre preview e aplicação rejeita proposta antiga', async ({ page, request }) => {
-  const s = await seed(request);
+  const s = await seed(request, page);
   await generate(page, s.t.id);
   await expect(page.getByRole('button', { name: 'Aplicar agenda', exact: true })).toBeVisible();
   expect(
     (
       await request.post(`${api}/tournaments/${s.t.id}/teams/${s.teamId}/availability`, {
+        headers: xsrf(s.token),
         data: { startsAt: '2026-11-16T10:00:00Z', endsAt: '2026-11-16T12:00:00Z' },
       })
     ).ok(),
@@ -125,10 +139,11 @@ test('mudança entre preview e aplicação rejeita proposta antiga', async ({ pa
 });
 
 test('Self-Healing troca somente a área após aprovação humana', async ({ page, request }) => {
-  const s = await seed(request);
+  const s = await seed(request, page);
   const venues = await (await request.get(`${api}/tournaments/${s.t.id}/venues`)).json();
   const alternate = await (
     await request.post(`${api}/tournaments/${s.t.id}/venues/${venues[0].id}/playing-areas`, {
+      headers: xsrf(s.token),
       data: { name: 'Quadra alternativa' },
     })
   ).json();
@@ -136,13 +151,17 @@ test('Self-Healing troca somente a área após aprovação humana', async ({ pag
     (
       await request.post(
         `${api}/tournaments/${s.t.id}/playing-areas/${alternate.id}/availability`,
-        { data: { startsAt: '2026-11-14T18:00:00Z', endsAt: '2026-11-15T02:00:00Z' } },
+        {
+          headers: xsrf(s.token),
+          data: { startsAt: '2026-11-14T18:00:00Z', endsAt: '2026-11-15T02:00:00Z' },
+        },
       )
     ).ok(),
   ).toBe(true);
   expect(
     (
       await request.put(`${api}/matches/${s.matches[0].id}/schedule`, {
+        headers: xsrf(s.token),
         data: { startsAt: '2026-11-14T18:00:00Z', playingAreaId: s.area.id },
       })
     ).ok(),

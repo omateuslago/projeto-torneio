@@ -1,6 +1,16 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  {
+    path: 'login',
+    title: 'Entrar | Brakvyo',
+    loadComponent: () => import('./features/auth/login').then((m) => m.Login),
+  },
+  {
+    path: 'cadastro',
+    title: 'Cadastro | Brakvyo',
+    loadComponent: () => import('./features/auth/register').then((m) => m.Register),
+  },
   { path: '', redirectTo: 'campeonatos', pathMatch: 'full' },
   {
     path: 'campeonatos',
