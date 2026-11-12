@@ -12,6 +12,7 @@ import { apiError } from '../../core/api-error';
   selector: 'app-tournament-detail',
   imports: [RouterLink, Registrations, Matches],
   templateUrl: './tournament-detail.html',
+  styleUrl: './tournament-detail.css',
 })
 export class TournamentDetail {
   private readonly api = inject(TournamentApi);

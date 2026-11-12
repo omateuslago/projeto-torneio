@@ -65,26 +65,6 @@
   overflow-x: auto;
 }
 
-/* Badge e grade de detalhes */
-.badge {
-  display: inline-block;
-  background: #edf3f8;
-  color: #334b65;
-  font-size: 0.8rem;
-  padding: 5px 9px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-.badge.open {
-  background: #e9f6ef;
-  color: #18613e;
-}
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin: 24px 0;
-}
 
 /* Ações e lista de participantes */
 .actions {
@@ -104,12 +84,8 @@
   overflow-wrap: anywhere;
 }
 
-/* Responsivo até 800px (header e shell em app/app.css; workspace em features/teams/teams.css) */
+/* Responsivo até 800px (header e shell em app/app.css; workspace e detail-grid nos CSS dos componentes) */
 @media (max-width: 800px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
   .panel {
     padding: 18px;
   }

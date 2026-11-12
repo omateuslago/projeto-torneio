@@ -1,0 +1,27 @@
+/* Badge de status e grade de detalhes do campeonato */
+.badge {
+  display: inline-block;
+  background: #edf3f8;
+  color: #334b65;
+  font-size: 0.8rem;
+  padding: 5px 9px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.badge.open {
+  background: #e9f6ef;
+  color: #18613e;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 24px 0;
+}
+/* Responsivo até 800px */
+@media (max-width: 800px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
