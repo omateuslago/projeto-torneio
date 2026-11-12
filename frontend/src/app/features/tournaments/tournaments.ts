@@ -22,6 +22,7 @@ import { trimmedRequired } from '../../shared/trimmed-required';
   selector: 'app-tournaments',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './tournaments.html',
+  styleUrl: './tournaments.css',
 })
 export class Tournaments {
   private readonly api = inject(TournamentApi);
