@@ -113,6 +113,20 @@ p {
   align-items: start;
   gap: 24px;
 }
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 22px;
+}
+.back:hover{
+  color: #2563eb;
+  text-decoration: underline;
+}
 .panel {
   background: white;
   border: 1px solid var(--line);
@@ -242,10 +256,6 @@ dd {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-}
-.back {
-  display: inline-block;
-  margin-bottom: 22px;
 }
 .participants {
   list-style: none;
