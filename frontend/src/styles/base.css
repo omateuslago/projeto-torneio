@@ -1,0 +1,139 @@
+/* Reset, elementos base, botões e foco */
+:root {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #243449;
+  background: #f3f6fa;
+  font-synthesis: none;
+  --blue: #0369a1;
+  --line: #ced9e5;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+a {
+  color: var(--blue);
+  text-underline-offset: 0.2em;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+.button {
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--blue);
+  border-radius: 6px;
+  background: var(--blue);
+  color: white;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+button.secondary {
+  color: var(--blue);
+  background: white;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 3px;
+}
+
+/* Tipografia */
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.25rem);
+  line-height: 1.2;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+h2 {
+  font-size: 1.25rem;
+  margin: 0 0 18px;
+}
+p {
+  line-height: 1.6;
+  max-width: 74ch;
+}
+
+/* Formulários */
+form {
+  display: grid;
+  gap: 18px;
+}
+label {
+  display: grid;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+input,
+select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #91a3b7;
+  border-radius: 5px;
+  background: white;
+  color: #243449;
+  padding: 0.65rem 0.75rem;
+}
+input.ng-invalid.ng-touched {
+  border-color: #a12d25;
+}
+
+/* Tabelas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+th {
+  color: #526478;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+th,
+td {
+  padding: 15px 10px;
+  border-bottom: 1px solid #e4eaf0;
+  vertical-align: top;
+}
+th:first-child,
+td:first-child {
+  padding-left: 0;
+}
+td a {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Listas de definição */
+dt {
+  color: #526478;
+  font-size: 0.9rem;
+}
+dd {
+  margin: 8px 0 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Textarea */
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #91a3b7;
+  border-radius: 5px;
+  resize: vertical;
+}
