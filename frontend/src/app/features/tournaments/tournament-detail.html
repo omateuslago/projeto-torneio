@@ -1,58 +1,67 @@
-<a class="back" routerLink="/campeonatos">Voltar aos campeonatos</a>
+<a class="back" routerLink="/campeonatos">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    aria-hidden="true" focusable="false">
+    <path d="m12 19-7-7 7-7" />
+    <path d="M19 12H5" />
+  </svg>
+  Voltar aos campeonatos
+</a>
+
 @if (loading()) {
-  <p role="status">Carregando campeonato…</p>
+<p role="status">Carregando campeonato…</p>
 } @else if (loadError()) {
-  <p class="error" role="alert">{{ loadError() }}</p>
+<p class="error" role="alert">{{ loadError() }}</p>
 } @else if (tournament(); as current) {
-  <section class="panel">
-    <h1>{{ current.name }}</h1>
-    <span class="badge" [class.open]="current.status === 'Open'">{{
-      statusLabels[current.status]
+<section class="panel">
+  <h1>{{ current.name }}</h1>
+  <span class="badge" [class.open]="current.status === 'Open'">{{
+    statusLabels[current.status]
     }}</span>
-    <dl class="detail-grid">
-      <div>
-        <dt>Modalidade</dt>
-        <dd>{{ current.sport }}</dd>
-      </div>
-      <div>
-        <dt>Formato</dt>
-        <dd>{{ formatLabels[current.format] }}</dd>
-      </div>
-      <div>
-        <dt>Capacidade</dt>
-        <dd>{{ current.maxTeams }} equipes</dd>
-      </div>
-    </dl>
-    @if (current.status === 'Draft') {
-      <p class="muted">Abra as inscrições para começar a adicionar equipes.</p>
-      <button (click)="changeStatus('Open')" [disabled]="saving()">
-        {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
-      </button>
-    } @else if (current.status === 'Open') {
-      <p class="muted">Ao encerrar, não será possível reabrir as inscrições nesta etapa.</p>
-      <button class="secondary" (click)="changeStatus('Closed')" [disabled]="saving()">
-        {{ saving() ? 'Encerrando…' : 'Fechar inscrições' }}
-      </button>
-    } @else {
-      <p class="muted">
-        As inscrições foram encerradas. As equipes inscritas continuam disponíveis para consulta.
-      </p>
-    }
-    @if (actionError()) {
-      <p class="error" role="alert">{{ actionError() }}</p>
-    }
-    @if (message()) {
-      <p class="success" role="status">{{ message() }}</p>
-    }
-  </section>
-  <app-registrations [tournament]="current" />
-  <p><a [routerLink]="['/campeonatos', current.id, 'agenda']">Agenda e disponibilidade</a></p>
-  @if (current.format === 'RoundRobin') {
-    <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
+  <dl class="detail-grid">
+    <div>
+      <dt>Modalidade</dt>
+      <dd>{{ current.sport }}</dd>
+    </div>
+    <div>
+      <dt>Formato</dt>
+      <dd>{{ formatLabels[current.format] }}</dd>
+    </div>
+    <div>
+      <dt>Capacidade</dt>
+      <dd>{{ current.maxTeams }} equipes</dd>
+    </div>
+  </dl>
+  @if (current.status === 'Draft') {
+  <p class="muted">Abra as inscrições para começar a adicionar equipes.</p>
+  <button (click)="changeStatus('Open')" [disabled]="saving()">
+    {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
+  </button>
+  } @else if (current.status === 'Open') {
+  <p class="muted">Ao encerrar, não será possível reabrir as inscrições nesta etapa.</p>
+  <button class="secondary" (click)="changeStatus('Closed')" [disabled]="saving()">
+    {{ saving() ? 'Encerrando…' : 'Fechar inscrições' }}
+  </button>
   } @else {
-    <p class="muted">
-      Partidas e classificação estão disponíveis apenas para campeonatos de pontos corridos nesta
-      etapa.
-    </p>
+  <p class="muted">
+    As inscrições foram encerradas. As equipes inscritas continuam disponíveis para consulta.
+  </p>
   }
+  @if (actionError()) {
+  <p class="error" role="alert">{{ actionError() }}</p>
+  }
+  @if (message()) {
+  <p class="success" role="status">{{ message() }}</p>
+  }
+</section>
+<app-registrations [tournament]="current" />
+<p><a [routerLink]="['/campeonatos', current.id, 'agenda']">Agenda e disponibilidade</a></p>
+@if (current.format === 'RoundRobin') {
+<app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
+} @else {
+<p class="muted">
+  Partidas e classificação estão disponíveis apenas para campeonatos de pontos corridos nesta
+  etapa.
+</p>
+}
 }
