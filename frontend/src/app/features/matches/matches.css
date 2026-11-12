@@ -1,0 +1,27 @@
+/* Tabelas roláveis de partidas e classificação */
+.table-wrap {
+  overflow-x: auto;
+}
+/* Envios por partida e ação administrativa */
+.admin-action {
+  margin-top: 18px;
+}
+.match-submissions {
+  min-width: 18rem;
+}
+.admin-action summary {
+  cursor: pointer;
+  padding-block: 10px;
+  color: var(--blue);
+}
+/* Campos de placar do formulário de resultado */
+.score-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 600px) {
+  .score-fields {
+    grid-template-columns: 1fr;
+  }
+}

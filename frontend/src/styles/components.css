@@ -34,7 +34,7 @@
   margin: 0;
 }
 
-/* Textos auxiliares, feedback, vazio e tabela rolável */
+/* Textos auxiliares, feedback e vazio */
 .hint,
 .muted {
   color: #526478;
@@ -60,9 +60,6 @@
 .empty {
   padding: 28px 0;
   color: #526478;
-}
-.table-wrap {
-  overflow-x: auto;
 }
 
 
@@ -96,18 +93,7 @@
   margin-top: 24px;
 }
 
-/* Ação administrativa, formulário de resultado e placar */
-.admin-action {
-  margin-top: 18px;
-}
-.match-submissions {
-  min-width: 18rem;
-}
-.admin-action summary {
-  cursor: pointer;
-  padding-block: 10px;
-  color: var(--blue);
-}
+/* Formulário de resultado/agendamento (Partidas e Agenda) */
 .result-form {
   margin-top: 24px;
   border-top: 1px solid var(--line);
@@ -115,16 +101,6 @@
 }
 .result-form h3 {
   margin: 0;
-}
-.score-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-@media (max-width: 600px) {
-  .score-fields {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Página de campeonatos, estados, cards e modal de criação */

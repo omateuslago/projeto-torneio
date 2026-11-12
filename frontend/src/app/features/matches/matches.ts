@@ -20,6 +20,7 @@ import { trimmedRequired } from '../../shared/trimmed-required';
   selector: 'app-matches',
   imports: [ReactiveFormsModule],
   templateUrl: './matches.html',
+  styleUrl: './matches.css',
 })
 export class Matches {
   readonly tournament = input.required<Tournament>();
