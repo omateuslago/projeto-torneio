@@ -114,22 +114,14 @@
   overflow-wrap: anywhere;
 }
 
-/* Responsivo até 800px (inclui header e shell; mantido inteiro) */
+/* Responsivo até 800px (header e shell ficam em app/app.css) */
 @media (max-width: 800px) {
   .workspace {
     grid-template-columns: 1fr;
   }
-  .header-inner {
-    flex-wrap: wrap;
-    padding-block: 18px;
-    gap: 10px;
-  }
   .detail-grid {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-  .shell {
-    width: calc(100% - 28px);
   }
   .panel {
     padding: 18px;
