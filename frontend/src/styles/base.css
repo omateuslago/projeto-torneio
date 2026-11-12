@@ -1,11 +1,9 @@
 /* Reset, elementos base, botões e foco */
 :root {
   font-family: 'Segoe UI', system-ui, sans-serif;
-  color: #243449;
-  background: #f3f6fa;
+  color: var(--color-text-legacy);
+  background: var(--color-bg-page);
   font-synthesis: none;
-  --blue: #0369a1;
-  --line: #ced9e5;
 }
 * {
   box-sizing: border-box;
@@ -14,7 +12,7 @@ body {
   margin: 0;
 }
 a {
-  color: var(--blue);
+  color: var(--color-primary-legacy);
   text-underline-offset: 0.2em;
 }
 button,
@@ -24,12 +22,12 @@ select {
 }
 button,
 .button {
-  min-height: 44px;
+  min-height: var(--control-height);
   padding: 0.65rem 1rem;
-  border: 1px solid var(--blue);
-  border-radius: 6px;
-  background: var(--blue);
-  color: white;
+  border: 1px solid var(--color-primary-legacy);
+  border-radius: var(--radius-button);
+  background: var(--color-primary-legacy);
+  color: var(--color-on-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
@@ -38,15 +36,15 @@ button,
   font-weight: 600;
 }
 button.secondary {
-  color: var(--blue);
-  background: white;
+  color: var(--color-primary-legacy);
+  background: var(--color-surface);
 }
 button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 :focus-visible {
-  outline: 3px solid #b45309;
+  outline: 3px solid var(--color-focus-ring);
   outline-offset: 3px;
 }
 
@@ -80,15 +78,15 @@ label {
 input,
 select {
   width: 100%;
-  min-height: 44px;
-  border: 1px solid #91a3b7;
-  border-radius: 5px;
-  background: white;
-  color: #243449;
+  min-height: var(--control-height);
+  border: 1px solid var(--color-border-field-legacy);
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+  color: var(--color-text-legacy);
   padding: 0.65rem 0.75rem;
 }
 input.ng-invalid.ng-touched {
-  border-color: #a12d25;
+  border-color: var(--color-border-invalid);
 }
 
 /* Tabelas */
@@ -98,14 +96,14 @@ table {
   text-align: left;
 }
 th {
-  color: #526478;
+  color: var(--color-text-muted-legacy);
   font-weight: 600;
   font-size: 0.85rem;
 }
 th,
 td {
   padding: 15px 10px;
-  border-bottom: 1px solid #e4eaf0;
+  border-bottom: 1px solid var(--color-divider-legacy);
   vertical-align: top;
 }
 th:first-child,
@@ -119,7 +117,7 @@ td a {
 
 /* Listas de definição */
 dt {
-  color: #526478;
+  color: var(--color-text-muted-legacy);
   font-size: 0.9rem;
 }
 dd {
@@ -133,7 +131,7 @@ textarea {
   font: inherit;
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #91a3b7;
-  border-radius: 5px;
+  border: 1px solid var(--color-border-field-legacy);
+  border-radius: var(--radius-field);
   resize: vertical;
 }

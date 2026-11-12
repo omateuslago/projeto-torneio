@@ -1,9 +1,11 @@
 /*
  * Ponto de entrada dos estilos globais (registrado em angular.json).
  * A ordem dos imports faz parte da cascata: não reordene sem revisar a precedência.
- *   1. base.css       — reset, elementos HTML, botões, foco, tipografia, formulários e tabelas
- *   2. components.css — classes compartilhadas e blocos de páginas, na ordem original
+ *   1. tokens.css     — design tokens (cores, raios, alturas de controle); carregado primeiro
+ *   2. base.css       — reset, elementos HTML, botões, foco, tipografia, formulários e tabelas
+ *   3. components.css — classes compartilhadas e blocos de páginas, na ordem original
  * Shell, cabeçalho, navegação e skip-link ficam encapsulados em app/app.css.
  */
+@import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/components.css';

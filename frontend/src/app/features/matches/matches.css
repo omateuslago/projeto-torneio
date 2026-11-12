@@ -12,7 +12,7 @@
 .admin-action summary {
   cursor: pointer;
   padding-block: 10px;
-  color: var(--blue);
+  color: var(--color-primary-legacy);
 }
 /* Campos de placar do formulário de resultado */
 .score-fields {

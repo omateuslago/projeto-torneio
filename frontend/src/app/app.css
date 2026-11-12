@@ -4,8 +4,8 @@
   margin-inline: auto;
 }
 .site-header {
-  background: white;
-  border-bottom: 1px solid var(--line);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-legacy);
 }
 .header-inner {
   display: flex;
@@ -15,7 +15,7 @@
   min-height: 94px;
 }
 .brand {
-  color: #243449;
+  color: var(--color-text-legacy);
   text-decoration: none;
 }
 .brand-logo {
@@ -30,11 +30,11 @@ nav {
 nav a {
   padding: 14px 0;
   text-decoration: none;
-  color: #526478;
+  color: var(--color-text-muted-legacy);
 }
 nav a.active {
-  color: var(--blue);
-  box-shadow: 0 3px var(--blue);
+  color: var(--color-primary-legacy);
+  box-shadow: 0 3px var(--color-primary-legacy);
   font-weight: 600;
 }
 main.shell {
@@ -46,7 +46,7 @@ main.shell {
   position: absolute;
   left: 20px;
   top: -100px;
-  background: white;
+  background: var(--color-surface);
   padding: 12px;
   z-index: 10;
 }

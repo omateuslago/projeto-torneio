@@ -1,0 +1,77 @@
+/*
+ * Design tokens do Brakvyo.
+ *
+ * Os valores reproduzem exatamente o que a interface usa hoje. Convivem duas paletas:
+ *   -legacy → identidade anterior (primária #0369a1)
+ *   -brand  → identidade atual do Brakvyo (logo: #2563eb / #1f2937)
+ * Quando as duas exercem o mesmo papel com valores diferentes, os tokens permanecem separados.
+ * A unificação é uma decisão visual futura: troque o valor aqui, não nos componentes.
+ *
+ * Os ícones SVG (assests/*.svg) usam #0b7bd8 internamente; por serem carregados via <img>,
+ * não consomem variáveis CSS e não há token para essa cor.
+ *
+ * Breakpoints em uso (var() não funciona em @media): 800px (layout em coluna) e 600px
+ * (formulários, cabeçalhos e modal).
+ */
+:root {
+  /* Superfícies e fundo */
+  --color-bg-page: #f3f6fa;
+  --color-surface: #fff;
+  --color-surface-muted-brand: #f1f5f9;
+  --color-backdrop: rgb(15 23 42 / 45%);
+
+  /* Texto */
+  --color-text-legacy: #243449;
+  --color-text-brand: #1f2937;
+  --color-text-muted-legacy: #526478;
+  --color-text-muted-brand: #64748b;
+  --color-text-secondary-brand: #475569;
+
+  /* Primária */
+  --color-primary-legacy: #0369a1;
+  --color-primary-brand: #2563eb;
+  --color-primary-strong-brand: #1d4ed8;
+  --color-primary-muted-brand: #bfdbfe;
+  --color-primary-soft-brand: #eff6ff;
+  --color-on-primary: #fff;
+
+  /* Bordas e divisores */
+  --color-border-legacy: #ced9e5;
+  --color-border-brand: #e2e8f0;
+  --color-divider-legacy: #e4eaf0;
+  --color-border-field-legacy: #91a3b7;
+  --color-border-invalid: #a12d25;
+
+  /* Feedback */
+  --color-danger-text: #8f241e;
+  --color-danger-bg: #fff2f1;
+  --color-danger-border: #b84036;
+  --color-success-text: #176044;
+  --color-success-bg: #effaf5;
+  --color-success-border: #27805a;
+
+  /* Status (badge de Detalhes) */
+  --color-status-bg-legacy: #edf3f8;
+  --color-status-text-legacy: #334b65;
+  --color-status-open-bg-legacy: #e9f6ef;
+  --color-status-open-text-legacy: #18613e;
+
+  /* Foco */
+  --color-focus-ring: #b45309;
+
+  /* Raios de borda */
+  --radius-badge: 4px;
+  --radius-field: 5px;
+  --radius-button: 6px;
+  --radius-surface: 8px;
+  --radius-modal: 10px;
+  --radius-pill: 999px;
+
+  /* Altura de controles (botões e campos) */
+  --control-height: 44px;
+  --control-height-compact-brand: 40px;
+
+  /* Aliases mantidos por compatibilidade */
+  --blue: var(--color-primary-legacy);
+  --line: var(--color-border-legacy);
+}

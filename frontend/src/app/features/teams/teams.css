@@ -1,6 +1,6 @@
 /* Introdução e grade de duas colunas da tela de Equipes */
 .intro {
-  color: #526478;
+  color: var(--color-text-muted-legacy);
   margin: 0 0 28px;
 }
 .workspace {

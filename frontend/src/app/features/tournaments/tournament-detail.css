@@ -1,16 +1,16 @@
 /* Badge de status e grade de detalhes do campeonato */
 .badge {
   display: inline-block;
-  background: #edf3f8;
-  color: #334b65;
+  background: var(--color-status-bg-legacy);
+  color: var(--color-status-text-legacy);
   font-size: 0.8rem;
   padding: 5px 9px;
-  border-radius: 4px;
+  border-radius: var(--radius-badge);
   white-space: nowrap;
 }
 .badge.open {
-  background: #e9f6ef;
-  color: #18613e;
+  background: var(--color-status-open-bg-legacy);
+  color: var(--color-status-open-text-legacy);
 }
 .detail-grid {
   display: grid;

@@ -3,20 +3,20 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #475569;
+  color: var(--color-text-secondary-brand);
   text-decoration: none;
   font-size: 20px;
   font-weight: 400;
   margin-bottom: 22px;
 }
 .back:hover{
-  color: #2563eb;
+  color: var(--color-primary-brand);
   text-decoration: underline;
 }
 .panel {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-legacy);
+  border-radius: var(--radius-surface);
   padding: 24px;
   min-width: 0;
 }
@@ -37,7 +37,7 @@
 /* Textos auxiliares, feedback e vazio */
 .hint,
 .muted {
-  color: #526478;
+  color: var(--color-text-muted-legacy);
   font-size: 0.9rem;
 }
 .hint {
@@ -45,21 +45,21 @@
   font-weight: 400;
 }
 .error {
-  color: #8f241e;
-  background: #fff2f1;
-  border-left: 3px solid #b84036;
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  border-left: 3px solid var(--color-danger-border);
   padding: 12px 16px;
   overflow-wrap: anywhere;
 }
 .success {
-  color: #176044;
-  background: #effaf5;
-  border-left: 3px solid #27805a;
+  color: var(--color-success-text);
+  background: var(--color-success-bg);
+  border-left: 3px solid var(--color-success-border);
   padding: 12px 16px;
 }
 .empty {
   padding: 28px 0;
-  color: #526478;
+  color: var(--color-text-muted-legacy);
 }
 
 
@@ -77,7 +77,7 @@
 }
 .participants li {
   padding: 14px 0;
-  border-bottom: 1px solid #e4eaf0;
+  border-bottom: 1px solid var(--color-divider-legacy);
   overflow-wrap: anywhere;
 }
 
@@ -96,7 +96,7 @@
 /* Formulário de resultado/agendamento (Partidas e Agenda) */
 .result-form {
   margin-top: 24px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border-legacy);
   padding-top: 18px;
 }
 .result-form h3 {
@@ -106,10 +106,10 @@
 /* Estados (loading/erro/vazio) e botões de Campeonatos, compartilhados com Equipes */
 .tournaments-page__refresh,
 .tournaments-page__secondary {
-  min-height: 40px;
-  color: #2563eb;
-  background: #fff;
-  border: 1px solid #bfdbfe;
+  min-height: var(--control-height-compact-brand);
+  color: var(--color-primary-brand);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary-muted-brand);
 }
 .tournaments-state {
   display: flex;
@@ -117,23 +117,23 @@
   justify-content: center;
   gap: 12px;
   min-height: 260px;
-  color: #64748b;
+  color: var(--color-text-muted-brand);
 }
 .tournaments-state--error {
   flex-direction: column;
   text-align: center;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
   padding: 32px 16px;
-  color: #1f2937;
+  color: var(--color-text-brand);
 }
 .tournaments-state--error p,
 .tournaments-state--error h3 {
   margin: 0;
 }
 .tournaments-state--error p {
-  color: #64748b;
+  color: var(--color-text-muted-brand);
 }
 .tournaments-state__technical-error {
   max-width: 60ch;
@@ -143,9 +143,9 @@
   flex-direction: column;
   text-align: center;
   padding: 32px 16px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
 }
 .tournaments-state__icon {
   display: grid;
@@ -153,7 +153,7 @@
   height: 64px;
   place-items: center;
   border-radius: 50%;
-  background: #eff6ff;
+  background: var(--color-primary-soft-brand);
 }
 .tournaments-state__icon img {
   width: 36px;
@@ -165,13 +165,13 @@
 }
 .tournaments-state--empty p {
   margin: 0;
-  color: #64748b;
+  color: var(--color-text-muted-brand);
 }
 .tournaments-state__spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid #bfdbfe;
-  border-top-color: #2563eb;
+  border: 2px solid var(--color-primary-muted-brand);
+  border-top-color: var(--color-primary-brand);
   border-radius: 50%;
   animation: tournaments-spin 0.8s linear infinite;
 }
