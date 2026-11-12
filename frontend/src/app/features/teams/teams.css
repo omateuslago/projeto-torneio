@@ -1,0 +1,17 @@
+/* Introdução e grade de duas colunas da tela de Equipes */
+.intro {
+  color: #526478;
+  margin: 0 0 28px;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: 24px;
+}
+/* Responsivo até 800px */
+@media (max-width: 800px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}

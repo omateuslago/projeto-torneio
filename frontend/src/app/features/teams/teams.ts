@@ -7,7 +7,12 @@ import { Team } from '../../core/models';
 import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
 
-@Component({ selector: 'app-teams', imports: [ReactiveFormsModule], templateUrl: './teams.html' })
+@Component({
+  selector: 'app-teams',
+  imports: [ReactiveFormsModule],
+  templateUrl: './teams.html',
+  styleUrl: './teams.css',
+})
 export class Teams {
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
