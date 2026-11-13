@@ -26,9 +26,13 @@ docker compose up -d --build --wait db scheduler
 echo "==> Aplicando migrations..."
 dotnet run --project backend/Projeto-Campeonato.Api --no-launch-profile -- --migrate
 
-if [ ! -d frontend/node_modules ]; then
+frontend_lock_hash="$(sha256sum frontend/package-lock.json | cut -d ' ' -f 1)"
+frontend_install_stamp="frontend/node_modules/.package-lock.sha256"
+
+if [ ! -d frontend/node_modules ] || [ ! -f "$frontend_install_stamp" ] || [ "$(cat "$frontend_install_stamp")" != "$frontend_lock_hash" ]; then
   echo "==> Instalando dependências do frontend..."
   (cd frontend && npm ci)
+  printf '%s\n' "$frontend_lock_hash" > "$frontend_install_stamp"
 fi
 
 pids=()

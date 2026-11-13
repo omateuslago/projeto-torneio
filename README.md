@@ -30,6 +30,12 @@ Veja [Autopilot v1](docs/tournament-autopilot.md).
 
 ## Iniciar localmente
 
+Depois de criar o `.env`, suba rapidamente o ambiente completo com:
+
+```bash
+bash iniciar.sh
+```
+
 ### 1. PostgreSQL
 
 Na raiz do repositório:
