@@ -152,6 +152,75 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.AccessInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AcceptedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InvitedEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TournamentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptedByUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("NormalizedEmail");
+
+                    b.HasIndex("TeamId");
+
+                    b.HasIndex("TournamentId");
+
+                    b.HasIndex("TeamId", "NormalizedEmail")
+                        .IsUnique()
+                        .HasFilter("\"Active\" = TRUE AND \"TeamId\" IS NOT NULL");
+
+                    b.HasIndex("TournamentId", "NormalizedEmail")
+                        .IsUnique()
+                        .HasFilter("\"Active\" = TRUE AND \"TournamentId\" IS NOT NULL");
+
+                    b.ToTable("AccessInvitations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AccessInvitations_Target", "(\"TournamentId\" IS NULL) <> (\"TeamId\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -683,6 +752,30 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.AccessInvitation", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AcceptedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Tournament", null)
+                        .WithMany()
+                        .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.AuditLog", b =>

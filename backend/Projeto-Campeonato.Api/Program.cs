@@ -47,6 +47,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAccessControl, AccessControl>();
+builder.Services.AddSingleton<IAccessInvitationTokens, AccessInvitationTokens>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

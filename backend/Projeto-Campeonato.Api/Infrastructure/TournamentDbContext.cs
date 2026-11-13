@@ -22,6 +22,7 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<Availability> Availabilities => Set<Availability>();
     public DbSet<TournamentOrganizer> TournamentOrganizers => Set<TournamentOrganizer>();
     public DbSet<TeamManager> TeamManagers => Set<TeamManager>();
+    public DbSet<AccessInvitation> AccessInvitations => Set<AccessInvitation>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -42,6 +43,25 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
             entity.HasKey(x => new { x.UserId, x.TeamId });
             entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.Cascade);
+        });
+        model.Entity<AccessInvitation>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.InvitedEmail).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.NormalizedEmail).HasMaxLength(256).IsRequired();
+            entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.AcceptedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => x.TournamentId);
+            entity.HasIndex(x => x.TeamId);
+            entity.HasIndex(x => x.NormalizedEmail);
+            entity.HasIndex(x => new { x.TournamentId, x.NormalizedEmail }).IsUnique()
+                .HasFilter("\"Active\" = TRUE AND \"TournamentId\" IS NOT NULL");
+            entity.HasIndex(x => new { x.TeamId, x.NormalizedEmail }).IsUnique()
+                .HasFilter("\"Active\" = TRUE AND \"TeamId\" IS NOT NULL");
+            entity.ToTable("AccessInvitations", table => table.HasCheckConstraint(
+                "CK_AccessInvitations_Target", "(\"TournamentId\" IS NULL) <> (\"TeamId\" IS NULL)"));
         });
         model.Entity<Tournament>(entity =>
         {
