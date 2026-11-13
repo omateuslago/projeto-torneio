@@ -1,0 +1,26 @@
+<section class="panel">
+  <div class="section-heading">
+    <h1>Notificações</h1>
+    <button type="button" class="secondary" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Atualizando…' : 'Atualizar' }}
+    </button>
+  </div>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  } @else if (!loading() && !notifications().length) {
+    <p class="muted">Você ainda não possui notificações.</p>
+  } @else {
+    <ul class="participants">
+      @for (notification of notifications(); track notification.id) {
+        <li>
+          <div>
+            <strong>{{ notification.title }}</strong>
+            <p>{{ notification.summary }}</p>
+            <small>{{ notification.createdAt | date: 'short' }}</small>
+          </div>
+          <span>WhatsApp: {{ statusLabels[notification.whatsAppStatus] }}</span>
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -8,6 +8,8 @@
       <a routerLink="/campeonatos" routerLinkActive="active">Campeonatos</a>
       <a routerLink="/equipes" routerLinkActive="active">Equipes</a>
       @if (auth.isAuthenticated()) {
+        <a routerLink="/notificacoes" routerLinkActive="active">Notificações</a>
+        <a routerLink="/minha-conta/notificacoes" routerLinkActive="active">Preferências</a>
         <span>Olá, {{ auth.user().displayName }}</span>
         <button type="button" class="secondary" (click)="logout()">Sair</button>
       } @else {
