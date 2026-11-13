@@ -48,6 +48,17 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAccessControl, AccessControl>();
 builder.Services.AddSingleton<IAccessInvitationTokens, AccessInvitationTokens>();
+builder.Services.Configure<WhatsAppOptions>(builder.Configuration.GetSection("Notifications:WhatsApp"));
+builder.Services.AddScoped<INotificationOutbox, NotificationOutbox>();
+builder.Services.AddSingleton<INotificationRenderer, NotificationRenderer>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHttpClient<EvolutionWhatsAppSender>();
+builder.Services.AddTransient<IWhatsAppSender>(services =>
+    services.GetRequiredService<Microsoft.Extensions.Options.IOptions<WhatsAppOptions>>().Value.Enabled
+        ? services.GetRequiredService<EvolutionWhatsAppSender>()
+        : new DisabledWhatsAppSender());
+builder.Services.AddScoped<NotificationDeliveryProcessor>();
+builder.Services.AddHostedService<NotificationDeliveryWorker>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Identity;
 using Projeto_Campeonato.Api.Domain;
 using System.Net.Http.Json;
 using Projeto_Campeonato.Api.Features;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Projeto_Campeonato.Api.Tests;
 
@@ -25,6 +27,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(
             new Dictionary<string, string?> { ["ConnectionStrings:Tournaments"] = testConnection }));
+        builder.ConfigureServices(services => services.RemoveAll<IHostedService>());
     }
 
     public async Task InitializeAsync()

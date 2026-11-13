@@ -14,7 +14,8 @@ public sealed record DisputeResponse(Guid Id, Guid MatchId, DisputeStatus Status
 public sealed record AuditResponse(Guid Id, Guid MatchId, Guid? TeamId, string EventType, DateTime OccurredAt, string Data);
 
 [ApiController]
-public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessControl access) : ControllerBase
+public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessControl access,
+    INotificationOutbox notifications) : ControllerBase
 {
     [HttpPut("api/matches/{matchId:guid}/score-submissions/{teamId:guid}")]
     [Authorize]
@@ -48,6 +49,7 @@ public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessCo
             {
                 var dispute = new Dispute(matchId); db.Disputes.Add(dispute); disputed = true;
                 workflow.Audit(match, "DisputeOpened", new { dispute.Id });
+                await notifications.DisputeOpened(dispute.Id, match.Id, ct);
             }
             match.AwaitConfirmation(disputed);
             await db.SaveChangesAsync(ct);
@@ -69,6 +71,8 @@ public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessCo
         if (dispute.Status != DisputeStatus.Open) return Problem(statusCode: 409, detail: "Dispute is already resolved.");
         var match = await db.Matches.SingleAsync(x => x.Id == target.Id, ct);
         await new ResultWorkflow(db).ApplyOfficial(match, tournament, request.HomeScore!.Value, request.AwayScore!.Value, "DisputeResolution", request.ResolutionNote, ct);
+        await notifications.DisputeResolved(dispute.Id, match.Id, ct);
+        await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return Ok(new DisputeResponse(dispute.Id, dispute.MatchId, dispute.Status, dispute.OpenedAt, dispute.ResolvedAt, dispute.ResolutionNote));
     }

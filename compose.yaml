@@ -33,6 +33,11 @@ services:
       Scheduler__BaseUrl: http://scheduler:8000
       Scheduler__TimeoutSeconds: 10
       ProposalKeysPath: /keys
+      Notifications__WhatsApp__Enabled: ${NOTIFICATIONS_WHATSAPP_ENABLED:-false}
+      Notifications__WhatsApp__BaseUrl: ${NOTIFICATIONS_WHATSAPP_BASE_URL:-}
+      Notifications__WhatsApp__ApiKey: ${NOTIFICATIONS_WHATSAPP_API_KEY:-}
+      Notifications__WhatsApp__InstanceName: ${NOTIFICATIONS_WHATSAPP_INSTANCE_NAME:-}
+      Notifications__WhatsApp__WebhookSecret: ${NOTIFICATIONS_WHATSAPP_WEBHOOK_SECRET:-}
       ConnectionStrings__Tournaments: Host=db;Database=tournaments;Username=tournaments;Password=${POSTGRES_PASSWORD}
     ports:
       - "127.0.0.1:5094:8080"

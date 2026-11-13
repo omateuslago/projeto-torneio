@@ -98,13 +98,13 @@ public sealed class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task TeamManagersSubmitOnlyForTheirOwnParticipatingTeamAndOrganizerResolves()
     {
-        var (organizer, _) = await factory.RegisterUser(displayName: "Organizer");
+        var (organizer, organizerUser) = await factory.RegisterUser(displayName: "Organizer");
         var tournamentId = await CreateTournament(organizer, "Bilateral Cup");
         await organizer.PutAsJsonAsync($"/api/tournaments/{tournamentId}/status", new { status = "Open" });
 
-        var (homeManager, _) = await factory.RegisterUser(displayName: "Home manager");
+        var (homeManager, homeManagerUser) = await factory.RegisterUser(displayName: "Home manager");
         var homeId = await CreateTeam(homeManager, "Home");
-        var (awayManager, _) = await factory.RegisterUser(displayName: "Away manager");
+        var (awayManager, awayManagerUser) = await factory.RegisterUser(displayName: "Away manager");
         var awayId = await CreateTeam(awayManager, "Away");
         Assert.Equal(HttpStatusCode.Created,
             (await organizer.PostAsJsonAsync($"/api/tournaments/{tournamentId}/registrations", new { teamId = homeId })).StatusCode);
@@ -137,6 +137,18 @@ public sealed class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK,
             (await organizer.PutAsJsonAsync($"/api/disputes/{disputeId}/resolve", new
                 { homeScore = 2, awayScore = 1, resolutionNote = "Conferido pelo organizador" })).StatusCode);
+        using var notificationScope = factory.Services.CreateScope();
+        var notificationDb = notificationScope.ServiceProvider.GetRequiredService<TournamentDbContext>();
+        var openedUsers = await (from delivery in notificationDb.NotificationDeliveries
+            join notification in notificationDb.Notifications on delivery.NotificationId equals notification.Id
+            where notification.Type == NotificationType.ScoreDisputeOpened && notification.MatchId == matchId
+            select delivery.UserId).ToArrayAsync();
+        var resolvedUsers = await (from delivery in notificationDb.NotificationDeliveries
+            join notification in notificationDb.Notifications on delivery.NotificationId equals notification.Id
+            where notification.Type == NotificationType.ScoreDisputeResolved && notification.MatchId == matchId
+            select delivery.UserId).Order().ToArrayAsync();
+        Assert.Equal([organizerUser.Id!.Value], openedUsers);
+        Assert.Equal(new[] { homeManagerUser.Id!.Value, awayManagerUser.Id!.Value }.Order(), resolvedUsers);
     }
 
     [Fact]

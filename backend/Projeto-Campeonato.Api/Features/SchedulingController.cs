@@ -21,7 +21,8 @@ public sealed record ScheduleDto(Guid MatchId, Guid HomeTeamId, string HomeTeam,
 
 [ApiController]
 [Route("api/tournaments/{tournamentId:guid}")]
-public sealed class SchedulingController(TournamentDbContext db, IAccessControl access) : ControllerBase
+public sealed class SchedulingController(TournamentDbContext db, IAccessControl access,
+    INotificationOutbox notifications) : ControllerBase
 {
     // All scheduling writes use this transaction-scoped PostgreSQL lock, including
     // availability edits. Global scope also protects teams shared across tournaments.
@@ -190,7 +191,9 @@ public sealed class SchedulingController(TournamentDbContext db, IAccessControl 
         if (!await access.CanManageTournament(User, tId.Value, ct)) return Forbid();
         var t = (await Tournament(tId.Value, ct))!;
         var m = await db.Matches.SingleAsync(x => x.Id == matchId, ct);
+        var rescheduled = m.StartsAt.HasValue;
         await new ScheduleWriter(db).Stage(m, t, request, true, ct);
+        await notifications.MatchScheduled(m.Id, rescheduled, ct);
         await db.SaveChangesAsync(ct);
         var result = await Agenda(t.Id, matchId).SingleAsync(ct);
         await tx.CommitAsync(ct);

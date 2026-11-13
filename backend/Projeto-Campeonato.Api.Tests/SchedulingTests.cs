@@ -4,6 +4,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Features;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Projeto_Campeonato.Api.Infrastructure;
 namespace Projeto_Campeonato.Api.Tests;
 
 public sealed class SchedulingTests(ApiFactory factory) : IClassFixture<ApiFactory>
@@ -71,6 +74,14 @@ public sealed class SchedulingTests(ApiFactory factory) : IClassFixture<ApiFacto
         var saved = (await Agenda(s.T)).First(); Assert.Equal(s.OtherArea.Id, saved.PlayingAreaId); Assert.Null(saved.RefereeId);
         var audit = await Read<AuditResponse[]>(await client.GetAsync($"/api/matches/{s.Matches[0].Id}/audit-log"));
         Assert.Contains(audit, x => x.EventType == "MatchScheduled"); Assert.Contains(audit, x => x.EventType == "MatchRescheduled");
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TournamentDbContext>();
+        Assert.Equal(2, await db.Notifications.CountAsync(x => x.MatchId == s.Matches[0].Id));
+        Assert.Equal(2, await db.NotificationDeliveries.CountAsync(x =>
+            db.Notifications.Any(n => n.Id == x.NotificationId && n.MatchId == s.Matches[0].Id)));
+        Assert.All(await db.NotificationDeliveries.Where(x =>
+            db.Notifications.Any(n => n.Id == x.NotificationId && n.MatchId == s.Matches[0].Id)).ToArrayAsync(),
+            x => Assert.Equal(NotificationDeliveryStatus.Skipped, x.Status));
         Assert.Equal(5, (await Agenda(s.T)).Count(x => x.StartsAt is null));
     }
     [Theory]
