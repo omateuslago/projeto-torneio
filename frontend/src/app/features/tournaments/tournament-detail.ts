@@ -7,6 +7,7 @@ import { Tournament, TournamentStatus, formatLabels, statusLabels } from '../../
 import { Matches } from '../matches/matches';
 import { Registrations } from '../registrations/registrations';
 import { apiError } from '../../core/api-error';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-tournament-detail',
@@ -14,6 +15,7 @@ import { apiError } from '../../core/api-error';
   templateUrl: './tournament-detail.html',
 })
 export class TournamentDetail {
+  readonly auth = inject(AuthService);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly tournament = signal<Tournament | null>(null);

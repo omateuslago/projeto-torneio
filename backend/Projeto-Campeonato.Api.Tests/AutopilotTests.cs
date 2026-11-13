@@ -43,7 +43,7 @@ public sealed partial class AutopilotTests(ApiFactory factory) : IClassFixture<A
         (await client.PostAsJsonAsync($"/api/tournaments/{t.Id}/playing-areas/{a.Id}/availability", new { startsAt = Options.HorizonStart, endsAt = Options.HorizonEnd })).EnsureSuccessStatusCode();
         return (t.Id, a.Id, teamId);
     }
-    private HttpClient Client(Stub stub) => factory.WithWebHostBuilder(b => b.ConfigureTestServices(s => { s.RemoveAll<ISchedulerClient>(); s.AddSingleton<ISchedulerClient>(stub); })).CreateClient();
+    private HttpClient Client(Stub stub) => factory.Authenticate(factory.WithWebHostBuilder(b => b.ConfigureTestServices(s => { s.RemoveAll<ISchedulerClient>(); s.AddSingleton<ISchedulerClient>(stub); })).CreateClient());
     private Task<HttpResponseMessage> Generate(HttpClient c, Guid id) => c.PostAsJsonAsync($"/api/tournaments/{id}/schedule/generate", Options);
     private Task<HttpResponseMessage> Apply(HttpClient c, Guid id, string token) => c.PostAsJsonAsync($"/api/tournaments/{id}/schedule/apply", new { proposalToken = token });
     private async Task<ScheduleDto[]> Agenda(HttpClient c, Guid id) => await Read<ScheduleDto[]>(await c.GetAsync($"/api/tournaments/{id}/schedule"));

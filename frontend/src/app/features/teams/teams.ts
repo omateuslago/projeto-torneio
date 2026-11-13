@@ -6,9 +6,11 @@ import { TournamentApi } from '../../core/tournament-api';
 import { Team } from '../../core/models';
 import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
+import { AuthService } from '../../core/auth.service';
 
 @Component({ selector: 'app-teams', imports: [ReactiveFormsModule], templateUrl: './teams.html' })
 export class Teams {
+  readonly auth = inject(AuthService);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly teams = signal<Team[]>([]);
@@ -52,6 +54,7 @@ export class Teams {
       )
       .subscribe({
         next: (team) => {
+          this.auth.recordCreatedTeam(team.id);
           this.form.reset();
           this.message.set(`Equipe ${team.name} cadastrada.`);
           this.load();

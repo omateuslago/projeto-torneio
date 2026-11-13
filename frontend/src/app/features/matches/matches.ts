@@ -15,6 +15,7 @@ import { TournamentApi } from '../../core/tournament-api';
 import { Match, Standing, Tournament } from '../../core/models';
 import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-matches',
@@ -22,6 +23,7 @@ import { trimmedRequired } from '../../shared/trimmed-required';
   templateUrl: './matches.html',
 })
 export class Matches {
+  readonly auth = inject(AuthService);
   readonly tournament = input.required<Tournament>();
   readonly tournamentChanged = output<Tournament>();
   private readonly tournamentId = computed(() => this.tournament().id);
@@ -52,6 +54,12 @@ export class Matches {
   }
   waitingFor(match: Match) {
     return this.submission(match, match.homeTeamId) ? match.awayTeamName : match.homeTeamName;
+  }
+  manageableTeams(match: Match) {
+    return [
+      { id: match.homeTeamId, name: match.homeTeamName },
+      { id: match.awayTeamId, name: match.awayTeamName },
+    ].filter((team) => this.auth.canManageTeam(team.id));
   }
   matchLabel(match: Match) {
     if (match.status === 'AwaitingConfirmation') return 'Aguardando confirmação';

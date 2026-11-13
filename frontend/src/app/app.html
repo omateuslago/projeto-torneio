@@ -2,11 +2,17 @@
 <header class="site-header">
   <div class="shell header-inner">
     <a class="brand" routerLink="/campeonatos">
-      <img class="brand-logo" src="assests/06-geometrica.svg" alt="Brakvyo">
+      <img class="brand-logo" src="assests/06-geometrica.svg" alt="Brakvyo" />
     </a>
     <nav aria-label="Navegação principal">
       <a routerLink="/campeonatos" routerLinkActive="active">Campeonatos</a>
       <a routerLink="/equipes" routerLinkActive="active">Equipes</a>
+      @if (auth.isAuthenticated()) {
+        <span>Olá, {{ auth.user().displayName }}</span>
+        <button type="button" class="secondary" (click)="logout()">Sair</button>
+      } @else {
+        <a routerLink="/login" routerLinkActive="active">Entrar</a>
+      }
     </nav>
   </div>
 </header>

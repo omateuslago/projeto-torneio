@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { Tournaments } from './tournaments';
+import { AuthService } from '../../core/auth.service';
 
 describe('Criação de campeonatos', () => {
   let http: HttpTestingController;
@@ -12,6 +13,15 @@ describe('Criação de campeonatos', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     http = TestBed.inject(HttpTestingController);
+    TestBed.inject(AuthService).user.set({
+      authenticated: true,
+      id: 'admin',
+      email: 'admin@example.com',
+      displayName: 'Admin',
+      isPlatformAdmin: true,
+      organizerTournamentIds: [],
+      managedTeamIds: [],
+    });
   });
   afterEach(() => http.verify());
   function setup(openModal = true) {
@@ -97,14 +107,10 @@ describe('Criação de campeonatos', () => {
     );
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      'Não foi possível carregar os campeonatos',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar os campeonatos');
     expect(fixture.nativeElement.textContent).toContain('Ocorreu um problema. Tente novamente.');
     expect(
-      fixture.nativeElement
-        .querySelector('.tournaments-state--error img')
-        ?.getAttribute('src'),
+      fixture.nativeElement.querySelector('.tournaments-state--error img')?.getAttribute('src'),
     ).toBe('assests/brakvyo-trofeu-outline.svg');
     expect(fixture.nativeElement.textContent).toContain('Falha temporária.');
     expect(fixture.nativeElement.textContent).not.toContain('Nenhum campeonato por aqui');

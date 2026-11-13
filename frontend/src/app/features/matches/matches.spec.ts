@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Matches } from './matches';
 import { Match, Standing, Tournament } from '../../core/models';
+import { AuthService } from '../../core/auth.service';
 
 const tournament: Tournament = {
   id: 'cup',
@@ -46,6 +47,15 @@ describe('Partidas e classificação', () => {
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
+    TestBed.inject(AuthService).user.set({
+      authenticated: true,
+      id: 'admin',
+      email: 'admin@example.com',
+      displayName: 'Admin',
+      isPlatformAdmin: true,
+      organizerTournamentIds: [],
+      managedTeamIds: [],
+    });
   });
   afterEach(() => http.verify());
   function flushView(matches: Match[] = [], rows: Standing[] = [], current = tournament) {
@@ -261,14 +271,53 @@ describe('Partidas e classificação', () => {
     expect(fixture.nativeElement.textContent).toContain('Súmula conferida.');
     expect(fixture.componentInstance.pending()).toHaveLength(0);
   });
-  it('mostra identidade não autenticada e esconde envio em partida finalizada', () => {
+  it('esconde envio para viewer e em partida finalizada', () => {
+    TestBed.inject(AuthService).user.set({
+      authenticated: false,
+      id: null,
+      email: null,
+      displayName: null,
+      isPlatformAdmin: false,
+      organizerTournamentIds: [],
+      managedTeamIds: [],
+    });
     const fixture = setup([match]);
-    expect(fixture.nativeElement.textContent).toContain('MVP sem login');
+    expect(fixture.nativeElement.textContent).not.toContain('Enviar como');
     fixture.componentInstance.load();
     flushView([{ ...match, status: 'Finished', homeScore: 0, awayScore: 0 }]);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Enviar como');
+    expect(fixture.nativeElement.textContent).not.toContain('Ação administrativa');
+  });
+  it('oferece envio somente pela equipe realmente gerenciada, sem seletor arbitrário', () => {
+    TestBed.inject(AuthService).user.set({
+      authenticated: true,
+      id: 'manager',
+      email: 'manager@example.com',
+      displayName: 'Manager',
+      isPlatformAdmin: false,
+      organizerTournamentIds: [],
+      managedTeamIds: ['a'],
+    });
+    const fixture = setup([match]);
+    expect(fixture.nativeElement.textContent).toContain('Enviar resultado como Azul');
+    expect(fixture.nativeElement.textContent).not.toContain('Enviar resultado como Verde');
+    expect(fixture.nativeElement.querySelector('select')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Ação administrativa');
+  });
+  it('mostra ações administrativas ao organizer sem conceder identidade de equipe', () => {
+    TestBed.inject(AuthService).user.set({
+      authenticated: true,
+      id: 'organizer',
+      email: 'organizer@example.com',
+      displayName: 'Organizer',
+      isPlatformAdmin: false,
+      organizerTournamentIds: ['cup'],
+      managedTeamIds: [],
+    });
+    const fixture = setup([match]);
     expect(fixture.nativeElement.textContent).toContain('Ação administrativa');
+    expect(fixture.nativeElement.textContent).not.toContain('Enviar resultado como');
   });
   it('mantém placar e equipe selecionada após falha no envio', () => {
     const fixture = setup([match]);

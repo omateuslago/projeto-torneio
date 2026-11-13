@@ -4,14 +4,16 @@
       <h1>Campeonatos</h1>
       <p class="tournaments-page__intro">Gerencie seus campeonatos em um só lugar.</p>
     </div>
-    <button
-      #createButton
-      type="button"
-      class="tournaments-page__create"
-      (click)="openCreateModal($event)"
-    >
-      + Criar
-    </button>
+    @if (auth.isAuthenticated()) {
+      <button
+        #createButton
+        type="button"
+        class="tournaments-page__create"
+        (click)="openCreateModal($event)"
+      >
+        + Criar
+      </button>
+    }
   </div>
 
   <section class="tournaments-list" aria-labelledby="lista-campeonatos">
@@ -51,13 +53,15 @@
         </div>
         <h3>Nenhum campeonato por aqui</h3>
         <p>Quando você criar um campeonato, ele aparecerá aqui.</p>
-        <button
-          type="button"
-          class="tournaments-page__secondary"
-          (click)="openCreateModal($event)"
-        >
-          Começar agora
-        </button>
+        @if (auth.isAuthenticated()) {
+          <button
+            type="button"
+            class="tournaments-page__secondary"
+            (click)="openCreateModal($event)"
+          >
+            Começar agora
+          </button>
+        }
       </div>
     } @else {
       <div class="tournament-grid">
@@ -95,7 +99,7 @@
   </section>
 </div>
 
-@if (isCreateModalOpen()) {
+@if (isCreateModalOpen() && auth.isAuthenticated()) {
   <div class="modal-backdrop" (click)="closeCreateModal()">
     <section
       #dialog

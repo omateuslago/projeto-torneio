@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { registerOrganizer, xsrf } from './auth';
 
 test('campeonato completo com envios divergentes, resolução e persistência', async ({
   page,
+  request,
 }, testInfo) => {
+  await registerOrganizer(request, page);
   const stamp = Date.now();
   const teams = [`Azul bilateral ${stamp}`, `Verde bilateral ${stamp}`];
   await page.goto('/equipes');
@@ -26,7 +29,9 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   }
   await page.getByRole('button', { name: 'Fechar inscrições', exact: true }).click();
   await page.getByRole('button', { name: 'Gerar confrontos', exact: true }).click();
-  await page.getByRole('button', { name: `Enviar como ${teams[0]}`, exact: true }).click();
+  await page
+    .getByRole('button', { name: `Enviar resultado como ${teams[0]}`, exact: true })
+    .click();
   await page.getByLabel('Placar mandante').fill('3');
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
@@ -35,7 +40,9 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
     page.getByText(`Aguardando resultado de ${teams[1]}.`, { exact: false }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: `Enviar como ${teams[1]}`, exact: true }).click();
+  await page
+    .getByRole('button', { name: `Enviar resultado como ${teams[1]}`, exact: true })
+    .click();
   await page.getByLabel('Placar mandante').fill('2');
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
@@ -68,7 +75,9 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
 
 test('envios concordantes confirmam automaticamente sem intervenção', async ({ page, request }) => {
   const api = 'http://localhost:5094/api';
+  const token = await registerOrganizer(request, page);
   const response = await request.post(`${api}/tournaments`, {
+    headers: xsrf(token),
     data: {
       name: `Concordância ${Date.now()}`,
       sport: 'Futsal',
@@ -78,18 +87,29 @@ test('envios concordantes confirmam automaticamente sem intervenção', async ({
   });
   const tournament = await response.json();
   expect(response.status()).toBe(201);
-  await request.put(`${api}/tournaments/${tournament.id}/status`, { data: { status: 'Open' } });
+  await request.put(`${api}/tournaments/${tournament.id}/status`, {
+    headers: xsrf(token),
+    data: { status: 'Open' },
+  });
   for (const name of ['Equipe A', 'Equipe B']) {
-    const team = await (await request.post(`${api}/teams`, { data: { name } })).json();
+    const team = await (
+      await request.post(`${api}/teams`, { headers: xsrf(token), data: { name } })
+    ).json();
     await request.post(`${api}/tournaments/${tournament.id}/registrations`, {
+      headers: xsrf(token),
       data: { teamId: team.id },
     });
   }
-  await request.put(`${api}/tournaments/${tournament.id}/status`, { data: { status: 'Closed' } });
-  await request.post(`${api}/tournaments/${tournament.id}/matches/generate`);
+  await request.put(`${api}/tournaments/${tournament.id}/status`, {
+    headers: xsrf(token),
+    data: { status: 'Closed' },
+  });
+  await request.post(`${api}/tournaments/${tournament.id}/matches/generate`, {
+    headers: xsrf(token),
+  });
   await page.goto(`/campeonatos/${tournament.id}`);
   for (const team of ['Equipe A', 'Equipe B']) {
-    await page.getByRole('button', { name: `Enviar como ${team}`, exact: true }).click();
+    await page.getByRole('button', { name: `Enviar resultado como ${team}`, exact: true }).click();
     await page.getByLabel('Placar mandante').fill('1');
     await page.getByLabel('Placar visitante').fill('1');
     await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();

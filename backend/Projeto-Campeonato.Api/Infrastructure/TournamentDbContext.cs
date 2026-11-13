@@ -1,9 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Projeto_Campeonato.Api.Domain;
 
 namespace Projeto_Campeonato.Api.Infrastructure;
 
-public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> options) : DbContext(options)
+public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Tournament> Tournaments => Set<Tournament>();
     public DbSet<Team> Teams => Set<Team>();
@@ -17,10 +20,29 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<PlayingArea> PlayingAreas => Set<PlayingArea>();
     public DbSet<Referee> Referees => Set<Referee>();
     public DbSet<Availability> Availabilities => Set<Availability>();
+    public DbSet<TournamentOrganizer> TournamentOrganizers => Set<TournamentOrganizer>();
+    public DbSet<TeamManager> TeamManagers => Set<TeamManager>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        base.OnModelCreating(model);
         SchedulingMapping.Configure(model);
+        model.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(x => x.DisplayName).HasMaxLength(120).IsRequired();
+        });
+        model.Entity<TournamentOrganizer>(entity =>
+        {
+            entity.HasKey(x => new { x.UserId, x.TournamentId });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.Cascade);
+        });
+        model.Entity<TeamManager>(entity =>
+        {
+            entity.HasKey(x => new { x.UserId, x.TeamId });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.Cascade);
+        });
         model.Entity<Tournament>(entity =>
         {
             entity.HasKey(x => x.Id);
