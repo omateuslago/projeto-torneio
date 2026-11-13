@@ -16,6 +16,7 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   readonly form = inject(FormBuilder).nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -31,10 +32,7 @@ export class Login {
       .login(value.email, value.password, value.rememberMe)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: () =>
-          void this.router.navigateByUrl(
-            this.route.snapshot.queryParamMap.get('returnUrl') || '/campeonatos',
-          ),
+        next: () => void this.router.navigateByUrl(this.returnUrl || '/campeonatos'),
         error: (e) => this.error.set(apiError(e)),
       });
   }

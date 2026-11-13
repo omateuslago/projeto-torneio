@@ -8,10 +8,11 @@ import { Matches } from '../matches/matches';
 import { Registrations } from '../registrations/registrations';
 import { apiError } from '../../core/api-error';
 import { AuthService } from '../../core/auth.service';
+import { AccessManagement } from '../access/access-management';
 
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink, Registrations, Matches],
+  imports: [RouterLink, Registrations, Matches, AccessManagement],
   templateUrl: './tournament-detail.html',
 })
 export class TournamentDetail {
