@@ -60,7 +60,7 @@ describe('páginas de autenticação', () => {
     fillRegistration(success);
     success.componentInstance.submit();
     expect(auth.register).toHaveBeenCalledWith('mateus@example.com', 'password', 'Mateus');
-    expect(router.navigate).toHaveBeenCalledWith(['/campeonatos']);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/agenda');
 
     auth.register.mockReturnValueOnce(
       throwError(

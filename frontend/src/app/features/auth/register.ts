@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { apiError } from '../../core/api-error';
@@ -13,8 +13,10 @@ import { apiError } from '../../core/api-error';
 export class Register {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   readonly form = inject(FormBuilder).nonNullable.group({
     displayName: ['', [Validators.required, Validators.maxLength(120)]],
     email: ['', [Validators.required, Validators.email]],
@@ -34,7 +36,7 @@ export class Register {
       .register(value.email, value.password, value.displayName.trim())
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: () => void this.router.navigate(['/campeonatos']),
+        next: () => void this.router.navigateByUrl(this.returnUrl || '/campeonatos'),
         error: (e) => this.error.set(apiError(e)),
       });
   }

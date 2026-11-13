@@ -7,8 +7,13 @@ import { Team } from '../../core/models';
 import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
 import { AuthService } from '../../core/auth.service';
+import { AccessManagement } from '../access/access-management';
 
-@Component({ selector: 'app-teams', imports: [ReactiveFormsModule], templateUrl: './teams.html' })
+@Component({
+  selector: 'app-teams',
+  imports: [ReactiveFormsModule, AccessManagement],
+  templateUrl: './teams.html',
+})
 export class Teams {
   readonly auth = inject(AuthService);
   private readonly api = inject(TournamentApi);

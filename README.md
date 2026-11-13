@@ -143,6 +143,8 @@ O sistema usa ASP.NET Core Identity com cookie seguro e antiforgery. Organizador
 administram somente os campeonatos vinculados, managers enviam placares apenas por
 equipes vinculadas e participantes, e `PlatformAdmin` pode administrar dados sem
 vínculo. Veja [o modelo de autenticação e autorização](docs/authentication-authorization.md).
+Organizers e managers podem compartilhar a administração por links com validade de 72 horas;
+veja [convites e gestão de acesso](docs/access-invitations.md).
 
 Erros usam ProblemDetails: 400 para validação, 403 para equipe externa à partida,
 404 para recurso inexistente e 409

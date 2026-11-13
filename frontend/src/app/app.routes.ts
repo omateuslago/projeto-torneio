@@ -11,6 +11,12 @@ export const routes: Routes = [
     title: 'Cadastro | Brakvyo',
     loadComponent: () => import('./features/auth/register').then((m) => m.Register),
   },
+  {
+    path: 'convites/aceitar',
+    title: 'Aceitar convite | Brakvyo',
+    loadComponent: () =>
+      import('./features/access/accept-invitation').then((m) => m.AcceptInvitation),
+  },
   { path: '', redirectTo: 'campeonatos', pathMatch: 'full' },
   {
     path: 'campeonatos',

@@ -15,5 +15,10 @@
     }
     <button [disabled]="busy() || form.invalid">{{ busy() ? 'Entrando…' : 'Entrar' }}</button>
   </form>
-  <p>Primeiro acesso? <a routerLink="/cadastro">Criar conta</a></p>
+  <p>
+    Primeiro acesso?
+    <a routerLink="/cadastro" [queryParams]="returnUrl ? { returnUrl: returnUrl } : undefined"
+      >Criar conta</a
+    >
+  </p>
 </section>

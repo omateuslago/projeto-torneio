@@ -33,7 +33,12 @@
     } @else {
       <ul class="participants">
         @for (team of teams(); track team.id) {
-          <li>{{ team.name }}</li>
+          <li>
+            {{ team.name }}
+            @if (auth.canManageTeam(team.id)) {
+              <app-access-management kind="team" [targetId]="team.id" title="Managers" />
+            }
+          </li>
         }
       </ul>
     }

@@ -64,6 +64,9 @@
       <p class="success" role="status">{{ message() }}</p>
     }
   </section>
+  @if (auth.canManageTournament(current.id)) {
+    <app-access-management kind="tournament" [targetId]="current.id" title="Organizadores" />
+  }
   <app-registrations [tournament]="current" />
   <p><a [routerLink]="['/campeonatos', current.id, 'agenda']">Agenda e disponibilidade</a></p>
   @if (current.format === 'RoundRobin') {
