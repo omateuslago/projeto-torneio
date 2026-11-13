@@ -24,9 +24,10 @@ Veja [Autopilot v1](docs/tournament-autopilot.md).
 
 ## Requisitos
 
-- SDK .NET 10 estável (selecionado por `global.json`).
 - Node.js 24.15 ou superior da linha 24 (ou uma versão compatível com `frontend/package.json`).
 - npm e Docker com Compose v2.
+- SDK .NET 10 estável (selecionado por `global.json`) somente para desenvolver/testar o backend
+  diretamente no host ou executar comandos `dotnet` manualmente.
 
 ## Iniciar localmente
 
@@ -35,6 +36,11 @@ Depois de criar o `.env`, suba rapidamente o ambiente completo com:
 ```bash
 bash iniciar.sh
 ```
+
+Esse fluxo executa PostgreSQL, scheduler, migrations e API pelo Docker Compose e
+mantém apenas o Angular no host. Para simplesmente rodar o projeto, não é necessário
+instalar o SDK .NET localmente. Ao pressionar Ctrl+C, o Angular é encerrado e os
+containers continuam rodando, preservando o banco.
 
 ### 1. PostgreSQL
 
