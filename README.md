@@ -145,6 +145,8 @@ equipes vinculadas e participantes, e `PlatformAdmin` pode administrar dados sem
 vínculo. Veja [o modelo de autenticação e autorização](docs/authentication-authorization.md).
 Organizers e managers podem compartilhar a administração por links com validade de 72 horas;
 veja [convites e gestão de acesso](docs/access-invitations.md).
+Notificações internas e o envio opcional por WhatsApp estão documentados em
+[Notification Center e Evolution API](docs/notifications-evolution-whatsapp.md).
 
 Erros usam ProblemDetails: 400 para validação, 403 para equipe externa à partida,
 404 para recurso inexistente e 409
