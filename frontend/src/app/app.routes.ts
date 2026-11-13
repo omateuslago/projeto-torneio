@@ -17,6 +17,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/access/accept-invitation').then((m) => m.AcceptInvitation),
   },
+  {
+    path: 'minha-conta/notificacoes',
+    title: 'Preferências de notificações | Brakvyo',
+    loadComponent: () =>
+      import('./features/notifications/notification-settings').then((m) => m.NotificationSettings),
+  },
+  {
+    path: 'notificacoes',
+    title: 'Notificações | Brakvyo',
+    loadComponent: () =>
+      import('./features/notifications/notification-center').then((m) => m.NotificationCenter),
+  },
   { path: '', redirectTo: 'campeonatos', pathMatch: 'full' },
   {
     path: 'campeonatos',

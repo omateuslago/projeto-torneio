@@ -471,6 +471,114 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeduplicationKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TournamentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("DeduplicationKey")
+                        .IsUnique();
+
+                    b.HasIndex("MatchId");
+
+                    b.HasIndex("TeamId");
+
+                    b.HasIndex("TournamentId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.NotificationDelivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("FailedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("LastAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "NextAttemptAt");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.HasIndex("NotificationId", "UserId", "Channel")
+                        .IsUnique();
+
+                    b.ToTable("NotificationDeliveries");
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.PlayingArea", b =>
                 {
                     b.Property<Guid>("Id")
@@ -676,6 +784,32 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                     b.ToTable("TournamentOrganizers");
                 });
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.UserNotificationPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("WhatsAppEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("WhatsAppPhoneNumber")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserNotificationPreferences", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserNotificationPreferences_WhatsApp", "NOT \"WhatsAppEnabled\" OR \"WhatsAppPhoneNumber\" IS NOT NULL");
+                        });
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Venue", b =>
                 {
                     b.Property<Guid>("Id")
@@ -857,6 +991,39 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Notification", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Tournament", null)
+                        .WithMany()
+                        .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.NotificationDelivery", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Notification", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.PlayingArea", b =>
                 {
                     b.HasOne("Projeto_Campeonato.Api.Domain.Venue", null)
@@ -932,6 +1099,15 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                     b.HasOne("Projeto_Campeonato.Api.Domain.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.UserNotificationPreference", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Projeto_Campeonato.Api.Domain.UserNotificationPreference", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

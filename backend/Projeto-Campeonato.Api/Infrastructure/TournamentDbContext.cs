@@ -23,6 +23,9 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<TournamentOrganizer> TournamentOrganizers => Set<TournamentOrganizer>();
     public DbSet<TeamManager> TeamManagers => Set<TeamManager>();
     public DbSet<AccessInvitation> AccessInvitations => Set<AccessInvitation>();
+    public DbSet<UserNotificationPreference> UserNotificationPreferences => Set<UserNotificationPreference>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -62,6 +65,40 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
                 .HasFilter("\"Active\" = TRUE AND \"TeamId\" IS NOT NULL");
             entity.ToTable("AccessInvitations", table => table.HasCheckConstraint(
                 "CK_AccessInvitations_Target", "(\"TournamentId\" IS NULL) <> (\"TeamId\" IS NULL)"));
+        });
+        model.Entity<UserNotificationPreference>(entity =>
+        {
+            entity.HasKey(x => x.UserId);
+            entity.Property(x => x.WhatsAppPhoneNumber).HasMaxLength(16);
+            entity.HasOne<ApplicationUser>().WithOne().HasForeignKey<UserNotificationPreference>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.ToTable("UserNotificationPreferences", table => table.HasCheckConstraint(
+                "CK_UserNotificationPreferences_WhatsApp", "NOT \"WhatsAppEnabled\" OR \"WhatsAppPhoneNumber\" IS NOT NULL"));
+        });
+        model.Entity<Notification>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Type).HasConversion<string>().HasMaxLength(40);
+            entity.Property(x => x.PayloadJson).HasColumnType("jsonb");
+            entity.Property(x => x.DeduplicationKey).HasMaxLength(300).IsRequired();
+            entity.HasIndex(x => x.DeduplicationKey).IsUnique();
+            entity.HasIndex(x => x.CreatedAt);
+            entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<Match>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.SetNull);
+        });
+        model.Entity<NotificationDelivery>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Channel).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.ProviderMessageId).HasMaxLength(300);
+            entity.Property(x => x.LastError).HasMaxLength(500);
+            entity.HasIndex(x => new { x.NotificationId, x.UserId, x.Channel }).IsUnique();
+            entity.HasIndex(x => new { x.Status, x.NextAttemptAt });
+            entity.HasIndex(x => new { x.UserId, x.CreatedAt });
+            entity.HasOne<Notification>().WithMany().HasForeignKey(x => x.NotificationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
         model.Entity<Tournament>(entity =>
         {

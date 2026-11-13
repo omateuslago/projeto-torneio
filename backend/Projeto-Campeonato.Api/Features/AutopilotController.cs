@@ -11,7 +11,8 @@ namespace Projeto_Campeonato.Api.Features;
 
 [ApiController]
 [Route("api/tournaments/{id:guid}/schedule")]
-public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient scheduler, IDataProtectionProvider protection, IAccessControl access) : ControllerBase
+public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient scheduler,
+    IDataProtectionProvider protection, IAccessControl access, INotificationOutbox notifications) : ControllerBase
 {
     private readonly IDataProtector protector = protection.CreateProtector("TournamentAutopilot.v1");
     [HttpGet("/api/scheduler/health")]
@@ -74,6 +75,8 @@ public sealed class AutopilotController(TournamentDbContext db, ISchedulerClient
         if (snapshot is null) return NotFound();
         if (snapshot.Hash != proposal.SnapshotHash) return Problem(statusCode: 409, detail: "Disponibilidade, recursos ou partidas mudaram desde a geração. Gere uma nova proposta.");
         await Stage(snapshot, proposal.Assignments, true, ct);
+        foreach (var assignment in proposal.Assignments)
+            await notifications.MatchScheduled(assignment.MatchId, false, ct);
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
         return Ok(new { appliedCount = proposal.Assignments.Length });
     }

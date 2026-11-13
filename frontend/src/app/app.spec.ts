@@ -48,6 +48,8 @@ describe('header autenticado', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Olá, Mateus');
+    expect(fixture.nativeElement.textContent).toContain('Notificações');
+    expect(fixture.nativeElement.textContent).toContain('Preferências');
     fixture.componentInstance.logout();
     expect(auth.logout).toHaveBeenCalledOnce();
     expect(navigate).toHaveBeenCalledWith(['/campeonatos']);

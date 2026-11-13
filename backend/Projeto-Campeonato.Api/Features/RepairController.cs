@@ -19,7 +19,8 @@ public sealed record ProtectedRepair(Guid TournamentId, RepairOptions Options, s
 
 [ApiController]
 [Route("api/tournaments/{id:guid}/schedule/repair")]
-public sealed class RepairController(TournamentDbContext db, ISchedulerClient scheduler, IDataProtectionProvider protection, IAccessControl access) : ControllerBase
+public sealed class RepairController(TournamentDbContext db, ISchedulerClient scheduler,
+    IDataProtectionProvider protection, IAccessControl access, INotificationOutbox notifications) : ControllerBase
 {
     private readonly IDataProtector protector = protection.CreateProtector("ScheduleRepair.v1");
     private static FixedSchedule[] Targets(SolverInput input, RepairIncident incident) => input.ExistingSchedule.Where(m => m.CountsForResilience && m.StartsAt >= input.HorizonStart && m.EndsAt <= input.HorizonEnd && m.MatchId != incident.MatchId).ToArray();
@@ -103,6 +104,7 @@ public sealed class RepairController(TournamentDbContext db, ISchedulerClient sc
         var snapshot = await SchedulingSnapshot.Load(db, id, p.Options.Horizon, ct);
         if (snapshot is null || snapshot.Hash != p.Hash) return Problem(statusCode: 409, detail: "Agenda mudou. Gere uma nova proposta.");
         var changes = await Stage(snapshot, p.Options.Incident, p.Assignments, true, ct);
+        await notifications.ScheduleRepaired(id, changes.Select(x => x.After.MatchId).ToArray(), ct);
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
         return Ok(new { appliedCount = changes.Length });
     }
