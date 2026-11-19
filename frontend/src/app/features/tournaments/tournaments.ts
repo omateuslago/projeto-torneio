@@ -23,6 +23,7 @@ import { AuthService } from '../../core/auth.service';
   selector: 'app-tournaments',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './tournaments.html',
+  styleUrl: './tournaments.css',
 })
 export class Tournaments {
   readonly auth = inject(AuthService);

@@ -13,6 +13,7 @@ import { AccessManagement } from '../access/access-management';
   selector: 'app-teams',
   imports: [ReactiveFormsModule, AccessManagement],
   templateUrl: './teams.html',
+  styleUrl: './teams.css',
 })
 export class Teams {
   readonly auth = inject(AuthService);

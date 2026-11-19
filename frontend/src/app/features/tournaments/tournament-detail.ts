@@ -14,6 +14,7 @@ import { AccessManagement } from '../access/access-management';
   selector: 'app-tournament-detail',
   imports: [RouterLink, Registrations, Matches, AccessManagement],
   templateUrl: './tournament-detail.html',
+  styleUrl: './tournament-detail.css',
 })
 export class TournamentDetail {
   readonly auth = inject(AuthService);

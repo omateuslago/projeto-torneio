@@ -1,0 +1,187 @@
+/* Voltar, painel e cabeçalho de seção */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary-brand);
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 22px;
+}
+.back:hover{
+  color: var(--color-primary-brand);
+  text-decoration: underline;
+}
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-legacy);
+  border-radius: var(--radius-surface);
+  padding: 24px;
+  min-width: 0;
+}
+.panel + .panel {
+  margin-top: 24px;
+}
+.section-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.section-heading h2 {
+  margin: 0;
+}
+
+/* Textos auxiliares, feedback e vazio */
+.hint,
+.muted {
+  color: var(--color-text-muted-legacy);
+  font-size: 0.9rem;
+}
+.hint {
+  margin: 0;
+  font-weight: 400;
+}
+.error {
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  border-left: 3px solid var(--color-danger-border);
+  padding: 12px 16px;
+  overflow-wrap: anywhere;
+}
+.success {
+  color: var(--color-success-text);
+  background: var(--color-success-bg);
+  border-left: 3px solid var(--color-success-border);
+  padding: 12px 16px;
+}
+.empty {
+  padding: 28px 0;
+  color: var(--color-text-muted-legacy);
+}
+
+
+/* Ações e lista de participantes */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.participants {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.participants li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-divider-legacy);
+  overflow-wrap: anywhere;
+}
+
+/* Responsivo até 800px (header e shell em app/app.css; workspace e detail-grid nos CSS dos componentes) */
+@media (max-width: 800px) {
+  .panel {
+    padding: 18px;
+  }
+}
+
+/* Painéis de partidas/agenda */
+.match-panel {
+  margin-top: 24px;
+}
+
+/* Formulário de resultado/agendamento (Partidas e Agenda) */
+.result-form {
+  margin-top: 24px;
+  border-top: 1px solid var(--color-border-legacy);
+  padding-top: 18px;
+}
+.result-form h3 {
+  margin: 0;
+}
+
+/* Estados (loading/erro/vazio) e botões de Campeonatos, compartilhados com Equipes */
+.tournaments-page__refresh,
+.tournaments-page__secondary {
+  min-height: var(--control-height-compact-brand);
+  color: var(--color-primary-brand);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary-muted-brand);
+}
+.tournaments-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 260px;
+  color: var(--color-text-muted-brand);
+}
+.tournaments-state--error {
+  flex-direction: column;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
+  padding: 32px 16px;
+  color: var(--color-text-brand);
+}
+.tournaments-state--error p,
+.tournaments-state--error h3 {
+  margin: 0;
+}
+.tournaments-state--error p {
+  color: var(--color-text-muted-brand);
+}
+.tournaments-state__technical-error {
+  max-width: 60ch;
+  font-size: 0.85rem;
+}
+.tournaments-state--empty {
+  flex-direction: column;
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
+}
+.tournaments-state__icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-soft-brand);
+}
+.tournaments-state__icon img {
+  width: 36px;
+  height: 36px;
+}
+.tournaments-state h3 {
+  margin: 8px 0 0;
+  font-size: 1.15rem;
+}
+.tournaments-state--empty p {
+  margin: 0;
+  color: var(--color-text-muted-brand);
+}
+.tournaments-state__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-primary-muted-brand);
+  border-top-color: var(--color-primary-brand);
+  border-radius: 50%;
+  animation: tournaments-spin 0.8s linear infinite;
+}
+@keyframes tournaments-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 600px) {
+  .tournaments-page__refresh {
+    width: 100%;
+  }
+}

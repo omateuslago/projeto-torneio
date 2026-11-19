@@ -21,6 +21,7 @@ import { AuthService } from '../../core/auth.service';
   selector: 'app-matches',
   imports: [ReactiveFormsModule],
   templateUrl: './matches.html',
+  styleUrl: './matches.css',
 })
 export class Matches {
   readonly auth = inject(AuthService);
