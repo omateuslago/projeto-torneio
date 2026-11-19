@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+:host .panel {
+  border-top: 4px solid var(--color-primary-brand);
+}
+:host form {
+  max-width: 720px;
+}
+:host h3 {
+  margin-top: var(--space-6);
+}
+:host .participants li {
+  padding-inline: var(--space-3);
+  background: var(--color-surface-muted-brand);
+}

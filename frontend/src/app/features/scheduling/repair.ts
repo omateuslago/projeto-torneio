@@ -31,7 +31,12 @@ export interface RepairProposal {
   resilience: Proposal['resilience'];
   proposalToken: string | null;
 }
-@Component({ selector: 'app-repair', imports: [ReactiveFormsModule], templateUrl: './repair.html' })
+@Component({
+  selector: 'app-repair',
+  imports: [ReactiveFormsModule],
+  templateUrl: './repair.html',
+  styleUrl: './schedule-tools.css',
+})
 export class Repair {
   readonly tournamentId = input.required<string>();
   readonly matches = input.required<ScheduledMatch[]>();

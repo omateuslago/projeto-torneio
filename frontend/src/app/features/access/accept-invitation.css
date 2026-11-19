@@ -1,0 +1,10 @@
+.invitation-card {
+  width: min(100%, 680px);
+  margin-inline: auto;
+  border-top: 4px solid var(--color-primary-brand);
+  box-shadow: var(--shadow-raised);
+}
+.invitation-card__secondary {
+  color: var(--color-primary-brand);
+  background: var(--color-surface);
+}

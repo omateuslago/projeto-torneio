@@ -47,6 +47,7 @@ export interface Proposal {
   selector: 'app-autopilot',
   imports: [ReactiveFormsModule],
   templateUrl: './autopilot.html',
+  styleUrl: './schedule-tools.css',
 })
 export class Autopilot {
   readonly tournamentId = input.required<string>();

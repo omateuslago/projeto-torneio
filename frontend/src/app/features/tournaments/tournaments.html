@@ -76,6 +76,9 @@
                 {{ statusLabels[tournament.status] }}
               </span>
             </div>
+            @if (auth.canManageTournament(tournament.id)) {
+              <span class="tournament-card__admin">Você organiza</span>
+            }
             <h3>
               <a [routerLink]="['/campeonatos', tournament.id]">{{ tournament.name }}</a>
             </h3>

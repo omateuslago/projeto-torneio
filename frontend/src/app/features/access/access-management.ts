@@ -6,11 +6,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccessApi, AccessMembers } from '../../core/access-api';
 import { AuthService } from '../../core/auth.service';
 import { apiError } from '../../core/api-error';
+import { ConfirmDialog } from '../../shared/confirm-dialog';
 
 @Component({
   selector: 'app-access-management',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, ConfirmDialog],
   templateUrl: './access-management.html',
+  styleUrl: './access-management.css',
 })
 export class AccessManagement implements OnInit {
   readonly kind = input.required<'tournament' | 'team'>();
@@ -24,6 +26,10 @@ export class AccessManagement implements OnInit {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly invitationLink = signal('');
+  readonly copyMessage = signal('');
+  readonly pendingAction = signal<{ type: 'remove' | 'revoke'; id: string; label: string } | null>(
+    null,
+  );
   readonly form = inject(FormBuilder).nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
   });
@@ -67,18 +73,42 @@ export class AccessManagement implements OnInit {
       });
   }
   revoke(id: string) {
-    this.api.revoke(this.kind(), this.targetId(), id).subscribe({
-      next: () => this.load(),
-      error: (error) => this.error.set(apiError(error)),
-    });
+    const invitation = this.data().pendingInvitations.find((item) => item.id === id);
+    this.pendingAction.set({ type: 'revoke', id, label: invitation?.email ?? 'este convite' });
   }
   remove(userId: string) {
-    this.api.remove(this.kind(), this.targetId(), userId).subscribe({
-      next: () => this.load(),
-      error: (error) => this.error.set(apiError(error)),
+    const member = this.data().members.find((item) => item.userId === userId);
+    this.pendingAction.set({
+      type: 'remove',
+      id: userId,
+      label: member?.displayName ?? 'este membro',
     });
   }
+  confirmPendingAction() {
+    const action = this.pendingAction();
+    if (!action || this.busy()) return;
+    this.busy.set(true);
+    this.error.set('');
+    const request =
+      action.type === 'remove'
+        ? this.api.remove(this.kind(), this.targetId(), action.id)
+        : this.api.revoke(this.kind(), this.targetId(), action.id);
+    request
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.pendingAction.set(null);
+          this.load();
+        },
+        error: (error) => this.error.set(apiError(error)),
+      });
+  }
   copy() {
-    if (this.invitationLink()) void navigator.clipboard?.writeText(this.invitationLink());
+    if (!this.invitationLink()) return;
+    void navigator.clipboard?.writeText(this.invitationLink());
+    this.copyMessage.set('Link copiado.');
   }
 }

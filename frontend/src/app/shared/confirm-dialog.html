@@ -1,0 +1,28 @@
+<div class="dialog-backdrop" (click)="cancelled.emit()">
+  <section
+    class="dialog-card"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-title"
+    aria-describedby="confirm-description"
+    (click)="$event.stopPropagation()"
+    (keydown)="onKeydown($event)"
+  >
+    <h2 id="confirm-title">{{ title() }}</h2>
+    <p id="confirm-description">{{ description() }}</p>
+    <div class="dialog-card__actions">
+      <button
+        #cancelButton
+        type="button"
+        class="secondary"
+        [disabled]="busy()"
+        (click)="cancelled.emit()"
+      >
+        Cancelar
+      </button>
+      <button type="button" class="button-danger" [disabled]="busy()" (click)="confirmed.emit()">
+        {{ busy() ? 'Aguarde…' : confirmLabel() }}
+      </button>
+    </div>
+  </section>
+</div>

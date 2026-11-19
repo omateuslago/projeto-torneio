@@ -73,6 +73,13 @@
   background: var(--color-primary-soft-brand);
   color: var(--color-primary-strong-brand);
 }
+.tournament-card__admin {
+  width: fit-content;
+  margin-top: var(--space-3);
+  color: var(--color-primary-strong-brand);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
 .tournament-card h3 {
   margin: 16px 0 20px;
   overflow-wrap: anywhere;

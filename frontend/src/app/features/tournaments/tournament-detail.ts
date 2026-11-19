@@ -9,10 +9,11 @@ import { Registrations } from '../registrations/registrations';
 import { apiError } from '../../core/api-error';
 import { AuthService } from '../../core/auth.service';
 import { AccessManagement } from '../access/access-management';
+import { ConfirmDialog } from '../../shared/confirm-dialog';
 
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink, Registrations, Matches, AccessManagement],
+  imports: [RouterLink, Registrations, Matches, AccessManagement, ConfirmDialog],
   templateUrl: './tournament-detail.html',
   styleUrl: './tournament-detail.css',
 })
@@ -26,6 +27,7 @@ export class TournamentDetail {
   readonly loadError = signal('');
   readonly actionError = signal('');
   readonly message = signal('');
+  readonly confirmClose = signal(false);
   readonly statusLabels = statusLabels;
   readonly formatLabels = formatLabels;
 

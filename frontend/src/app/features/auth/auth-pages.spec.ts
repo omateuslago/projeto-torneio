@@ -40,6 +40,19 @@ describe('páginas de autenticação', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/agenda');
   });
 
+  it('apresenta os estados de entrada e cadastro com contexto claro', () => {
+    const login = TestBed.createComponent(Login);
+    login.detectChanges();
+    expect(login.nativeElement.textContent).toContain('Boas-vindas de volta');
+    expect(
+      login.nativeElement.querySelector('input[autocomplete="current-password"]'),
+    ).toBeTruthy();
+    const register = TestBed.createComponent(Register);
+    register.detectChanges();
+    expect(register.nativeElement.textContent).toContain('Crie sua conta');
+    expect(register.nativeElement.querySelector('input[autocomplete="new-password"]')).toBeTruthy();
+  });
+
   it('bloqueia cadastro quando a confirmação diverge', () => {
     const fixture = TestBed.createComponent(Register);
     fixture.componentInstance.form.setValue({

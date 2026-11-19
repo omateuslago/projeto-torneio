@@ -57,4 +57,25 @@ describe('AccessManagement', () => {
     expect(fixture.nativeElement.textContent).toContain('Você não tem permissão');
     expect(auth.user().id).toBe('owner');
   });
+
+  it('pede confirmação antes de remover um membro', () => {
+    api.members.mockReturnValue(
+      of({
+        members: [{ userId: 'member', displayName: 'Ana', email: 'ana@example.com' }],
+        pendingInvitations: [],
+      }),
+    );
+    api.remove.mockReturnValue(of({}));
+    const fixture = TestBed.createComponent(AccessManagement);
+    fixture.componentRef.setInput('kind', 'team');
+    fixture.componentRef.setInput('targetId', 'team');
+    fixture.componentRef.setInput('title', 'Managers');
+    fixture.detectChanges();
+    fixture.componentInstance.remove('member');
+    fixture.detectChanges();
+    expect(api.remove).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Remover acesso?');
+    fixture.componentInstance.confirmPendingAction();
+    expect(api.remove).toHaveBeenCalledWith('team', 'team', 'member');
+  });
 });

@@ -9,6 +9,7 @@ import { apiError } from '../../core/api-error';
   selector: 'app-register',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
+  styleUrl: './auth.css',
 })
 export class Register {
   private readonly auth = inject(AuthService);

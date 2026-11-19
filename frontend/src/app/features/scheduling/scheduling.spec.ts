@@ -92,6 +92,18 @@ describe('Agenda e disponibilidade', () => {
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('Quadra 2');
   });
+  it('navega entre as áreas da agenda sem perder os dados carregados', () => {
+    const f = setup();
+    expect(f.componentInstance.activeView()).toBe('agenda');
+    const tabs = [...f.nativeElement.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
+    tabs.find((tab) => tab.textContent?.trim() === 'Autopilot')!.click();
+    f.detectChanges();
+    expect(f.componentInstance.activeView()).toBe('autopilot');
+    expect(
+      f.nativeElement.querySelector('[role="tab"][aria-selected="true"]').textContent,
+    ).toContain('Autopilot');
+    expect(f.componentInstance.matches()).toHaveLength(1);
+  });
   it('cadastra árbitro e permite selecioná-lo na disponibilidade', () => {
     const f = setup(),
       c = f.componentInstance;

@@ -1,0 +1,38 @@
+.auth-layout {
+  display: grid;
+  min-height: min(680px, calc(100vh - 190px));
+  place-items: center;
+}
+.auth-card {
+  width: min(100%, 480px);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border-top: 4px solid var(--color-primary-brand);
+  box-shadow: var(--shadow-raised);
+}
+.auth-card__heading {
+  margin-bottom: var(--space-5);
+}
+.auth-card__heading span {
+  color: var(--color-primary-strong-brand);
+  font-weight: 800;
+}
+.auth-card__heading h1 {
+  margin-block: var(--space-2);
+}
+.auth-card__heading p,
+.auth-card > p {
+  margin-bottom: 0;
+  color: var(--color-text-muted-brand);
+}
+.auth-card form button {
+  width: 100%;
+}
+.auth-card label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+}
+.auth-card input[type='checkbox'] {
+  width: 1.1rem;
+  min-height: 1.1rem;
+}

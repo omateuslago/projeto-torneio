@@ -9,6 +9,7 @@ import { apiError } from '../../core/api-error';
   selector: 'app-notification-settings',
   imports: [ReactiveFormsModule],
   templateUrl: './notification-settings.html',
+  styleUrl: './notifications.css',
 })
 export class NotificationSettings {
   private readonly api = inject(NotificationApi);

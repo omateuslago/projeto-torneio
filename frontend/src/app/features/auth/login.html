@@ -1,24 +1,32 @@
-<section class="panel" aria-labelledby="login-title">
-  <h1 id="login-title">Entrar</h1>
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <label>Email<input type="email" formControlName="email" autocomplete="email" required /></label>
-    <label
-      >Senha<input
-        type="password"
-        formControlName="password"
-        autocomplete="current-password"
-        required
-    /></label>
-    <label><input type="checkbox" formControlName="rememberMe" /> Lembrar-me</label>
-    @if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
-    }
-    <button [disabled]="busy() || form.invalid">{{ busy() ? 'Entrando…' : 'Entrar' }}</button>
-  </form>
-  <p>
-    Primeiro acesso?
-    <a routerLink="/cadastro" [queryParams]="returnUrl ? { returnUrl: returnUrl } : undefined"
-      >Criar conta</a
-    >
-  </p>
-</section>
+<div class="auth-layout">
+  <section class="panel auth-card" aria-labelledby="login-title">
+    <div class="auth-card__heading">
+      <span>Brakvyo</span>
+      <h1 id="login-title">Boas-vindas de volta</h1>
+      <p>Acesse seus campeonatos, equipes e operações.</p>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label
+        >Email<input type="email" formControlName="email" autocomplete="email" required
+      /></label>
+      <label
+        >Senha<input
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          required
+      /></label>
+      <label><input type="checkbox" formControlName="rememberMe" /> Lembrar-me</label>
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+      <button [disabled]="busy() || form.invalid">{{ busy() ? 'Entrando…' : 'Entrar' }}</button>
+    </form>
+    <p>
+      Primeiro acesso?
+      <a routerLink="/cadastro" [queryParams]="returnUrl ? { returnUrl: returnUrl } : undefined"
+        >Criar conta</a
+      >
+    </p>
+  </section>
+</div>
