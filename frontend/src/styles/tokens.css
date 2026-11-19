@@ -17,7 +17,9 @@
   /* Superfícies e fundo */
   --color-bg-page: #f3f6fa;
   --color-surface: #fff;
+  --color-surface-raised: #ffffff;
   --color-surface-muted-brand: #f1f5f9;
+  --color-surface-strong: #10233f;
   --color-backdrop: rgb(15 23 42 / 45%);
 
   /* Texto */
@@ -26,6 +28,7 @@
   --color-text-muted-legacy: #526478;
   --color-text-muted-brand: #64748b;
   --color-text-secondary-brand: #475569;
+  --color-text-on-strong: #f8fafc;
 
   /* Primária */
   --color-primary-legacy: #0369a1;
@@ -49,6 +52,9 @@
   --color-success-text: #176044;
   --color-success-bg: #effaf5;
   --color-success-border: #27805a;
+  --color-warning-text: #854d0e;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #d97706;
 
   /* Status (badge de Detalhes) */
   --color-status-bg-legacy: #edf3f8;
@@ -66,6 +72,17 @@
   --radius-surface: 8px;
   --radius-modal: 10px;
   --radius-pill: 999px;
+
+  /* Ritmo, largura e elevação */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --content-width: 1180px;
+  --shadow-raised: 0 18px 45px rgb(15 35 63 / 10%);
 
   /* Altura de controles (botões e campos) */
   --control-height: 44px;

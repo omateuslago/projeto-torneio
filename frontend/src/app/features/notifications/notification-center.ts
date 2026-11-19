@@ -9,6 +9,7 @@ import { apiError } from '../../core/api-error';
   selector: 'app-notification-center',
   imports: [DatePipe],
   templateUrl: './notification-center.html',
+  styleUrl: './notifications.css',
 })
 export class NotificationCenter {
   private readonly api = inject(NotificationApi);

@@ -11,6 +11,7 @@ import { apiError } from '../../core/api-error';
   selector: 'app-accept-invitation',
   imports: [RouterLink, DatePipe],
   templateUrl: './accept-invitation.html',
+  styleUrl: './accept-invitation.css',
 })
 export class AcceptInvitation {
   readonly auth = inject(AuthService);

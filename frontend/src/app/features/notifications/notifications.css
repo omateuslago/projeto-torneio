@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+.notification-panel .participants li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-block: var(--space-4);
+}
+.notification-panel p {
+  margin-block: var(--space-2);
+}
+.notification-settings {
+  max-width: 680px;
+}
+.notification-settings form {
+  margin-top: var(--space-5);
+}
+.notification-settings label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+}
+.notification-settings input[type='checkbox'] {
+  width: 1.1rem;
+  min-height: 1.1rem;
+}
+@media (max-width: 600px) {
+  .notification-panel .participants li {
+    flex-direction: column;
+  }
+}

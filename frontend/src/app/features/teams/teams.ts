@@ -25,6 +25,7 @@ export class Teams {
   readonly loadError = signal('');
   readonly saveError = signal('');
   readonly message = signal('');
+  readonly expandedAccessTeamId = signal<string | null>(null);
   readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [trimmedRequired, Validators.maxLength(120)]],
   });
@@ -67,5 +68,8 @@ export class Teams {
         },
         error: (error) => this.saveError.set(apiError(error)),
       });
+  }
+  toggleAccess(teamId: string) {
+    this.expandedAccessTeamId.update((current) => (current === teamId ? null : teamId));
   }
 }

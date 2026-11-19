@@ -40,6 +40,17 @@ describe('header autenticado', () => {
     expect(fixture.nativeElement.textContent).toContain('Entrar');
   });
 
+  it('abre e fecha o menu móvel com estado acessível', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const toggle = fixture.nativeElement.querySelector('.menu-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(fixture.nativeElement.querySelector('#main-navigation').classList).toContain('is-open');
+  });
+
   it('mostra nome e encerra a sessão pelo header', () => {
     authenticated.set(true);
     user.set({ ...user(), authenticated: true, displayName: 'Mateus' });

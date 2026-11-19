@@ -24,6 +24,7 @@ import {
   selector: 'app-scheduling',
   imports: [ReactiveFormsModule, RouterLink, Autopilot, Repair],
   templateUrl: './scheduling.html',
+  styleUrl: './scheduling.css',
 })
 export class Scheduling {
   readonly auth = inject(AuthService);
@@ -39,6 +40,9 @@ export class Scheduling {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly message = signal('');
+  readonly activeView = signal<'agenda' | 'autopilot' | 'incidents' | 'availability' | 'resources'>(
+    'agenda',
+  );
   readonly venues = signal<Venue[]>([]);
   readonly areas = signal<Area[]>([]);
   readonly referees = signal<Referee[]>([]);

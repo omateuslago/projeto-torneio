@@ -1,21 +1,27 @@
-<section class="panel">
-  <h1>Notificações</h1>
+<header class="page-header">
+  <div>
+    <h1>Preferências de notificações</h1>
+    <p>Escolha como receber avisos fora da plataforma.</p>
+  </div>
+</header>
+<section class="panel notification-settings">
   <h2>WhatsApp</h2>
+  <p class="muted">Ative o canal para receber atualizações importantes no celular.</p>
   @if (loading()) {
     <p role="status">Carregando preferências…</p>
   } @else {
     <form [formGroup]="form" (ngSubmit)="save()">
       <label>
-        Número
+        Número internacional
         <input type="tel" formControlName="whatsAppPhoneNumber" placeholder="+5511999999999" />
       </label>
       <p class="muted">Use o número com código do país e DDD. Ex.: +5511999999999</p>
       <label>
         <input type="checkbox" formControlName="whatsAppEnabled" />
-        Receber notificações pelo WhatsApp
+        Receber avisos pelo WhatsApp
       </label>
       <button type="submit" [disabled]="saving()">
-        {{ saving() ? 'Salvando…' : 'Salvar' }}
+        {{ saving() ? 'Salvando…' : 'Salvar preferências' }}
       </button>
     </form>
   }

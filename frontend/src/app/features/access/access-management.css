@@ -1,0 +1,33 @@
+.access-panel {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
+  background: var(--color-surface);
+}
+.access-panel .section-heading,
+.access-panel h2,
+.access-panel__label {
+  margin: 0;
+}
+.access-panel__label {
+  font-size: 1rem;
+}
+.access-panel .participants li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.access-panel__invite {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-brand);
+}
+@media (max-width: 600px) {
+  .access-panel .participants li,
+  .access-panel .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -9,6 +9,7 @@ import { apiError } from '../../core/api-error';
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
+  styleUrl: './auth.css',
 })
 export class Login {
   private readonly auth = inject(AuthService);
