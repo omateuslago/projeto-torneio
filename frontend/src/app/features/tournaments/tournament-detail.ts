@@ -7,14 +7,17 @@ import { Tournament, TournamentStatus, formatLabels, statusLabels } from '../../
 import { Matches } from '../matches/matches';
 import { Registrations } from '../registrations/registrations';
 import { apiError } from '../../core/api-error';
+import { AuthService } from '../../core/auth.service';
+import { AccessManagement } from '../access/access-management';
 
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink, Registrations, Matches],
+  imports: [RouterLink, Registrations, Matches, AccessManagement],
   templateUrl: './tournament-detail.html',
   styleUrl: './tournament-detail.css',
 })
 export class TournamentDetail {
+  readonly auth = inject(AuthService);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly tournament = signal<Tournament | null>(null);

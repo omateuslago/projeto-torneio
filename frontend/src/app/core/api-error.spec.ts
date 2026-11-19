@@ -11,5 +11,6 @@ describe('Erros da API', () => {
   });
   it('diferencia erro de conexão de erro de negócio', () => {
     expect(apiError(new HttpErrorResponse({ status: 0 }))).toContain('conectar ao servidor');
+    expect(apiError(new HttpErrorResponse({ status: 403 }))).toContain('não tem permissão');
   });
 });

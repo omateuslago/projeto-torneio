@@ -1,0 +1,45 @@
+<section class="panel">
+  <div class="section-heading">
+    <h2>{{ title() }}</h2>
+    <button type="button" class="secondary" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Carregando…' : 'Gerenciar acesso' }}
+    </button>
+  </div>
+  @if (data().members.length || data().pendingInvitations.length || loading()) {
+    <h3>Membros atuais</h3>
+    <ul class="participants">
+      @for (member of data().members; track member.userId) {
+        <li>
+          <span>{{ member.displayName }} — {{ member.email }}</span>
+          @if (member.userId !== auth.user().id) {
+            <button type="button" class="secondary" (click)="remove(member.userId)">Remover</button>
+          }
+        </li>
+      }
+    </ul>
+    @if (data().pendingInvitations.length) {
+      <h3>Convites pendentes</h3>
+      <ul class="participants">
+        @for (invitation of data().pendingInvitations; track invitation.id) {
+          <li>
+            <span
+              >{{ invitation.email }} — expira em {{ invitation.expiresAt | date: 'short' }}</span
+            >
+            <button type="button" class="secondary" (click)="revoke(invitation.id)">Revogar</button>
+          </li>
+        }
+      </ul>
+    }
+  }
+  <form [formGroup]="form" (ngSubmit)="invite()">
+    <label>Email<input type="email" formControlName="email" autocomplete="email" required /></label>
+    <button type="submit" [disabled]="busy()">{{ busy() ? 'Gerando…' : 'Gerar convite' }}</button>
+  </form>
+  @if (invitationLink()) {
+    <label>Link de convite<input readonly [value]="invitationLink()" /></label>
+    <button type="button" class="secondary" (click)="copy()">Copiar</button>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+</section>

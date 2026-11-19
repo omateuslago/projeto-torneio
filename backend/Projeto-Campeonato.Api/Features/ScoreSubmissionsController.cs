@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Infrastructure;
 
@@ -13,13 +14,16 @@ public sealed record DisputeResponse(Guid Id, Guid MatchId, DisputeStatus Status
 public sealed record AuditResponse(Guid Id, Guid MatchId, Guid? TeamId, string EventType, DateTime OccurredAt, string Data);
 
 [ApiController]
-public sealed class ScoreSubmissionsController(TournamentDbContext db) : ControllerBase
+public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessControl access,
+    INotificationOutbox notifications) : ControllerBase
 {
     [HttpPut("api/matches/{matchId:guid}/score-submissions/{teamId:guid}")]
+    [Authorize]
     public async Task<ActionResult<SubmissionResponse>> Submit(Guid matchId, Guid teamId, SubmitScoreRequest request, CancellationToken ct)
     {
         var tournamentId = await db.Matches.Where(x => x.Id == matchId).Select(x => (Guid?)x.TournamentId).SingleOrDefaultAsync(ct);
         if (tournamentId is null) return NotFound();
+        if (!await access.CanManageTeam(User, teamId, ct)) return Forbid();
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var tournament = await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId.Value} FOR UPDATE").SingleAsync(ct);
         var match = await db.Matches.SingleAsync(x => x.Id == matchId, ct);
@@ -45,6 +49,7 @@ public sealed class ScoreSubmissionsController(TournamentDbContext db) : Control
             {
                 var dispute = new Dispute(matchId); db.Disputes.Add(dispute); disputed = true;
                 workflow.Audit(match, "DisputeOpened", new { dispute.Id });
+                await notifications.DisputeOpened(dispute.Id, match.Id, ct);
             }
             match.AwaitConfirmation(disputed);
             await db.SaveChangesAsync(ct);
@@ -54,16 +59,20 @@ public sealed class ScoreSubmissionsController(TournamentDbContext db) : Control
     }
 
     [HttpPut("api/disputes/{disputeId:guid}/resolve")]
+    [Authorize]
     public async Task<ActionResult<DisputeResponse>> Resolve(Guid disputeId, ResolveDisputeRequest request, CancellationToken ct)
     {
         var target = await (from d in db.Disputes join m in db.Matches on d.MatchId equals m.Id where d.Id == disputeId select new { m.Id, m.TournamentId }).SingleOrDefaultAsync(ct);
         if (target is null) return NotFound();
+        if (!await access.CanManageTournament(User, target.TournamentId, ct)) return Forbid();
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var tournament = await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {target.TournamentId} FOR UPDATE").SingleAsync(ct);
         var dispute = await db.Disputes.SingleAsync(x => x.Id == disputeId, ct);
         if (dispute.Status != DisputeStatus.Open) return Problem(statusCode: 409, detail: "Dispute is already resolved.");
         var match = await db.Matches.SingleAsync(x => x.Id == target.Id, ct);
         await new ResultWorkflow(db).ApplyOfficial(match, tournament, request.HomeScore!.Value, request.AwayScore!.Value, "DisputeResolution", request.ResolutionNote, ct);
+        await notifications.DisputeResolved(dispute.Id, match.Id, ct);
+        await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return Ok(new DisputeResponse(dispute.Id, dispute.MatchId, dispute.Status, dispute.OpenedAt, dispute.ResolvedAt, dispute.ResolutionNote));
     }

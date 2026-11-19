@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { registerOrganizer, xsrf } from './auth';
 
 test('cria equipes e campeonato, persiste após recarregar e gerencia inscrições', async ({
   page,
+  request,
 }, testInfo) => {
+  await registerOrganizer(request, page);
   const suffix = Date.now();
   const names = [`Azul ${suffix}`, `Verde ${suffix}`, `Laranja ${suffix}`];
   await page.goto('/equipes');
@@ -92,7 +95,9 @@ test('mostra erro real se as inscrições fecharem enquanto o formulário está 
   page,
   request,
 }) => {
+  const token = await registerOrganizer(request, page);
   const created = await request.post('http://localhost:5094/api/tournaments', {
+    headers: xsrf(token),
     data: {
       name: `Inscrições concorrentes ${Date.now()}`,
       sport: 'Futsal',
@@ -103,15 +108,18 @@ test('mostra erro real se as inscrições fecharem enquanto o formulário está 
   expect(created.status()).toBe(201);
   const tournament = await created.json();
   const createdTeam = await request.post('http://localhost:5094/api/teams', {
+    headers: xsrf(token),
     data: { name: `Equipe concorrente ${Date.now()}` },
   });
   const team = await createdTeam.json();
   await request.put(`http://localhost:5094/api/tournaments/${tournament.id}/status`, {
+    headers: xsrf(token),
     data: { status: 'Open' },
   });
   await page.goto(`/campeonatos/${tournament.id}`);
   await page.getByRole('combobox', { name: 'Equipe', exact: true }).selectOption(team.id);
   await request.put(`http://localhost:5094/api/tournaments/${tournament.id}/status`, {
+    headers: xsrf(token),
     data: { status: 'Closed' },
   });
   await page.getByRole('button', { name: 'Inscrever equipe', exact: true }).click();

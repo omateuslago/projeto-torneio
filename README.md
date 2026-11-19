@@ -24,11 +24,23 @@ Veja [Autopilot v1](docs/tournament-autopilot.md).
 
 ## Requisitos
 
-- SDK .NET 10 estável (selecionado por `global.json`).
 - Node.js 24.15 ou superior da linha 24 (ou uma versão compatível com `frontend/package.json`).
 - npm e Docker com Compose v2.
+- SDK .NET 10 estável (selecionado por `global.json`) somente para desenvolver/testar o backend
+  diretamente no host ou executar comandos `dotnet` manualmente.
 
 ## Iniciar localmente
+
+Depois de criar o `.env`, suba rapidamente o ambiente completo com:
+
+```bash
+bash iniciar.sh
+```
+
+Esse fluxo executa PostgreSQL, scheduler, migrations e API pelo Docker Compose e
+mantém apenas o Angular no host. Para simplesmente rodar o projeto, não é necessário
+instalar o SDK .NET localmente. Ao pressionar Ctrl+C, o Angular é encerrado e os
+containers continuam rodando, preservando o banco.
 
 ### 1. PostgreSQL
 
@@ -127,9 +139,14 @@ a última partida finalizada o encerra. Vitória vale 3 pontos, empate 1 e derro
 As regras continuam no backend. Veja [o ciclo de vida](docs/tournament-lifecycle.md)
 e [resultados bilaterais e disputas](docs/bilateral-results.md).
 
-A identidade da equipe é declarada na rota, sem autenticação: a API valida se ela
-participa da partida, mas não comprova quem fez a chamada. A UI apresenta isso como
-simulação. Operações administrativas também não têm controle de acesso neste MVP.
+O sistema usa ASP.NET Core Identity com cookie seguro e antiforgery. Organizadores
+administram somente os campeonatos vinculados, managers enviam placares apenas por
+equipes vinculadas e participantes, e `PlatformAdmin` pode administrar dados sem
+vínculo. Veja [o modelo de autenticação e autorização](docs/authentication-authorization.md).
+Organizers e managers podem compartilhar a administração por links com validade de 72 horas;
+veja [convites e gestão de acesso](docs/access-invitations.md).
+Notificações internas e o envio opcional por WhatsApp estão documentados em
+[Notification Center e Evolution API](docs/notifications-evolution-whatsapp.md).
 
 Erros usam ProblemDetails: 400 para validação, 403 para equipe externa à partida,
 404 para recurso inexistente e 409
@@ -165,12 +182,12 @@ npm run build
 npm test -- --watch=false
 ```
 
-Os 117 testes de backend incluem testes HTTP com PostgreSQL real em banco isolado por execução, com migrations aplicadas
+Os testes de backend incluem testes HTTP com PostgreSQL real em banco isolado por execução, com migrations aplicadas
 e remoção ao terminar. O usuário precisa de CREATEDB; o usuário local do Compose
 já possui. Para executar somente domínio sem banco:
 `dotnet test backend/Projeto-Campeonato.sln --filter FullyQualifiedName~DomainTests`.
 
-Os 40 testes Angular cobrem criação, validação, erros de inscrição e recuperação
+Os testes Angular cobrem autenticação, permissões, criação, validação, erros de inscrição e recuperação
 após falha HTTP, partidas, classificação, submissões, disputas, pendências e respostas
 atrasadas de status, recursos, disponibilidade, agendamento e conflitos. Não dependem de backend em execução.
 

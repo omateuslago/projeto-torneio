@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Infrastructure;
 
@@ -16,7 +17,7 @@ public sealed record MatchResponse(Guid Id, Guid TournamentId, Guid HomeTeamId, 
 public sealed record RecordResultRequest([Required, Range(0, int.MaxValue)] int? HomeScore, [Required, Range(0, int.MaxValue)] int? AwayScore);
 
 [ApiController]
-public sealed class MatchesController(TournamentDbContext db) : ControllerBase
+public sealed class MatchesController(TournamentDbContext db, IAccessControl access) : ControllerBase
 {
     private IQueryable<MatchResponse> MatchQuery(Guid tournamentId, Guid? matchId = null) =>
         from match in db.Matches.AsNoTracking().Where(x => x.TournamentId == tournamentId && (matchId == null || x.Id == matchId))
@@ -43,8 +44,10 @@ public sealed class MatchesController(TournamentDbContext db) : ControllerBase
     }
 
     [HttpPost("api/tournaments/{tournamentId:guid}/matches/generate")]
+    [Authorize]
     public async Task<ActionResult<IReadOnlyList<MatchResponse>>> Generate(Guid tournamentId, CancellationToken ct)
     {
+        if (!await access.CanManageTournament(User, tournamentId, ct)) return Forbid();
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         // Serialize generation and results for the same tournament, including across API instances.
         var tournament = await db.Tournaments.FromSqlInterpolated(
@@ -63,10 +66,12 @@ public sealed class MatchesController(TournamentDbContext db) : ControllerBase
     }
 
     [HttpPut("api/matches/{matchId:guid}/result")]
+    [Authorize]
     public async Task<ActionResult<MatchResponse>> RecordResult(Guid matchId, RecordResultRequest request, CancellationToken ct)
     {
         var tournamentId = await db.Matches.Where(x => x.Id == matchId).Select(x => (Guid?)x.TournamentId).SingleOrDefaultAsync(ct);
         if (tournamentId is null) return NotFound();
+        if (!await access.CanManageTournament(User, tournamentId.Value, ct)) return Forbid();
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         var tournament = await db.Tournaments.FromSqlInterpolated(
             $"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId.Value} FOR UPDATE").SingleAsync(ct);

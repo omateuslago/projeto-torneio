@@ -1,0 +1,34 @@
+<section class="panel">
+  <h1>Convite de acesso</h1>
+  @if (!auth.isAuthenticated()) {
+    <p>Você recebeu um convite para o Brakvyo.</p>
+    <p>Entre ou crie uma conta para continuar.</p>
+    <p>
+      <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }">Entrar</a>
+      <a [routerLink]="['/cadastro']" [queryParams]="{ returnUrl: returnUrl }">Criar conta</a>
+    </p>
+  } @else if (loading()) {
+    <p role="status">Carregando convite…</p>
+  } @else if (preview(); as invitation) {
+    <p>Você foi convidado para administrar:</p>
+    <h2>{{ invitation.targetName }}</h2>
+    <dl class="detail-grid">
+      <div>
+        <dt>Função</dt>
+        <dd>
+          {{ invitation.type === 'TournamentOrganizer' ? 'Organizador' : 'Manager da equipe' }}
+        </dd>
+      </div>
+      <div>
+        <dt>Expira em</dt>
+        <dd>{{ invitation.expiresAt | date: 'medium' }}</dd>
+      </div>
+    </dl>
+    <button type="button" (click)="accept()" [disabled]="accepting()">
+      {{ accepting() ? 'Aceitando…' : 'Aceitar convite' }}
+    </button>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+</section>

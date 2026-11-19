@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Projeto_Campeonato.Api.Domain;
 using Projeto_Campeonato.Api.Infrastructure;
 
@@ -7,7 +8,7 @@ namespace Projeto_Campeonato.Api.Features;
 
 [ApiController]
 [Route("api/teams")]
-public sealed class TeamsController(TournamentDbContext db) : ControllerBase
+public sealed class TeamsController(TournamentDbContext db, IAccessControl access) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<TeamResponse>>> List(CancellationToken ct) =>
@@ -22,10 +23,12 @@ public sealed class TeamsController(TournamentDbContext db) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<TeamResponse>> Create(CreateTeamRequest request, CancellationToken ct)
     {
         var team = new Team(request.Name);
         db.Teams.Add(team);
+        db.TeamManagers.Add(new TeamManager(access.UserId(User), team.Id));
         await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { id = team.Id }, new TeamResponse(team.Id, team.Name));
     }

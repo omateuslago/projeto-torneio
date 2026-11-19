@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { registerOrganizer, xsrf } from './auth';
 
 test.use({ timezoneId: 'America/Sao_Paulo' });
 test('configura recursos e disponibilidade, rejeita conflito e reagenda com persistência', async ({
@@ -6,30 +7,50 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
   request,
 }, testInfo) => {
   const api = 'http://localhost:5094/api';
+  const token = await registerOrganizer(request, page);
   const tResponse = await request.post(`${api}/tournaments`, {
+    headers: xsrf(token),
     data: { name: `Agenda ${Date.now()}`, sport: 'Futsal', maxTeams: 4, format: 'RoundRobin' },
   });
   expect(tResponse.status()).toBe(201);
   const t = await tResponse.json();
   expect(
-    (await request.put(`${api}/tournaments/${t.id}/status`, { data: { status: 'Open' } })).ok(),
+    (
+      await request.put(`${api}/tournaments/${t.id}/status`, {
+        headers: xsrf(token),
+        data: { status: 'Open' },
+      })
+    ).ok(),
   ).toBe(true);
   for (let i = 1; i <= 4; i++) {
-    const response = await request.post(`${api}/teams`, { data: { name: `Time agenda ${i}` } });
+    const response = await request.post(`${api}/teams`, {
+      headers: xsrf(token),
+      data: { name: `Time agenda ${i}` },
+    });
     expect(response.ok()).toBe(true);
     const team = await response.json();
     expect(
       (
         await request.post(`${api}/tournaments/${t.id}/registrations`, {
+          headers: xsrf(token),
           data: { teamId: team.id },
         })
       ).ok(),
     ).toBe(true);
   }
   expect(
-    (await request.put(`${api}/tournaments/${t.id}/status`, { data: { status: 'Closed' } })).ok(),
+    (
+      await request.put(`${api}/tournaments/${t.id}/status`, {
+        headers: xsrf(token),
+        data: { status: 'Closed' },
+      })
+    ).ok(),
   ).toBe(true);
-  expect((await request.post(`${api}/tournaments/${t.id}/matches/generate`)).ok()).toBe(true);
+  expect(
+    (
+      await request.post(`${api}/tournaments/${t.id}/matches/generate`, { headers: xsrf(token) })
+    ).ok(),
+  ).toBe(true);
   await page.goto(`/campeonatos/${t.id}`);
   await page.getByRole('link', { name: 'Agenda e disponibilidade', exact: true }).click();
   await expect(
@@ -55,7 +76,9 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
   ] as const) {
     await page.getByLabel('Tipo de recurso').selectOption(kind);
     for (const name of names) {
-      await page.getByRole('combobox', { name: 'Recurso', exact: true }).selectOption({ label: name });
+      await page
+        .getByRole('combobox', { name: 'Recurso', exact: true })
+        .selectOption({ label: name });
       await page.getByLabel('Disponível desde').fill('2026-11-14T08:00');
       await page.getByLabel('Disponível até').fill('2026-11-14T22:00');
       await page.getByRole('button', { name: 'Adicionar período', exact: true }).click();

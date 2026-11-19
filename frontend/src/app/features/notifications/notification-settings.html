@@ -1,0 +1,28 @@
+<section class="panel">
+  <h1>Notificações</h1>
+  <h2>WhatsApp</h2>
+  @if (loading()) {
+    <p role="status">Carregando preferências…</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <label>
+        Número
+        <input type="tel" formControlName="whatsAppPhoneNumber" placeholder="+5511999999999" />
+      </label>
+      <p class="muted">Use o número com código do país e DDD. Ex.: +5511999999999</p>
+      <label>
+        <input type="checkbox" formControlName="whatsAppEnabled" />
+        Receber notificações pelo WhatsApp
+      </label>
+      <button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </form>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="success" role="status">{{ message() }}</p>
+  }
+</section>

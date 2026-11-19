@@ -6,6 +6,7 @@ import { finalize, forkJoin, Subject, switchMap, catchError, EMPTY } from 'rxjs'
 import { TournamentApi } from '../../core/tournament-api';
 import { Registration, Team, Tournament } from '../../core/models';
 import { apiError } from '../../core/api-error';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-registrations',
@@ -13,6 +14,7 @@ import { apiError } from '../../core/api-error';
   templateUrl: './registrations.html',
 })
 export class Registrations {
+  readonly auth = inject(AuthService);
   readonly tournament = input.required<Tournament>();
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);

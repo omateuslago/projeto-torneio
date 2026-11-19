@@ -20,7 +20,7 @@
         }
       </ul>
     }
-    @if (tournament().status === 'Open') {
+    @if (tournament().status === 'Open' && auth.canManageTournament(tournament().id)) {
       <h2 style="margin-top: 28px">Inscrever equipe</h2>
       @if (!teams().length) {
         <p>
