@@ -45,7 +45,42 @@ describe('Criação de campeonatos', () => {
     fixture.componentInstance.create();
     fixture.detectChanges();
     http.expectNone((request) => request.method === 'POST');
-    expect(fixture.nativeElement.textContent).toContain('número inteiro');
+    expect(fixture.nativeElement.textContent).toContain('deve ser inteiro');
+  });
+
+  it('usa pontos corridos sem expor formato no fluxo principal e aceita esporte personalizado', () => {
+    const fixture = setup();
+    expect(fixture.nativeElement.textContent).not.toContain('Mata-mata simples');
+    fixture.componentInstance.chooseSport('Outro');
+    fixture.componentInstance.form.patchValue({ name: 'Copa', sport: 'Beach tennis', maxTeams: 8 });
+    fixture.componentInstance.create();
+    const request = http.expectOne('/api/tournaments');
+    expect(request.request.body).toEqual({
+      name: 'Copa',
+      sport: 'Beach tennis',
+      maxTeams: 8,
+      format: 'RoundRobin',
+    });
+    request.flush({ ...request.request.body, id: 'custom', status: 'Draft' });
+  });
+
+  it('continua renderizando campeonato mata-mata existente sem expor o formato no card', () => {
+    const fixture = TestBed.createComponent(Tournaments);
+    http
+      .expectOne('/api/tournaments')
+      .flush([
+        {
+          id: 'legacy',
+          name: 'Copa antiga',
+          sport: 'Futebol',
+          maxTeams: 8,
+          format: 'SingleElimination',
+          status: 'Draft',
+        },
+      ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Copa antiga');
+    expect(fixture.nativeElement.textContent).not.toContain('Mata-mata simples');
   });
   it('envia o DTO, fecha o modal e atualiza a lista após a criação confirmada', () => {
     const fixture = setup();

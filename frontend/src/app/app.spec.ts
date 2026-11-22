@@ -58,11 +58,35 @@ describe('header autenticado', () => {
     const navigate = vi.spyOn(router, 'navigate');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Olá, Mateus');
+    expect(fixture.nativeElement.textContent).toContain('Mateus');
     expect(fixture.nativeElement.textContent).toContain('Notificações');
+    const account = fixture.nativeElement.querySelector(
+      '.account-menu__trigger',
+    ) as HTMLButtonElement;
+    expect(account.getAttribute('aria-expanded')).toBe('false');
+    account.click();
+    fixture.detectChanges();
+    expect(account.getAttribute('aria-expanded')).toBe('true');
     expect(fixture.nativeElement.textContent).toContain('Preferências');
     fixture.componentInstance.logout();
     expect(auth.logout).toHaveBeenCalledOnce();
     expect(navigate).toHaveBeenCalledWith(['/campeonatos']);
+  });
+
+  it('fecha o menu da conta com Escape e devolve o foco ao acionador', async () => {
+    authenticated.set(true);
+    user.set({ ...user(), authenticated: true, displayName: 'Mateus' });
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const account = fixture.nativeElement.querySelector(
+      '.account-menu__trigger',
+    ) as HTMLButtonElement;
+    account.click();
+    fixture.detectChanges();
+    fixture.componentInstance.onEscape();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(fixture.componentInstance.userMenuOpen()).toBe(false);
+    expect(document.activeElement).toBe(account);
   });
 });

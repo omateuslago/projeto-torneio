@@ -33,35 +33,51 @@
         statusLabels[current.status]
       }}</span>
     </div>
-    <dl class="detail-grid">
-      <div>
-        <dt>Modalidade</dt>
-        <dd>{{ current.sport }}</dd>
+    @if (current.status === 'Draft') {
+      <div class="tournament-next-step">
+        <h2>Prepare seu campeonato</h2>
+        <p>Abra as inscrições quando estiver pronto para receber as equipes.</p>
       </div>
-      <div>
-        <dt>Formato</dt>
-        <dd>{{ formatLabels[current.format] }}</dd>
+    } @else if (current.status === 'Open') {
+      <div class="tournament-next-step">
+        <h2>Inscrições abertas</h2>
+        <p>Inscreva as equipes participantes e encerre quando o grupo estiver completo.</p>
       </div>
-      <div>
-        <dt>Capacidade</dt>
-        <dd>{{ current.maxTeams }} equipes</dd>
+    } @else if (current.status === 'Closed') {
+      <div class="tournament-next-step">
+        <h2>Inscrições encerradas</h2>
+        <p>O próximo passo é gerar os confrontos.</p>
       </div>
-    </dl>
-    @if (auth.canManageTournament(current.id) && current.status === 'Draft') {
-      <p class="muted">Abra as inscrições para começar a adicionar equipes.</p>
-      <button (click)="changeStatus('Open')" [disabled]="saving()">
-        {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
-      </button>
-    } @else if (auth.canManageTournament(current.id) && current.status === 'Open') {
-      <p class="muted">Ao encerrar, não será possível reabrir as inscrições nesta etapa.</p>
-      <button class="secondary" (click)="confirmClose.set(true)" [disabled]="saving()">
-        {{ saving() ? 'Encerrando…' : 'Fechar inscrições' }}
-      </button>
-    } @else if (current.status !== 'Draft' && current.status !== 'Open') {
-      <p class="muted">
-        As inscrições foram encerradas. As equipes inscritas continuam disponíveis para consulta.
-      </p>
+    } @else if (current.status === 'InProgress') {
+      <div class="tournament-next-step">
+        <h2>Campeonato em andamento</h2>
+        <p>Acompanhe a agenda, as pendências e os resultados.</p>
+      </div>
+    } @else {
+      <div class="tournament-next-step">
+        <h2>Campeonato encerrado</h2>
+        <p>Consulte a classificação final e os resultados.</p>
+      </div>
     }
+    <div class="tournament-primary-actions">
+      @if (auth.canManageTournament(current.id) && current.status === 'Draft') {
+        <button (click)="changeStatus('Open')" [disabled]="saving()">
+          {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
+        </button>
+      } @else if (auth.canManageTournament(current.id) && current.status === 'Open') {
+        <a class="button" href="#inscricoes">Inscrever equipe</a>
+        <button class="secondary" (click)="confirmClose.set(true)" [disabled]="saving()">
+          {{ saving() ? 'Encerrando…' : 'Encerrar inscrições' }}
+        </button>
+      } @else if (current.status === 'Closed') {
+        <a class="button" href="#partidas">Gerar confrontos</a>
+      } @else if (current.status === 'InProgress') {
+        <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Ver agenda</a>
+        <a class="button secondary" href="#partidas">Ver resultados</a>
+      } @else if (current.status === 'Finished') {
+        <a class="button" href="#classificacao">Ver classificação final</a>
+      }
+    </div>
     @if (actionError()) {
       <p class="error" role="alert">{{ actionError() }}</p>
     }
@@ -69,42 +85,62 @@
       <p class="success" role="status">{{ message() }}</p>
     }
   </section>
-  <nav class="context-nav tournament-nav" aria-label="Seções do campeonato">
-    <a href="#inscricoes">Inscrições</a>
-    <a href="#partidas">Partidas e classificação</a>
-    <a [routerLink]="['/campeonatos', current.id, 'agenda']">Agenda</a>
-    @if (auth.canManageTournament(current.id)) {
-      <a href="#acessos">Acessos</a>
-    }
-  </nav>
   @if (auth.canManageTournament(current.id)) {
-    <div id="acessos" class="detail-section">
-      <app-access-management kind="tournament" [targetId]="current.id" title="Organizadores" />
+    <details id="acessos" class="panel tournament-settings detail-section">
+      <summary>Configurações e acessos</summary>
+      <dl class="detail-grid">
+        <div>
+          <dt>Formato</dt>
+          <dd>{{ formatLabels[current.format] }}</dd>
+        </div>
+        <div>
+          <dt>Limite</dt>
+          <dd>{{ current.maxTeams }} equipes</dd>
+        </div>
+      </dl>
+      <app-access-management
+        kind="tournament"
+        [targetId]="current.id"
+        title="Gerenciar organizadores"
+      />
+    </details>
+  }
+  @if (current.status === 'InProgress' || current.status === 'Finished') {
+    <details id="inscricoes" class="panel tournament-settings detail-section">
+      <summary>Equipes inscritas</summary>
+      <app-registrations [tournament]="current" />
+    </details>
+  } @else {
+    <div id="inscricoes" class="detail-section"><app-registrations [tournament]="current" /></div>
+  }
+  @if (current.status === 'Closed') {
+    <div class="agenda-callout">
+      <div>
+        <strong>Agenda</strong>
+        <p>Organize horários e locais ou deixe o Brakvyo gerar a agenda.</p>
+      </div>
+      <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Abrir agenda</a>
     </div>
   }
-  <div id="inscricoes" class="detail-section"><app-registrations [tournament]="current" /></div>
-  <div class="agenda-callout">
-    <div>
-      <strong>Agenda operacional</strong>
-      <p>Configure disponibilidade, recursos e automatize os confrontos.</p>
+  @if (
+    current.status === 'Closed' || current.status === 'InProgress' || current.status === 'Finished'
+  ) {
+    <div id="partidas" class="detail-section">
+      @if (current.format === 'RoundRobin') {
+        <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
+      } @else {
+        <p class="panel muted">
+          Partidas e classificação estão disponíveis apenas para campeonatos de pontos corridos
+          nesta etapa.
+        </p>
+      }
     </div>
-    <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Abrir agenda</a>
-  </div>
-  <div id="partidas" class="detail-section">
-    @if (current.format === 'RoundRobin') {
-      <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
-    } @else {
-      <p class="panel muted">
-        Partidas e classificação estão disponíveis apenas para campeonatos de pontos corridos nesta
-        etapa.
-      </p>
-    }
-  </div>
+  }
   @if (confirmClose()) {
     <app-confirm-dialog
-      title="Fechar inscrições?"
+      title="Encerrar inscrições?"
       description="Novas equipes não poderão se inscrever nesta etapa e as inscrições não poderão ser reabertas."
-      confirmLabel="Fechar inscrições"
+      confirmLabel="Encerrar inscrições"
       [busy]="saving()"
       (confirmed)="confirmClose.set(false); changeStatus('Closed')"
       (cancelled)="confirmClose.set(false)"

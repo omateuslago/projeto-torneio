@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { TournamentDetail } from './tournament-detail';
-import { Tournament } from '../../core/models';
+import { Tournament, TournamentStatus } from '../../core/models';
 
 const tournament: Tournament = {
   id: 'cup',
@@ -48,5 +48,27 @@ describe('Atualizações do campeonato', () => {
     component.updateTournament({ ...tournament, status: 'Finished' });
     component.updateTournament({ ...tournament, id: 'another', status: 'Finished' });
     expect(component.tournament()).toEqual({ ...tournament, status: 'Finished' });
+  });
+
+  it.each([
+    ['Draft', 'Prepare seu campeonato'],
+    ['Open', 'Inscrições abertas'],
+    ['Closed', 'O próximo passo é gerar os confrontos'],
+    ['InProgress', 'Campeonato em andamento'],
+    ['Finished', 'Campeonato encerrado'],
+  ] as [TournamentStatus, string][])('prioriza a etapa %s na apresentação', (status, copy) => {
+    const fixture = TestBed.createComponent(TournamentDetail);
+    const current = { ...tournament, status };
+    http.expectOne('/api/tournaments/cup').flush(current);
+    fixture.detectChanges();
+    http.expectOne('/api/tournaments/cup/registrations').flush([]);
+    http.expectOne('/api/teams').flush([]);
+    if (status === 'Closed' || status === 'InProgress' || status === 'Finished') {
+      http.expectOne('/api/tournaments/cup/matches').flush([]);
+      http.expectOne('/api/tournaments/cup/standings').flush([]);
+      http.expectOne('/api/tournaments/cup').flush(current);
+    }
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(copy);
   });
 });
