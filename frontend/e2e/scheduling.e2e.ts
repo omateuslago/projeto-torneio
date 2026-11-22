@@ -52,36 +52,41 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
     ).ok(),
   ).toBe(true);
   await page.goto(`/campeonatos/${t.id}`);
-  await page.getByRole('link', { name: 'Agenda e disponibilidade', exact: true }).click();
+  await page.getByRole('link', { name: 'Abrir agenda', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Partidas aguardando agendamento (6)' }),
   ).toBeVisible();
-  await page.getByText('Configuração e recursos', { exact: true }).click();
-  await page.getByLabel('Fuso da agenda (IANA)').fill('America/Sao_Paulo');
-  await page.getByRole('button', { name: 'Salvar configuração' }).click();
-  await expect(page.getByRole('button', { name: 'Salvar configuração' })).toBeEnabled();
-  await page.getByLabel('Nome do local', { exact: true }).fill('Ginásio Central');
+  await page.getByRole('button', { name: /Configurações/, exact: true }).click();
+  await page.getByText('Configurações avançadas', { exact: true }).click();
+  await page.getByLabel('Fuso da agenda', { exact: true }).fill('America/Sao_Paulo');
+  await page.getByRole('button', { name: 'Salvar configurações' }).click();
+  await expect(page.getByRole('button', { name: 'Salvar configurações' })).toBeEnabled();
+  await page.getByRole('textbox', { name: 'Local', exact: true }).fill('Ginásio Central');
   await page.getByLabel('Endereço', { exact: true }).fill('Rua Central, 10');
-  await page.getByRole('button', { name: 'Criar local', exact: true }).click();
-  await page.getByLabel('Local da área').selectOption({ label: 'Ginásio Central' });
-  await page.getByLabel('Nome da área').fill('Quadra 1');
-  await page.getByRole('button', { name: 'Criar área', exact: true }).click();
+  await page.getByRole('button', { name: 'Adicionar local', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Local', exact: true })
+    .selectOption({ label: 'Ginásio Central' });
+  await page.getByLabel('Nome da quadra').fill('Quadra 1');
+  await page.getByRole('button', { name: 'Adicionar quadra', exact: true }).click();
+  await page.getByText('Árbitros', { exact: true }).click();
   await page.getByLabel('Nome do árbitro').fill('Carlos');
   await page.getByRole('button', { name: 'Cadastrar árbitro' }).click();
   await expect(page.getByLabel('Nome do árbitro')).toHaveValue('');
+  await page.getByText('Disponibilidade', { exact: true }).click();
   for (const [kind, names] of [
     ['teams', ['Time agenda 1', 'Time agenda 2', 'Time agenda 3', 'Time agenda 4']],
     ['playing-areas', ['Ginásio Central / Quadra 1']],
     ['referees', ['Carlos']],
   ] as const) {
-    await page.getByLabel('Tipo de recurso').selectOption(kind);
+    await page.getByLabel('Aplicar para').selectOption(kind);
     for (const name of names) {
       await page
         .getByRole('combobox', { name: 'Recurso', exact: true })
         .selectOption({ label: name });
-      await page.getByLabel('Disponível desde').fill('2026-11-14T08:00');
-      await page.getByLabel('Disponível até').fill('2026-11-14T22:00');
-      await page.getByRole('button', { name: 'Adicionar período', exact: true }).click();
+      await page.getByLabel('Das').fill('2026-11-14T08:00');
+      await page.getByLabel('Até', { exact: true }).fill('2026-11-14T22:00');
+      await page.getByRole('button', { name: 'Adicionar disponibilidade', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Editar período', exact: true })).toHaveCount(
         1,
       );
@@ -89,10 +94,11 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
   }
   async function schedule(time: string) {
     await page.getByLabel('Início da partida').fill(`2026-11-14T${time}`);
-    await page.getByLabel('Área da partida').selectOption({ label: 'Quadra 1' });
-    await page.getByLabel('Árbitro da partida').selectOption({ label: 'Carlos' });
+    await page.getByLabel('Quadra', { exact: true }).selectOption({ label: 'Quadra 1' });
+    await page.getByLabel('Árbitro', { exact: true }).selectOption({ label: 'Carlos' });
     await page.getByRole('button', { name: 'Salvar agendamento', exact: true }).click();
   }
+  await page.getByRole('button', { name: 'Agenda', exact: true }).click();
   await page.getByRole('button', { name: 'Agendar partida', exact: true }).first().click();
   await schedule('18:00');
   await expect(
