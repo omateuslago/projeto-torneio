@@ -65,9 +65,10 @@ describe('Self-Healing', () => {
     it(`envia somente os campos do incidente ${kind}`, () => {
       const f = setup(),
         c = f.componentInstance;
-      c.form.patchValue({ kind, matchId: 'm' });
+      (f.nativeElement.querySelector(`input[value="${kind}"]`) as HTMLInputElement).click();
+      c.form.patchValue({ matchId: 'm', resourceId: 'a' });
       f.detectChanges();
-      expect(f.nativeElement.textContent.includes('Atraso operacional')).toBe(
+      expect(f.nativeElement.querySelector('input[formControlName="delayMinutes"]') !== null).toBe(
         kind === 'matchDelayed',
       );
       c.generate();
@@ -84,11 +85,11 @@ describe('Self-Healing', () => {
     http.expectOne('/api/tournaments/cup/schedule/repair/generate').flush(proposal);
     f.detectChanges();
     for (const text of [
-      'Antes:',
-      'Depois:',
+      'Antes',
+      'Depois',
       'Azul × Verde',
-      '1 partidas precisam mudar',
-      '2 partidas preservadas',
+      '1 partida precisa mudar',
+      '2 partidas permanecem como estão',
       '120 min',
     ])
       expect(f.nativeElement.textContent).toContain(text);
@@ -103,7 +104,7 @@ describe('Self-Healing', () => {
     const f = setup();
     f.componentInstance.proposal.set(proposal);
     f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('Reparo mínimo encontrado.');
+    expect(f.nativeElement.textContent).toContain('O menor conjunto de mudanças foi comprovado.');
     expect(f.nativeElement.textContent).not.toContain('não foi comprovado');
   });
   it('avisa quando o mínimo não foi comprovado e mantém a aplicação disponível', () => {
@@ -112,11 +113,13 @@ describe('Self-Healing', () => {
     c.proposal.set({ ...proposal, status: 'feasible' });
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain(
-      'Foi encontrado um reparo válido, mas o menor conjunto possível de mudanças não foi comprovado dentro do tempo de cálculo.',
+      'O reparo é válido, mas o menor conjunto possível de mudanças não foi comprovado dentro do tempo de cálculo.',
     );
-    expect(f.nativeElement.textContent).not.toContain('Reparo mínimo encontrado.');
+    expect(f.nativeElement.textContent).not.toContain(
+      'O menor conjunto de mudanças foi comprovado.',
+    );
     const apply = [...f.nativeElement.querySelectorAll('button')].find((button) =>
-      button.textContent?.includes('Aplicar reparo'),
+      button.textContent?.includes('Aplicar solução'),
     ) as HTMLButtonElement | undefined;
     expect(apply).toBeTruthy();
     apply!.click();
@@ -141,15 +144,15 @@ describe('Self-Healing', () => {
       metrics: { ...proposal.metrics, changedCount: 0 },
     });
     f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('Nenhuma alteração necessária');
-    expect(f.nativeElement.textContent).not.toContain('Aplicar reparo');
+    expect(f.nativeElement.textContent).toContain('Nenhuma alteração é necessária');
+    expect(f.nativeElement.textContent).not.toContain('Aplicar solução');
   });
   for (const status of ['infeasible', 'timeout', 'error'])
     it(`explica ${status}`, () => {
       const f = setup();
       f.componentInstance.proposal.set({ ...proposal, status, proposalToken: null, changes: [] });
       f.detectChanges();
-      expect(f.nativeElement.textContent).not.toContain('Aplicar reparo');
+      expect(f.nativeElement.textContent).not.toContain('Aplicar solução');
     });
   it('limpa proposta desatualizada e mantém erro visível', () => {
     const c = setup().componentInstance;
@@ -160,5 +163,20 @@ describe('Self-Healing', () => {
       .flush({ detail: 'Agenda mudou' }, { status: 409, statusText: 'Conflict' });
     expect(c.proposal()).toBeNull();
     expect(c.error()).toContain('Agenda mudou');
+  });
+
+  it('mantém parâmetros técnicos recolhidos e deriva o período da agenda', () => {
+    const f = setup();
+    const c = f.componentInstance;
+    c.form.patchValue({ horizonStart: '', horizonEnd: '' });
+    const details = f.nativeElement.querySelector('.advanced-options') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    c.generate();
+    const request = http.expectOne('/api/tournaments/cup/schedule/repair/generate');
+    expect(Date.parse(request.request.body.horizon.horizonStart)).toBe(Date.parse(row.startsAt));
+    expect(Date.parse(request.request.body.horizon.horizonEnd)).toBeGreaterThan(
+      Date.parse(row.startsAt),
+    );
+    request.flush(proposal);
   });
 });

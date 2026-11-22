@@ -1,39 +1,51 @@
-<section class="panel match-panel" aria-labelledby="repair-title">
-  <h2 id="repair-title">Self-Healing</h2>
-  <p>Analise um incidente e revise a proposta de reparo antes de aplicar.</p>
+<section class="panel match-panel" aria-labelledby="repair-section-title">
+  <h2 id="repair-section-title">Resolver imprevisto</h2>
+  <p>Conte o que aconteceu. A agenda só será alterada depois da sua aprovação.</p>
   <form [formGroup]="form" (ngSubmit)="generate()">
-    <label
-      >Início do horizonte de reparo<input
-        type="datetime-local"
-        formControlName="horizonStart"
-        required
-    /></label>
-    <label
-      >Fim do horizonte de reparo<input type="datetime-local" formControlName="horizonEnd" required
-    /></label>
-    <label
-      >Grade de reparo (minutos)<input
-        type="number"
-        formControlName="granularityMinutes"
-        min="1"
-        max="60"
-        required
-    /></label>
-    <p class="muted">Fuso dos campos: {{ browserZone }}. Horários exibidos: {{ zone() }}.</p>
-    <label
-      >Tipo de incidente<select
-        formControlName="kind"
-        (change)="form.controls.resourceId.setValue('')"
-      >
-        <option value="playingAreaUnavailable">Área indisponível</option>
-        <option value="refereeUnavailable">Árbitro indisponível</option>
-        <option value="teamUnavailable">Equipe indisponível</option>
-        <option value="matchDelayed">Partida atrasada</option>
-      </select></label
-    >
+    <fieldset class="plain-fieldset">
+      <legend>O que aconteceu?</legend>
+      <div class="incident-options">
+        <label
+          ><input
+            type="radio"
+            formControlName="kind"
+            value="playingAreaUnavailable"
+            (change)="form.controls.resourceId.setValue('')"
+          />
+          Uma quadra ficou indisponível</label
+        >
+        <label
+          ><input
+            type="radio"
+            formControlName="kind"
+            value="refereeUnavailable"
+            (change)="form.controls.resourceId.setValue('')"
+          />
+          Um árbitro não poderá comparecer</label
+        >
+        <label
+          ><input
+            type="radio"
+            formControlName="kind"
+            value="teamUnavailable"
+            (change)="form.controls.resourceId.setValue('')"
+          />
+          Uma equipe não poderá jogar</label
+        >
+        <label
+          ><input
+            type="radio"
+            formControlName="kind"
+            value="matchDelayed"
+            (change)="form.controls.resourceId.setValue('')"
+          />
+          Uma partida atrasou</label
+        >
+      </div>
+    </fieldset>
     @if (form.controls.kind.value === 'matchDelayed') {
       <label
-        >Partida atrasada<select formControlName="matchId">
+        >Partida<select formControlName="matchId">
           <option value="">Selecione</option>
           @for (m of matches(); track m.matchId) {
             @if (m.startsAt && m.matchStatus !== 'Finished') {
@@ -43,7 +55,7 @@
         </select></label
       >
       <label
-        >Atraso operacional (minutos)<input
+        >Atraso (minutos)<input
           type="number"
           formControlName="delayMinutes"
           min="1"
@@ -52,7 +64,13 @@
       /></label>
     } @else {
       <label
-        >Recurso afetado<select formControlName="resourceId">
+        >{{
+          form.controls.kind.value === 'teamUnavailable'
+            ? 'Equipe'
+            : form.controls.kind.value === 'playingAreaUnavailable'
+              ? 'Quadra'
+              : 'Árbitro'
+        }}<select formControlName="resourceId">
           <option value="">Selecione</option>
           @if (form.controls.kind.value === 'teamUnavailable') {
             @for (t of teams(); track t.teamId) {
@@ -69,83 +87,131 @@
           }
         </select></label
       >
-      <label>Início do incidente<input type="datetime-local" formControlName="startsAt" /></label>
-      <label>Fim do incidente<input type="datetime-local" formControlName="endsAt" /></label>
+      <div class="field-grid">
+        <label>Indisponível de<input type="datetime-local" formControlName="startsAt" /></label>
+        <label>Até<input type="datetime-local" formControlName="endsAt" /></label>
+      </div>
     }
+    <details class="advanced-options">
+      <summary>Opções avançadas</summary>
+      <div class="advanced-options__content">
+        <label
+          >Início do período de busca<input type="datetime-local" formControlName="horizonStart"
+        /></label>
+        <label
+          >Fim do período de busca<input type="datetime-local" formControlName="horizonEnd"
+        /></label>
+        <label
+          >Intervalo entre opções (minutos)<input
+            type="number"
+            formControlName="granularityMinutes"
+            min="1"
+            max="60"
+            required
+        /></label>
+        <p class="muted">
+          Horário do seu dispositivo: {{ browserZone }} · agenda exibida em {{ zone() }}
+        </p>
+      </div>
+    </details>
     <button [disabled]="busy() || blocked()">
-      {{ busy() ? 'Analisando…' : 'Analisar reparo' }}
+      {{ busy() ? 'Buscando solução…' : 'Encontrar solução' }}
     </button>
   </form>
   @if (error()) {
     <p class="error" role="alert">{{ error() }}</p>
   }
   @if (message()) {
-    <p role="status">{{ message() }}</p>
+    <p class="success" role="status">{{ message() }}</p>
   }
   @if (proposal(); as p) {
-    <h3>Proposta de reparo</h3>
-    <p>{{ incidentSummary() }}</p>
-    @if (p.status === 'infeasible') {
-      <p>Não existe reparo válido neste horizonte.</p>
-    } @else if (p.status === 'timeout') {
-      <p>Tempo esgotado sem solução. Isso não prova impossibilidade.</p>
-    } @else if (p.status === 'error') {
-      <p>Não foi possível calcular o reparo.</p>
-    } @else {
-      @if (p.status === 'optimal') {
-        <p>Reparo mínimo encontrado.</p>
-      } @else if (p.status === 'feasible') {
-        <p>
-          Foi encontrado um reparo válido, mas o menor conjunto possível de mudanças não foi
-          comprovado dentro do tempo de cálculo.
-        </p>
+    <div class="proposal-result">
+      @if (p.status === 'infeasible') {
+        <h3>Não foi possível encontrar uma solução com essas condições</h3>
+        <p>Tente ampliar o período ou revisar a disponibilidade dos recursos.</p>
+      } @else if (p.status === 'timeout') {
+        <h3>Não encontramos uma solução a tempo</h3>
+        <p>Tente ampliar o período ou ajustar as condições.</p>
+      } @else if (p.status === 'error') {
+        <h3>Não foi possível calcular a solução</h3>
+      } @else {
+        <span class="status-badge status-badge--success">
+          {{ p.status === 'optimal' ? 'Menor mudança comprovada' : 'Solução válida' }}
+        </span>
+        <h3>Encontramos uma solução ✓</h3>
+        <p>{{ incidentSummary() }}</p>
+        @if (p.status === 'optimal') {
+          <p>O menor conjunto de mudanças foi comprovado.</p>
+        } @else if (p.status === 'feasible') {
+          <p class="muted">
+            O reparo é válido, mas o menor conjunto possível de mudanças não foi comprovado dentro
+            do tempo de cálculo.
+          </p>
+        }
+        @if (!p.metrics.changedCount) {
+          <p>Nenhuma alteração é necessária.</p>
+        } @else {
+          <p>
+            <strong>{{ p.metrics.changedCount }}</strong>
+            {{ p.metrics.changedCount === 1 ? 'partida precisa' : 'partidas precisam' }} mudar.
+          </p>
+          <p>{{ p.metrics.preservedCount }} partidas permanecem como estão.</p>
+        }
+        @for (c of p.changes; track c.after.matchId) {
+          <article class="repair-change">
+            <h4>{{ matchName(c.after.matchId) }}</h4>
+            <dl>
+              <div>
+                <dt>Antes</dt>
+                <dd>
+                  {{ display(c.before.startsAt) }} ·
+                  {{ resourceName(c.before.playingAreaId, 'area') }}
+                </dd>
+              </div>
+              <div>
+                <dt>Depois</dt>
+                <dd>
+                  {{ display(c.after.startsAt) }} ·
+                  {{ resourceName(c.after.playingAreaId, 'area') }}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        }
+        <details class="proposal-details">
+          <summary>Ver detalhes</summary>
+          <div class="proposal-details__content">
+            <ul>
+              <li>{{ p.metrics.impactedCount }} partidas impactadas</li>
+              <li>{{ p.metrics.changedCount }} partidas alteradas</li>
+              <li>{{ p.metrics.preservedCount }} partidas preservadas</li>
+              <li>Deslocamento total: {{ p.metrics.totalDisplacementMinutes }} min</li>
+              <li>Deslocamento máximo: {{ p.metrics.maxDisplacementMinutes }} min</li>
+              <li>{{ p.metrics.areaChanges }} mudanças de quadra</li>
+              <li>{{ p.metrics.refereeChanges }} mudanças de árbitro</li>
+            </ul>
+            @if (p.fairness) {
+              <p>Qualidade da agenda: {{ p.fairness.score }}/100</p>
+            }
+            @if (p.resilience) {
+              <p>Resistência a imprevistos: {{ p.resilience.score }}/100</p>
+            }
+          </div>
+        </details>
       }
-      @if (!p.metrics.changedCount) {
-        <p>Nenhuma alteração necessária.</p>
+      @if (p.warnings.length) {
+        <ul class="proposal-warnings">
+          @for (w of p.warnings; track $index) {
+            <li>{{ w }}</li>
+          }
+        </ul>
       }
-      <p>
-        {{ p.metrics.impactedCount }} partidas impactadas · {{ p.metrics.changedCount }} partidas
-        precisam mudar · {{ p.metrics.preservedCount }} partidas preservadas
-      </p>
-      <p>
-        Deslocamento total: {{ p.metrics.totalDisplacementMinutes }} min · Máximo:
-        {{ p.metrics.maxDisplacementMinutes }} min
-      </p>
-      <p>
-        {{ p.metrics.areaChanges }} mudanças de área · {{ p.metrics.refereeChanges }} mudanças de
-        árbitro
-      </p>
-      @for (c of p.changes; track c.after.matchId) {
-        <h4>{{ matchName(c.after.matchId) }}</h4>
-        <p>
-          Antes: {{ display(c.before.startsAt) }} ·
-          {{ resourceName(c.before.playingAreaId, 'area') }} ·
-          {{ resourceName(c.before.refereeId, 'referee') }}
-        </p>
-        <p>
-          Depois: {{ display(c.after.startsAt) }} ·
-          {{ resourceName(c.after.playingAreaId, 'area') }} ·
-          {{ resourceName(c.after.refereeId, 'referee') }}
-        </p>
-      }
-      @if (p.fairness) {
-        <p>Fairness Score: {{ p.fairness.score }}/100</p>
-      }
-      @if (p.resilience) {
-        <p>Resilience Score: {{ p.resilience.score }}/100</p>
-      }
-    }
-    <ul>
-      @for (w of p.warnings; track $index) {
-        <li>{{ w }}</li>
-      }
-    </ul>
-    <p class="muted">A agenda só será alterada após sua aprovação.</p>
-    <div class="actions">
-      @if (p.proposalToken) {
-        <button (click)="apply()" [disabled]="busy() || blocked()">Aplicar reparo</button>
-      }
-      <button class="secondary" (click)="discard()" [disabled]="busy()">Descartar reparo</button>
+      <div class="actions">
+        @if (p.proposalToken) {
+          <button (click)="apply()" [disabled]="busy() || blocked()">Aplicar solução</button>
+        }
+        <button class="secondary" (click)="discard()" [disabled]="busy()">Descartar</button>
+      </div>
     </div>
   }
 </section>
