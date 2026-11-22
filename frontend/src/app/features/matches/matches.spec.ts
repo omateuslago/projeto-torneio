@@ -172,7 +172,7 @@ describe('Partidas e classificação', () => {
     request.flush(homeSubmission);
     flushView([{ ...match, status: 'AwaitingConfirmation', submissions: [homeSubmission] }]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Pendências (1)');
+    expect(fixture.nativeElement.textContent).toContain('1 partida precisa de atenção');
     expect(fixture.nativeElement.textContent).toContain('Aguardando resultado de Verde');
     expect(fixture.componentInstance.matches()[0].homeScore).toBeNull();
   });
@@ -205,7 +205,7 @@ describe('Partidas e classificação', () => {
     );
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Resultado confirmado pelas equipes');
-    expect(fixture.nativeElement.textContent).toContain('Pendências (0)');
+    expect(fixture.nativeElement.textContent).not.toContain('precisa de atenção');
     expect(fixture.componentInstance.standings()[0].points).toBe(3);
   });
   it('exibe disputa quando a segunda submissão diverge sem resultado oficial', () => {
@@ -282,12 +282,12 @@ describe('Partidas e classificação', () => {
       managedTeamIds: [],
     });
     const fixture = setup([match]);
-    expect(fixture.nativeElement.textContent).not.toContain('Enviar como');
+    expect(fixture.nativeElement.textContent).not.toContain('Informar resultado');
     fixture.componentInstance.load();
     flushView([{ ...match, status: 'Finished', homeScore: 0, awayScore: 0 }]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Enviar como');
-    expect(fixture.nativeElement.textContent).not.toContain('Ação administrativa');
+    expect(fixture.nativeElement.textContent).not.toContain('Informar resultado');
+    expect(fixture.nativeElement.textContent).not.toContain('Mais ações');
   });
   it('oferece envio somente pela equipe realmente gerenciada, sem seletor arbitrário', () => {
     TestBed.inject(AuthService).user.set({
@@ -300,10 +300,10 @@ describe('Partidas e classificação', () => {
       managedTeamIds: ['a'],
     });
     const fixture = setup([match]);
-    expect(fixture.nativeElement.textContent).toContain('Enviar resultado como Azul');
-    expect(fixture.nativeElement.textContent).not.toContain('Enviar resultado como Verde');
+    expect(fixture.nativeElement.textContent).toContain('Informar resultado');
+    expect(fixture.nativeElement.textContent).not.toContain('Informar resultado como Verde');
     expect(fixture.nativeElement.querySelector('select')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Ação administrativa');
+    expect(fixture.nativeElement.textContent).not.toContain('Mais ações');
   });
   it('mostra ações administrativas ao organizer sem conceder identidade de equipe', () => {
     TestBed.inject(AuthService).user.set({
@@ -316,8 +316,9 @@ describe('Partidas e classificação', () => {
       managedTeamIds: [],
     });
     const fixture = setup([match]);
-    expect(fixture.nativeElement.textContent).toContain('Ação administrativa');
-    expect(fixture.nativeElement.textContent).not.toContain('Enviar resultado como');
+    expect(fixture.nativeElement.textContent).toContain('Mais ações');
+    expect(fixture.nativeElement.textContent).toContain('Registrar resultado administrativamente');
+    expect(fixture.nativeElement.textContent).not.toContain('Informar resultado');
   });
   it('mantém placar e equipe selecionada após falha no envio', () => {
     const fixture = setup([match]);

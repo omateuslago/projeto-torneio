@@ -20,8 +20,8 @@ export class NotificationCenter {
   readonly statusLabels: Record<UserNotification['whatsAppStatus'], string> = {
     Pending: 'Pendente',
     Processing: 'Pendente',
-    Sent: 'Enviado',
-    Failed: 'Falhou',
+    Sent: 'Enviado pelo WhatsApp',
+    Failed: 'Falha no envio pelo WhatsApp',
     Skipped: 'Não habilitado',
   };
 

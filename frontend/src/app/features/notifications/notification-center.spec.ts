@@ -28,7 +28,27 @@ describe('NotificationCenter', () => {
     const fixture = TestBed.createComponent(NotificationCenter);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Partida agendada');
-    expect(fixture.nativeElement.textContent).toContain('WhatsApp: Enviado');
+    expect(fixture.nativeElement.textContent).toContain('Enviado pelo WhatsApp');
+  });
+
+  it('não exibe ruído quando o canal WhatsApp está desabilitado', () => {
+    api.notifications.mockReturnValue(
+      of([
+        {
+          id: 'notification',
+          type: 'Invite',
+          title: 'Convite',
+          summary: 'Equipe Azul',
+          createdAt: '2026-11-13T19:30:00Z',
+          whatsAppStatus: 'Skipped',
+        },
+      ]),
+    );
+    const fixture = TestBed.createComponent(NotificationCenter);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Convite');
+    expect(fixture.nativeElement.textContent).not.toContain('Não habilitado');
+    expect(fixture.nativeElement.textContent).not.toContain('WhatsApp:');
   });
 
   it('mostra falha da API e permite atualizar', () => {
