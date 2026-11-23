@@ -25,10 +25,32 @@
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+.schedule-actions__agenda {
+  min-width: 112px;
+  font-weight: 800;
+}
 .schedule-actions button[aria-pressed='true'] {
   border-color: var(--color-primary-brand);
   background: var(--color-primary-brand);
   color: var(--color-on-primary);
+}
+.schedule-utilities {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.schedule-settings,
+.schedule-refresh {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-secondary-brand);
+}
+.schedule-settings[aria-pressed='true'] {
+  border-color: var(--color-border-brand);
+  background: var(--color-surface-muted-brand);
+  color: var(--color-text-brand);
+  font-weight: 700;
 }
 [hidden] {
   display: none;
@@ -77,6 +99,8 @@
   }
   .schedule-actions,
   .schedule-actions button,
+  .schedule-utilities,
+  .schedule-utilities button,
   .schedule-refresh,
   .settings-grid {
     width: 100%;

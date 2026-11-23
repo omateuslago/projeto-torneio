@@ -18,7 +18,7 @@
     <div class="schedule-actions">
       <button
         type="button"
-        class="secondary"
+        class="secondary schedule-actions__agenda"
         [attr.aria-pressed]="activeView() === 'agenda'"
         (click)="activeView.set('agenda')"
       >
@@ -42,20 +42,22 @@
           Resolver imprevisto
         </button>
       }
+    </div>
+    <div class="schedule-utilities">
       @if (canManageTournament() || auth.user().managedTeamIds.length) {
         <button
           type="button"
-          class="secondary"
+          class="secondary schedule-settings"
           [attr.aria-pressed]="activeView() === 'settings'"
           (click)="activeView.set('settings')"
         >
           ⚙ Configurações
         </button>
       }
+      <button class="secondary schedule-refresh" (click)="load()" [disabled]="busy()">
+        Atualizar
+      </button>
     </div>
-    <button class="secondary schedule-refresh" (click)="load()" [disabled]="busy()">
-      Atualizar
-    </button>
   </div>
 
   @if (canManageTournament()) {

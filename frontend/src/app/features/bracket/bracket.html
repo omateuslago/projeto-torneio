@@ -75,7 +75,7 @@
                       @if (node.isBye) {
                         <p class="bracket-card__note">Avançou direto</p>
                       } @else if (node.match?.status === 'Pending') {
-                        <a class="bracket-card__action" href="#resultados-mata-mata"
+                        <a class="bracket-card__action" [href]="'#match-' + node.match!.id"
                           >Gerenciar resultado</a
                         >
                       }

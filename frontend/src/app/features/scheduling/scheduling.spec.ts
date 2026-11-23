@@ -95,6 +95,8 @@ describe('Agenda e disponibilidade', () => {
   it('navega entre as áreas da agenda sem perder os dados carregados', () => {
     const f = setup();
     expect(f.componentInstance.activeView()).toBe('agenda');
+    expect(f.nativeElement.querySelector('.schedule-actions__agenda')).toBeTruthy();
+    expect(f.nativeElement.querySelector('.schedule-utilities .schedule-settings')).toBeTruthy();
     const actions = [
       ...f.nativeElement.querySelectorAll('.schedule-actions button'),
     ] as HTMLButtonElement[];
@@ -111,10 +113,10 @@ describe('Agenda e disponibilidade', () => {
 
   it('agrupa recursos e disponibilidade em Configurações e mantém avançado recolhido', () => {
     const f = setup();
-    const actions = [
-      ...f.nativeElement.querySelectorAll('.schedule-actions button'),
-    ] as HTMLButtonElement[];
-    actions.find((button) => button.textContent?.includes('Configurações'))!.click();
+    const settings = f.nativeElement.querySelector(
+      '.schedule-utilities .schedule-settings',
+    ) as HTMLButtonElement;
+    settings.click();
     f.detectChanges();
     expect(f.componentInstance.activeView()).toBe('settings');
     expect(f.nativeElement.textContent).toContain('Onde serão os jogos?');

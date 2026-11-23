@@ -10,6 +10,7 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   const teams = [`Azul bilateral ${stamp}`, `Verde bilateral ${stamp}`];
   await page.goto('/equipes');
   for (const name of teams) {
+    await page.getByRole('button', { name: '+ Criar equipe', exact: true }).click();
     await page.getByLabel('Nome da equipe').fill(name);
     await page.getByRole('button', { name: 'Criar equipe', exact: true }).click();
     await expect(page.getByText(`Equipe ${name} cadastrada.`, { exact: true })).toBeVisible();
@@ -58,7 +59,7 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   );
   const table = page.getByRole('table', { name: 'Classificação do campeonato' });
   await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('0');
-  await expect(page.getByText('Em andamento', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Em andamento');
   await page.getByRole('button', { name: 'Resolver disputa', exact: true }).click();
   resultForm = page.getByRole('form', { name: 'Resultado da partida' });
   await resultForm.locator('input[formcontrolname="homeScore"]').fill('3');
@@ -66,7 +67,7 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   await resultForm.locator('textarea').fill('Placar confirmado pela súmula.');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByText('precisa de atenção')).toHaveCount(0);
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Finalizado');
   await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
   await page.reload();
   await page.getByText('Ver detalhes', { exact: true }).click();
@@ -128,7 +129,7 @@ test('envios concordantes confirmam automaticamente sem intervenção', async ({
     await expect(page.getByRole('form', { name: 'Resultado da partida' })).toHaveCount(0);
   }
   await expect(page.getByText('Resultado confirmado pelas equipes', { exact: true })).toBeVisible();
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Finalizado');
   await expect(page.getByText('precisa de atenção')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Resolver disputa' })).toHaveCount(0);
 });
