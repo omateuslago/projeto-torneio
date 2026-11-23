@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -9,7 +10,7 @@ using Projeto_Campeonato.Api.Infrastructure;
 namespace Projeto_Campeonato.Api.Features;
 
 public sealed record MatchNotificationPayload(string HomeTeam, string AwayTeam, DateTime? StartsAt,
-    string? Venue, string? PlayingArea, int? ChangedMatches = null);
+    string? Venue, string? PlayingArea, int? ChangedMatches = null, string? TimeZoneId = null);
 
 public interface INotificationOutbox
 {
@@ -70,6 +71,8 @@ public sealed class NotificationOutbox(TournamentDbContext db, IOptions<WhatsApp
     {
         var home = await db.Teams.Where(x => x.Id == match.HomeTeamId).Select(x => x.Name).SingleAsync(ct);
         var away = await db.Teams.Where(x => x.Id == match.AwayTeamId).Select(x => x.Name).SingleAsync(ct);
+        var timeZoneId = await db.Tournaments.Where(x => x.Id == match.TournamentId)
+            .Select(x => x.TimeZoneId).SingleAsync(ct);
         string? area = null;
         string? venue = null;
         if (match.PlayingAreaId.HasValue)
@@ -81,7 +84,7 @@ public sealed class NotificationOutbox(TournamentDbContext db, IOptions<WhatsApp
             area = location?.Area;
             venue = location?.Venue;
         }
-        return new(home, away, match.StartsAt, venue, area);
+        return new(home, away, match.StartsAt, venue, area, TimeZoneId: timeZoneId);
     }
 
     private async Task Add(NotificationType type, MatchNotificationPayload payload, string key,
@@ -127,7 +130,7 @@ public sealed class NotificationRenderer : INotificationRenderer
             _ => "Notificação"
         };
         var match = $"{payload.HomeTeam} × {payload.AwayTeam}";
-        var when = payload.StartsAt.HasValue ? payload.StartsAt.Value.ToString("dd/MM/yyyy 'às' HH:mm 'UTC'") : "horário não informado";
+        var when = FormatTime(payload.StartsAt, payload.TimeZoneId);
         var location = payload.Venue is null ? "local não informado" :
             payload.PlayingArea is null ? payload.Venue : $"{payload.Venue} / {payload.PlayingArea}";
         var summary = notification.Type == NotificationType.ScheduleRepaired
@@ -142,5 +145,22 @@ public sealed class NotificationRenderer : INotificationRenderer
             _ => $"Brakvyo\n\n{title}\n{match}"
         };
         return new(title, summary, message);
+    }
+
+    private static string FormatTime(DateTime? startsAt, string? timeZoneId)
+    {
+        if (!startsAt.HasValue) return "horário não informado";
+        TimeZoneInfo zone;
+        try { zone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId ?? "UTC"); }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        { zone = TimeZoneInfo.Utc; }
+        var instant = startsAt.Value.Kind switch
+        {
+            DateTimeKind.Utc => startsAt.Value,
+            DateTimeKind.Local => startsAt.Value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(startsAt.Value, DateTimeKind.Utc)
+        };
+        return TimeZoneInfo.ConvertTimeFromUtc(instant, zone)
+            .ToString("dd/MM/yyyy 'às' HH:mm", CultureInfo.InvariantCulture);
     }
 }

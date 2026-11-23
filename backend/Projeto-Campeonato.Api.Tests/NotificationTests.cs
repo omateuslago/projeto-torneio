@@ -173,6 +173,69 @@ public sealed class NotificationTests(ApiFactory factory) : IClassFixture<ApiFac
         Assert.Equal("Mensagem", body.RootElement.GetProperty("text").GetString());
     }
 
+    [Fact]
+    public void RendererUsesTournamentTimeZoneForInternalAndWhatsAppMessages()
+    {
+        var notification = NotificationWith(new MatchNotificationPayload("Brakvyo FC", "Panteras",
+            new DateTime(2026, 11, 23, 22, 0, 0, DateTimeKind.Utc), "Ginásio Municipal", "Quadra 1",
+            TimeZoneId: "America/Sao_Paulo"));
+
+        var rendered = new NotificationRenderer().Render(notification);
+
+        Assert.Contains("23/11/2026 às 19:00", rendered.Summary);
+        Assert.Contains("Data: 23/11/2026 às 19:00", rendered.WhatsAppMessage);
+        Assert.Contains("Local: Ginásio Municipal / Quadra 1", rendered.WhatsAppMessage);
+    }
+
+    [Fact]
+    public void RendererKeepsUtcTimeWhenTournamentUsesUtc()
+    {
+        var notification = NotificationWith(new MatchNotificationPayload("Home", "Away",
+            new DateTime(2026, 11, 23, 22, 0, 0, DateTimeKind.Utc), null, null, TimeZoneId: "UTC"));
+
+        var rendered = new NotificationRenderer().Render(notification);
+
+        Assert.Contains("23/11/2026 às 22:00", rendered.Summary);
+        Assert.Contains("Data: 23/11/2026 às 22:00", rendered.WhatsAppMessage);
+    }
+
+    [Fact]
+    public void RendererFallsBackToUtcForLegacyPayloadWithoutTimeZone()
+    {
+        var payload = JsonSerializer.Serialize(new
+        {
+            HomeTeam = "Home",
+            AwayTeam = "Away",
+            StartsAt = new DateTime(2026, 11, 23, 22, 0, 0, DateTimeKind.Utc),
+            Venue = (string?)null,
+            PlayingArea = (string?)null
+        });
+        var notification = new Notification(NotificationType.MatchScheduled, payload, Guid.NewGuid().ToString());
+
+        var rendered = new NotificationRenderer().Render(notification);
+
+        Assert.Contains("23/11/2026 às 22:00", rendered.Summary);
+    }
+
+    [Fact]
+    public async Task OutboxPersistsTournamentTimeZoneInNewPayloads()
+    {
+        var (_, manager) = await factory.RegisterUser();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TournamentDbContext>();
+        var managerId = manager.Id!.Value;
+        var seeded = await SeedMatch(db, managerId, managerId, managerId,
+            "America/Sao_Paulo");
+        var outbox = new NotificationOutbox(db, Options.Create(new WhatsAppOptions { Enabled = false }));
+
+        await outbox.MatchScheduled(seeded.Match.Id, false, default);
+        await db.SaveChangesAsync();
+
+        var saved = await db.Notifications.SingleAsync(x => x.MatchId == seeded.Match.Id);
+        var payload = JsonSerializer.Deserialize<MatchNotificationPayload>(saved.PayloadJson);
+        Assert.Equal("America/Sao_Paulo", payload!.TimeZoneId);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.BadRequest, true)]
     [InlineData(HttpStatusCode.InternalServerError, false)]
@@ -225,6 +288,9 @@ public sealed class NotificationTests(ApiFactory factory) : IClassFixture<ApiFac
         return delivery;
     }
 
+    private static Notification NotificationWith(MatchNotificationPayload payload) =>
+        new(NotificationType.MatchRescheduled, JsonSerializer.Serialize(payload), Guid.NewGuid().ToString());
+
     private static async Task<Guid[]> DeliveryUsers(TournamentDbContext db, NotificationType type,
         Guid? matchId = null, Guid? tournamentId = null) => await (
         from delivery in db.NotificationDeliveries
@@ -234,9 +300,10 @@ public sealed class NotificationTests(ApiFactory factory) : IClassFixture<ApiFac
         select delivery.UserId).Order().ToArrayAsync();
 
     private static async Task<(Tournament Tournament, Match Match)> SeedMatch(TournamentDbContext db,
-        Guid homeManager, Guid awayManager, Guid organizer)
+        Guid homeManager, Guid awayManager, Guid organizer, string timeZoneId = "UTC")
     {
         var tournament = new Tournament($"Notification Cup {Guid.NewGuid():N}", "Futsal", 4, TournamentFormat.RoundRobin);
+        tournament.ConfigureSchedule(60, timeZoneId);
         var home = new Team($"Home {Guid.NewGuid():N}");
         var away = new Team($"Away {Guid.NewGuid():N}");
         var venue = new Venue(tournament.Id, "Venue", "Address");
