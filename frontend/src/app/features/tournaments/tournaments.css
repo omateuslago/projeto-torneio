@@ -88,18 +88,9 @@
   color: var(--color-text-brand);
   text-decoration: none;
 }
-.tournament-card__details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.tournament-card__capacity {
   margin: 0 0 20px;
-}
-.tournament-card__details dt {
   color: var(--color-text-muted-brand);
-  font-size: 0.8rem;
-}
-.tournament-card__details dd {
-  margin: 4px 0 0;
   font-size: 0.9rem;
 }
 .tournament-card__link {

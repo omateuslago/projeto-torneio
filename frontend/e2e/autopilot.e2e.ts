@@ -55,12 +55,12 @@ async function seed(request: APIRequestContext, page: Page, unavailable = false)
 }
 async function generate(page: Page, id: string) {
   await page.goto(`/campeonatos/${id}/agenda`);
-  await page.getByLabel('Início do horizonte', { exact: true }).fill('2026-11-14T18:00');
-  await page.getByLabel('Fim do horizonte', { exact: true }).fill('2026-11-15T02:00');
-  await page
-    .getByLabel('Árbitros no agendamento automático')
-    .selectOption({ label: 'Exigir árbitro em todas as partidas' });
   await page.getByRole('button', { name: 'Gerar agenda automaticamente', exact: true }).click();
+  await page.getByLabel('De', { exact: true }).fill('2026-11-14T18:00');
+  await page.getByLabel('Até', { exact: true }).fill('2026-11-15T02:00');
+  await page.getByText('Opções avançadas', { exact: true }).click();
+  await page.getByLabel('Árbitros').selectOption({ label: 'Exigir em todas as partidas' });
+  await page.getByRole('button', { name: 'Gerar agenda', exact: true }).click();
 }
 test('gera preview real, preserva reserva fixa e aplica todas as partidas', async ({
   page,
@@ -73,26 +73,23 @@ test('gera preview real, preserva reserva fixa e aplica todas as partidas', asyn
   });
   expect(fixed.ok()).toBe(true);
   await generate(page, s.t.id);
-  await expect(
-    page.getByRole('heading', { name: 'Proposta de agenda', exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText('Encontrei uma agenda válida para todas as 5 partidas pendentes.'),
-  ).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Fairness Score: \d+\/100/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Agenda pronta ✓', exact: true })).toBeVisible();
+  await expect(page.getByText('5 partidas · 1 quadras')).toBeVisible();
+  await expect(page.getByText(/Qualidade da agenda\d+ \/ 100/)).toBeVisible();
+  await page.getByText('Ver detalhes', { exact: true }).click();
   await expect(page.getByText(/Descanso: \d+\/100/, { exact: true })).toBeVisible();
   await expect(page.getByText(/Partidas consecutivas: \d+\/100/, { exact: true })).toBeVisible();
   await expect(page.getByText(/Equilíbrio de horários: \d+\/100/, { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Análise da agenda' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Resilience Score: \d+\/100/ })).toBeVisible();
+  await expect(page.getByText(/Resistência a imprevistos: \d+\/100/)).toBeVisible();
   const before = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(before.filter((m: { startsAt: string | null }) => m.startsAt)).toHaveLength(1);
   await page.getByRole('button', { name: 'Aplicar agenda', exact: true }).click();
   await expect(page.getByText('Agenda aplicada.', { exact: true })).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole('heading', { name: 'Partidas aguardando agendamento (0)' }),
+    page.getByRole('heading', { name: 'Agenda cronológica', exact: true }),
   ).toBeVisible();
+  await expect(page.getByText(/Partidas aguardando agendamento/)).toHaveCount(0);
   const after = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(after.filter((m: { startsAt: string | null }) => m.startsAt)).toHaveLength(6);
   expect(after.find((m: { matchId: string }) => m.matchId === s.matches[0].id).startsAt).toBe(
@@ -111,7 +108,7 @@ test('problema impossível explica a equipe indisponível sem gravar agenda', as
   const s = await seed(request, page, true);
   await generate(page, s.t.id);
   await expect(
-    page.getByText('Não existe agenda compatível com os dados e a grade solicitados.'),
+    page.getByText('Não foi possível montar uma agenda com esses horários'),
   ).toBeVisible();
   await expect(
     page.getByText('Equipe Autopilot time 1 não possui janela suficiente no horizonte.'),
@@ -167,23 +164,24 @@ test('Self-Healing troca somente a área após aprovação humana', async ({ pag
     ).ok(),
   ).toBe(true);
   await page.goto(`/campeonatos/${s.t.id}/agenda`);
-  await page.getByLabel('Início do horizonte de reparo').fill('2026-11-14T18:00');
-  await page.getByLabel('Fim do horizonte de reparo').fill('2026-11-15T02:00');
-  await page.getByLabel('Recurso afetado').selectOption(s.area.id);
-  await page.getByLabel('Início do incidente').fill('2026-11-14T18:00');
-  await page.getByLabel('Fim do incidente').fill('2026-11-14T19:00');
-  await page.getByRole('button', { name: 'Analisar reparo', exact: true }).click();
-  await expect(page.getByText(/1 partidas precisam mudar/)).toBeVisible();
-  await expect(page.getByText(/Antes:/)).toBeVisible();
-  await expect(page.getByText(/Depois:/)).toContainText('Quadra alternativa');
+  await page.getByRole('button', { name: 'Resolver imprevisto', exact: true }).click();
+  await page.getByLabel('Quadra', { exact: true }).selectOption(s.area.id);
+  await page.getByLabel('Indisponível de').fill('2026-11-14T18:00');
+  await page.getByLabel('Até', { exact: true }).fill('2026-11-14T19:00');
+  await page.getByRole('button', { name: 'Encontrar solução', exact: true }).click();
+  await expect(page.getByText(/1 partida precisa mudar/)).toBeVisible();
+  await expect(page.getByText('Antes', { exact: true })).toBeVisible();
+  await expect(page.getByText('Depois', { exact: true }).locator('..')).toContainText(
+    'Quadra alternativa',
+  );
   const before = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(before.find((m: { matchId: string }) => m.matchId === s.matches[0].id).playingAreaId).toBe(
     s.area.id,
   );
-  await page.getByRole('button', { name: 'Aplicar reparo', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Proposta de reparo', exact: true })).toHaveCount(
-    0,
-  );
+  await page.getByRole('button', { name: 'Aplicar solução', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Encontramos uma solução ✓', exact: true }),
+  ).toHaveCount(0);
   const after = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(after.find((m: { matchId: string }) => m.matchId === s.matches[0].id).playingAreaId).toBe(
     alternate.id,

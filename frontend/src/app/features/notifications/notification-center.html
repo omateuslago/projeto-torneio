@@ -26,11 +26,14 @@
             <p>{{ notification.summary }}</p>
             <small>{{ notification.createdAt | date: 'short' }}</small>
           </div>
-          <span
-            class="status-badge"
-            [class.status-badge--success]="notification.whatsAppStatus === 'Sent'"
-            >WhatsApp: {{ statusLabels[notification.whatsAppStatus] }}</span
-          >
+          @if (notification.whatsAppStatus === 'Sent' || notification.whatsAppStatus === 'Failed') {
+            <span
+              class="status-badge"
+              [class.status-badge--success]="notification.whatsAppStatus === 'Sent'"
+              [class.status-badge--warning]="notification.whatsAppStatus === 'Failed'"
+              >{{ statusLabels[notification.whatsAppStatus] }}</span
+            >
+          }
         </li>
       }
     </ul>

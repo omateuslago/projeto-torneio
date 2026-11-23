@@ -95,14 +95,32 @@ describe('Agenda e disponibilidade', () => {
   it('navega entre as áreas da agenda sem perder os dados carregados', () => {
     const f = setup();
     expect(f.componentInstance.activeView()).toBe('agenda');
-    const tabs = [...f.nativeElement.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
-    tabs.find((tab) => tab.textContent?.trim() === 'Autopilot')!.click();
+    const actions = [
+      ...f.nativeElement.querySelectorAll('.schedule-actions button'),
+    ] as HTMLButtonElement[];
+    actions
+      .find((button) => button.textContent?.trim() === 'Gerar agenda automaticamente')!
+      .click();
     f.detectChanges();
     expect(f.componentInstance.activeView()).toBe('autopilot');
     expect(
-      f.nativeElement.querySelector('[role="tab"][aria-selected="true"]').textContent,
-    ).toContain('Autopilot');
+      f.nativeElement.querySelector('.schedule-actions button[aria-pressed="true"]').textContent,
+    ).toContain('Gerar agenda automaticamente');
     expect(f.componentInstance.matches()).toHaveLength(1);
+  });
+
+  it('agrupa recursos e disponibilidade em Configurações e mantém avançado recolhido', () => {
+    const f = setup();
+    const actions = [
+      ...f.nativeElement.querySelectorAll('.schedule-actions button'),
+    ] as HTMLButtonElement[];
+    actions.find((button) => button.textContent?.includes('Configurações'))!.click();
+    f.detectChanges();
+    expect(f.componentInstance.activeView()).toBe('settings');
+    expect(f.nativeElement.textContent).toContain('Onde serão os jogos?');
+    expect((f.nativeElement.querySelector('.advanced-settings') as HTMLDetailsElement).open).toBe(
+      false,
+    );
   });
   it('cadastra árbitro e permite selecioná-lo na disponibilidade', () => {
     const f = setup(),

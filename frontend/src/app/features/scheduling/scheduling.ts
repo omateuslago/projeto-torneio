@@ -40,9 +40,7 @@ export class Scheduling {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly message = signal('');
-  readonly activeView = signal<'agenda' | 'autopilot' | 'incidents' | 'availability' | 'resources'>(
-    'agenda',
-  );
+  readonly activeView = signal<'agenda' | 'autopilot' | 'incidents' | 'settings'>('agenda');
   readonly venues = signal<Venue[]>([]);
   readonly areas = signal<Area[]>([]);
   readonly referees = signal<Referee[]>([]);

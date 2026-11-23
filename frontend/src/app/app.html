@@ -18,10 +18,36 @@
       <a routerLink="/campeonatos" routerLinkActive="active">Campeonatos</a>
       <a routerLink="/equipes" routerLinkActive="active">Equipes</a>
       @if (auth.isAuthenticated()) {
-        <a routerLink="/notificacoes" routerLinkActive="active">Notificações</a>
-        <a routerLink="/minha-conta/notificacoes" routerLinkActive="active">Preferências</a>
-        <span class="user-chip">Olá, {{ auth.user().displayName }}</span>
-        <button type="button" class="secondary" (click)="logout()">Sair</button>
+        <a
+          class="notification-link"
+          routerLink="/notificacoes"
+          routerLinkActive="active"
+          aria-label="Notificações"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+          </svg>
+          <span class="notification-link__label">Notificações</span>
+        </a>
+        <div class="account-menu" (click)="$event.stopPropagation()">
+          <button
+            #userMenuButton
+            type="button"
+            class="account-menu__trigger secondary"
+            [attr.aria-expanded]="userMenuOpen()"
+            aria-controls="account-menu-options"
+            (click)="toggleUserMenu()"
+          >
+            <span>{{ auth.user().displayName }}</span>
+            <span aria-hidden="true">⌄</span>
+          </button>
+          @if (userMenuOpen()) {
+            <div id="account-menu-options" class="account-menu__options">
+              <a routerLink="/minha-conta/notificacoes">Preferências</a>
+              <button type="button" (click)="logout()">Sair</button>
+            </div>
+          }
+        </div>
       } @else {
         <a routerLink="/login" routerLinkActive="active">Entrar</a>
       }

@@ -62,6 +62,11 @@ export class Matches {
       { id: match.awayTeamId, name: match.awayTeamName },
     ].filter((team) => this.auth.canManageTeam(team.id));
   }
+  submissionActionLabel(match: Match, team: { id: string; name: string }) {
+    return this.manageableTeams(match).length === 1
+      ? 'Informar resultado'
+      : `Informar resultado como ${team.name}`;
+  }
   matchLabel(match: Match) {
     if (match.status === 'AwaitingConfirmation') return 'Aguardando confirmação';
     if (match.status === 'Disputed') return 'Resultado contestado';

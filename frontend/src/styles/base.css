@@ -49,11 +49,13 @@ button:not(:disabled):hover,
   background: var(--color-primary-strong-brand);
   border-color: var(--color-primary-strong-brand);
 }
-button.secondary {
+button.secondary,
+.button.secondary {
   color: var(--color-primary-legacy);
   background: var(--color-surface);
 }
-button.secondary:not(:disabled):hover {
+button.secondary:not(:disabled):hover,
+.button.secondary:hover {
   color: var(--color-primary-strong-brand);
   background: var(--color-primary-soft-brand);
   border-color: var(--color-primary-muted-brand);

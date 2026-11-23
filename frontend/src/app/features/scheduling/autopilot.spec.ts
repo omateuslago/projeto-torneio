@@ -76,13 +76,13 @@ describe('Tournament Autopilot', () => {
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('Azul × Verde');
     expect(f.nativeElement.textContent).toContain('Quadra 1');
-    expect(f.nativeElement.textContent).toContain('2 partidas preservadas');
-    expect(f.nativeElement.textContent).toContain('Resilience Score: 80/100');
+    expect(f.nativeElement.textContent).toContain('Partidas preservadas');
+    expect(f.nativeElement.textContent).toContain('Resistência a imprevistos: 80/100');
     expect(f.nativeElement.textContent).toContain('Árbitros: N/A');
-    expect(f.nativeElement.textContent).toContain('3 cenários analisados');
+    expect(f.nativeElement.textContent).toContain('3 cenários avaliados');
     expect(f.nativeElement.textContent).toContain('1 vulnerabilidades encontradas');
     expect(f.nativeElement.textContent).toContain('Análise determinística.');
-    expect(f.nativeElement.textContent).toContain('Fairness Score: 91/100');
+    expect(f.nativeElement.textContent).toContain('Qualidade da agenda: 91/100');
     expect(f.nativeElement.textContent).toContain('Descanso: 94/100');
     expect(f.nativeElement.textContent).toContain('Partidas consecutivas: 100/100');
     expect(f.nativeElement.textContent).toContain('Equilíbrio de horários: 82/100');
@@ -98,19 +98,19 @@ describe('Tournament Autopilot', () => {
     expect(generated.request.body.preferredRestMinutes).toBe(120);
     generated.flush(proposal);
     f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('Resilience Score: 80/100');
+    expect(f.nativeElement.textContent).toContain('Resistência a imprevistos: 80/100');
     expect(f.nativeElement.textContent).toContain('Árbitros: N/A');
-    expect(f.nativeElement.textContent).toContain('3 cenários analisados');
+    expect(f.nativeElement.textContent).toContain('3 cenários avaliados');
     expect(f.nativeElement.textContent).toContain('1 vulnerabilidades encontradas');
     expect(f.nativeElement.textContent).toContain('Análise determinística.');
-    expect(f.nativeElement.textContent).toContain('Fairness Score: 91/100');
+    expect(f.nativeElement.textContent).toContain('Qualidade da agenda: 91/100');
     const button = [...f.nativeElement.querySelectorAll('button')] as HTMLButtonElement[];
     button.find((b) => b.textContent?.includes('Aplicar agenda'))!.click();
     const apply = http.expectOne('/api/tournaments/cup/schedule/apply');
     expect(apply.request.body).toEqual({ proposalToken: 'protected' });
     apply.flush({ appliedCount: 1 });
     f.detectChanges();
-    expect(f.nativeElement.textContent).not.toContain('Fairness Score:');
+    expect(f.nativeElement.textContent).not.toContain('Qualidade da agenda:');
     expect(f.nativeElement.textContent).toContain('Agenda aplicada');
   });
   for (const minutes of [-1, 241, 1.5])
@@ -168,10 +168,12 @@ describe('Tournament Autopilot', () => {
       f.detectChanges();
       expect(f.nativeElement.textContent).toContain('Amplie a disponibilidade.');
       expect(f.nativeElement.textContent).toContain(
-        status === 'timeout' ? 'não significa' : 'Não existe',
+        status === 'timeout'
+          ? 'Não encontramos uma agenda dentro do tempo de cálculo'
+          : 'Não foi possível montar uma agenda com esses horários',
       );
       expect(f.nativeElement.textContent).not.toContain('Aplicar agenda');
-      expect(f.nativeElement.textContent).not.toContain('Fairness Score:');
+      expect(f.nativeElement.textContent).not.toContain('Qualidade da agenda:');
     });
   it('explica indisponibilidade do serviço e permite nova tentativa', () => {
     const f = setup(),
@@ -186,6 +188,30 @@ describe('Tournament Autopilot', () => {
     expect(c.error()).toContain('indisponível');
     expect(c.calculating()).toBe(false);
     expect(c.form.controls.horizonStart.value).toBe('2026-11-14T18:00');
+  });
+
+  it('mantém defaults nas opções avançadas, que começam recolhidas', () => {
+    const f = setup();
+    const details = f.nativeElement.querySelector('.advanced-options') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(f.componentInstance.form.getRawValue()).toMatchObject({
+      granularityMinutes: 15,
+      preferredRestMinutes: 60,
+      requireReferee: false,
+    });
+  });
+
+  it('distingue visualmente agenda otimizada de agenda apenas válida', () => {
+    const f = setup();
+    f.componentInstance.proposal.set(proposal);
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Agenda otimizada');
+    expect(f.nativeElement.textContent).not.toContain('não conseguiu provar');
+    f.componentInstance.proposal.set({ ...proposal, status: 'feasible' });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Agenda válida');
+    expect(f.nativeElement.textContent).toContain('não conseguiu provar');
+    expect(f.nativeElement.textContent).toContain('Aplicar agenda');
   });
   it('exige nova proposta quando o estado mudou', () => {
     const c = setup().componentInstance;

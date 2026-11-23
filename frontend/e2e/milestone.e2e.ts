@@ -18,8 +18,8 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page.getByRole('link', { name: 'Campeonatos', exact: true }).click();
   await page.getByRole('button', { name: '+ Criar', exact: true }).click();
   await page.getByLabel('Nome do campeonato').fill(`Copa ${suffix}`);
-  await page.getByLabel('Modalidade').fill('Futsal');
-  await page.getByLabel('Limite de equipes').fill('2');
+  await page.getByLabel('Esporte').selectOption('Futsal');
+  await page.getByLabel('Número de equipes').fill('2');
   await page.getByRole('button', { name: 'Criar campeonato', exact: true }).click();
   await page.getByRole('link', { name: `Copa ${suffix}`, exact: true }).click();
   await expect(page.getByRole('heading', { name: `Copa ${suffix}`, exact: true })).toBeVisible();
@@ -52,18 +52,20 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
     .selectOption({ label: names[2] });
   await page.getByRole('button', { name: 'Inscrever equipe', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('campeonato está lotado');
-  await page.getByRole('button', { name: 'Fechar inscrições' }).click();
+  await page.getByRole('button', { name: 'Encerrar inscrições' }).click();
   await expect(page.getByText('Inscrições encerradas.', { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByText('2 de 2 vagas preenchidas')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Inscrever equipe', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Gerar confrontos', exact: true }).click();
   await expect(
-    page.getByRole('table', { name: 'Partidas do campeonato' }).getByRole('row'),
-  ).toHaveCount(2);
+    page.getByRole('list', { name: 'Partidas do campeonato' }).getByRole('listitem'),
+  ).toHaveCount(1);
   await expect(page.getByText('Em andamento', { exact: true })).toBeVisible();
-  await page.getByText('Ação administrativa', { exact: true }).click();
-  await page.getByRole('button', { name: 'Registrar resultado', exact: true }).click();
+  await page.getByText('Mais ações', { exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Registrar resultado administrativamente', exact: true })
+    .click();
   await page.getByLabel('Placar mandante').fill('-1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Informe placares inteiros');
@@ -73,8 +75,10 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
   const standings = page.getByRole('table', { name: 'Classificação do campeonato' });
   await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
-  await page.getByText('Ação administrativa', { exact: true }).click();
-  await page.getByRole('button', { name: 'Corrigir resultado', exact: true }).click();
+  await page.getByText('Mais ações', { exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Corrigir resultado administrativamente', exact: true })
+    .click();
   await page.getByLabel('Placar mandante').fill('1');
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();

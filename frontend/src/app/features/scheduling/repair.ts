@@ -88,8 +88,26 @@ export class Repair {
   private url(action: string) {
     return `${environment.apiUrl}/tournaments/${this.tournamentId()}/schedule/repair/${action}`;
   }
+  private localInput(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  }
+  private ensureHorizonDefaults() {
+    if (this.form.controls.horizonStart.value && this.form.controls.horizonEnd.value) return;
+    const scheduled = this.matches().filter((match) => match.startsAt);
+    const starts = scheduled.map((match) => Date.parse(match.startsAt!));
+    const ends = scheduled.map((match) => Date.parse(match.endsAt ?? match.startsAt!));
+    const start = starts.length ? new Date(Math.min(...starts)) : new Date();
+    const end = ends.length
+      ? new Date(Math.max(...ends) + 24 * 60 * 60 * 1000)
+      : new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+    this.form.patchValue({
+      horizonStart: this.form.controls.horizonStart.value || this.localInput(start),
+      horizonEnd: this.form.controls.horizonEnd.value || this.localInput(end),
+    });
+  }
   generate() {
     if (this.busy() || this.blocked()) return;
+    this.ensureHorizonDefaults();
     this.form.markAllAsTouched();
     this.error.set('');
     this.proposal.set(null);

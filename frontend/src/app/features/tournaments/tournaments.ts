@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
-import { Tournament, TournamentFormat, formatLabels, statusLabels } from '../../core/models';
+import { Tournament, TournamentFormat, statusLabels } from '../../core/models';
 import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
 import { AuthService } from '../../core/auth.service';
@@ -41,11 +41,12 @@ export class Tournaments {
   readonly loadError = signal('');
   readonly saveError = signal('');
   readonly isCreateModalOpen = signal(false);
+  readonly sportChoice = signal('Futsal');
+  readonly sportOptions = ['Futsal', 'Futebol', 'Vôlei', 'Valorant', 'CS2', 'EA FC'];
   readonly statusLabels = statusLabels;
-  readonly formatLabels = formatLabels;
   readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [trimmedRequired, Validators.maxLength(120)]],
-    sport: ['', [trimmedRequired, Validators.maxLength(80)]],
+    sport: ['Futsal', [trimmedRequired, Validators.maxLength(80)]],
     maxTeams: [
       8,
       [Validators.required, Validators.min(2), Validators.max(128), Validators.pattern(/^\d+$/)],
@@ -82,6 +83,11 @@ export class Tournaments {
     this.isCreateModalOpen.set(true);
     this.saveError.set('');
     this.renderer.setStyle(this.document.body, 'overflow', 'hidden');
+  }
+
+  chooseSport(value: string) {
+    this.sportChoice.set(value);
+    this.form.controls.sport.setValue(value === 'Outro' ? '' : value);
   }
 
   closeCreateModal(force = false) {
@@ -135,10 +141,11 @@ export class Tournaments {
           this.auth.recordCreatedTournament(tournament.id);
           this.form.reset({
             name: '',
-            sport: '',
+            sport: 'Futsal',
             maxTeams: 8,
             format: 'RoundRobin',
           });
+          this.sportChoice.set('Futsal');
           this.closeCreateModal(true);
         },
         error: (error) => this.saveError.set(apiError(error)),

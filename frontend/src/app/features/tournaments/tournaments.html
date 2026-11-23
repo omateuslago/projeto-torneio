@@ -82,16 +82,7 @@
             <h3>
               <a [routerLink]="['/campeonatos', tournament.id]">{{ tournament.name }}</a>
             </h3>
-            <dl class="tournament-card__details">
-              <div>
-                <dt>Formato</dt>
-                <dd>{{ formatLabels[tournament.format] }}</dd>
-              </div>
-              <div>
-                <dt>Limite de equipes</dt>
-                <dd>{{ tournament.maxTeams }}</dd>
-              </div>
-            </dl>
+            <p class="tournament-card__capacity">Até {{ tournament.maxTeams }} equipes</p>
             <a class="tournament-card__link" [routerLink]="['/campeonatos', tournament.id]">
               Ver campeonato
             </a>
@@ -135,14 +126,28 @@
             required
         /></label>
         <label
-          >Modalidade<input
-            formControlName="sport"
-            maxlength="80"
-            placeholder="Ex.: Futsal ou Valorant"
-            required
-        /></label>
+          >Esporte<select
+            #sportSelect
+            [value]="sportChoice()"
+            (change)="chooseSport(sportSelect.value)"
+          >
+            @for (sport of sportOptions; track sport) {
+              <option [value]="sport">{{ sport }}</option>
+            }
+            <option value="Outro">Outro</option>
+          </select></label
+        >
+        @if (sportChoice() === 'Outro') {
+          <label
+            >Qual esporte?<input
+              formControlName="sport"
+              maxlength="80"
+              placeholder="Digite o nome do esporte"
+              required
+          /></label>
+        }
         <label
-          >Limite de equipes<input
+          >Número de equipes<input
             type="number"
             formControlName="maxTeams"
             min="2"
@@ -151,15 +156,9 @@
             required
           /><span class="hint">De 2 a 128 equipes.</span></label
         >
-        <label
-          >Formato<select formControlName="format">
-            <option value="RoundRobin">Pontos corridos</option>
-            <option value="SingleElimination">Mata-mata simples</option>
-          </select></label
-        >
         @if (form.touched && form.invalid) {
           <p class="error" role="alert">
-            Preencha nome e modalidade. O limite deve ser um número inteiro entre 2 e 128.
+            Preencha nome e esporte. O número de equipes deve ser inteiro, entre 2 e 128.
           </p>
         }
         @if (saveError()) {

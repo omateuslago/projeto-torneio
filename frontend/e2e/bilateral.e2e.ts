@@ -17,8 +17,7 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   await page.getByRole('link', { name: 'Campeonatos', exact: true }).click();
   await page.getByRole('button', { name: '+ Criar', exact: true }).click();
   await page.getByLabel('Nome do campeonato').fill(`Copa bilateral ${stamp}`);
-  await page.getByLabel('Modalidade').fill('Futsal');
-  await page.getByLabel('Limite de equipes').fill('2');
+  await page.getByLabel('Número de equipes').fill('2');
   await page.getByRole('button', { name: 'Criar campeonato', exact: true }).click();
   await page.getByRole('link', { name: `Copa bilateral ${stamp}`, exact: true }).click();
   await page.getByRole('button', { name: 'Abrir inscrições', exact: true }).click();
@@ -27,7 +26,7 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
     await page.getByRole('button', { name: 'Inscrever equipe', exact: true }).click();
     await expect(page.getByText(`${index + 1} de 2 vagas preenchidas`)).toBeVisible();
   }
-  await page.getByRole('button', { name: 'Fechar inscrições', exact: true }).click();
+  await page.getByRole('button', { name: 'Encerrar inscrições', exact: true }).click();
   await page.getByRole('button', { name: 'Gerar confrontos', exact: true }).click();
   await page
     .getByRole('button', { name: `Enviar resultado como ${teams[0]}`, exact: true })
@@ -35,7 +34,9 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   await page.getByLabel('Placar mandante').fill('3');
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Pendências (1)', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '⚠ 1 partida precisa de atenção', exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText(`Aguardando resultado de ${teams[1]}.`, { exact: false }),
   ).toBeVisible();
@@ -46,7 +47,7 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   await page.getByLabel('Placar mandante').fill('2');
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
-  await expect(page.getByRole('table', { name: 'Partidas do campeonato' })).toContainText(
+  await expect(page.getByRole('list', { name: 'Partidas do campeonato' })).toContainText(
     'Resultado contestado',
   );
   const table = page.getByRole('table', { name: 'Classificação do campeonato' });
@@ -57,12 +58,12 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByLabel('Motivo da decisão').fill('Placar confirmado pela súmula.');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Pendências (0)', exact: true })).toBeVisible();
+  await expect(page.getByText('precisa de atenção')).toHaveCount(0);
   await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
   await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
   await page.reload();
   await expect(page.getByText('Decisão: Placar confirmado pela súmula.')).toBeVisible();
-  await expect(page.getByRole('table', { name: 'Partidas do campeonato' })).toContainText(
+  await expect(page.getByRole('list', { name: 'Partidas do campeonato' })).toContainText(
     'Disputa resolvida',
   );
   await page.screenshot({ path: testInfo.outputPath('bilateral-desktop.png'), fullPage: true });
@@ -117,6 +118,6 @@ test('envios concordantes confirmam automaticamente sem intervenção', async ({
   }
   await expect(page.getByText('Resultado confirmado pelas equipes', { exact: true })).toBeVisible();
   await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Pendências (0)', exact: true })).toBeVisible();
+  await expect(page.getByText('precisa de atenção')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Resolver disputa' })).toHaveCount(0);
 });

@@ -1,18 +1,52 @@
-/* Tabelas roláveis de partidas e classificação */
 .table-wrap {
   overflow-x: auto;
 }
-/* Envios por partida e ação administrativa */
+.pending-panel {
+  border-left: 4px solid var(--color-warning-text);
+}
+.match-list {
+  display: grid;
+  gap: var(--space-4);
+}
+.match-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
+  background: var(--color-surface);
+}
+.match-card__scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+}
+.match-card__scoreboard span:last-child {
+  text-align: right;
+}
+.match-card__scoreboard strong {
+  font-size: 1.35rem;
+  white-space: nowrap;
+}
+.match-card__status {
+  margin: 0;
+  color: var(--color-text-muted-brand);
+}
+.match-card__status--attention {
+  color: var(--color-danger-text);
+  font-weight: 700;
+}
+.match-details summary,
 .admin-action {
-  margin-top: 18px;
+  margin-top: var(--space-2);
 }
-.match-submissions {
-  min-width: 18rem;
-}
+.match-details summary,
 .admin-action summary {
   cursor: pointer;
   padding-block: 10px;
   color: var(--color-primary-legacy);
+  font-weight: 650;
 }
 /* Campos de placar do formulário de resultado */
 .score-fields {
@@ -21,7 +55,21 @@
   gap: 18px;
 }
 @media (max-width: 600px) {
+  .match-card {
+    padding: var(--space-4);
+  }
+  .match-card__scoreboard {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+  .match-card__scoreboard span:last-child {
+    text-align: left;
+  }
   .score-fields {
     grid-template-columns: 1fr;
+  }
+  .table-wrap th:nth-child(n + 4):nth-child(-n + 8),
+  .table-wrap td:nth-child(n + 4):nth-child(-n + 8) {
+    display: none;
   }
 }

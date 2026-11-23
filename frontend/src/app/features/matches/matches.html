@@ -1,12 +1,9 @@
-<section class="panel match-panel" aria-labelledby="pendencias">
-  <h2 id="pendencias">Pendências ({{ pending().length }})</h2>
-  @if (loading()) {
-    <p role="status">Carregando pendências…</p>
-  } @else if (loadError()) {
-    <p>Atualize as partidas para consultar as pendências.</p>
-  } @else if (!pending().length) {
-    <p class="muted">Nenhuma confirmação pendente ou disputa aberta.</p>
-  } @else {
+@if (!loading() && !loadError() && pending().length) {
+  <section class="panel match-panel pending-panel" aria-labelledby="pendencias">
+    <h2 id="pendencias">
+      ⚠ {{ pending().length }}
+      {{ pending().length === 1 ? 'partida precisa' : 'partidas precisam' }} de atenção
+    </h2>
     <ul class="participants">
       @for (match of pending(); track match.id) {
         <li>
@@ -19,8 +16,8 @@
         </li>
       }
     </ul>
-  }
-</section>
+  </section>
+}
 <section class="panel match-panel" aria-labelledby="partidas">
   <div class="section-heading">
     <h2 id="partidas">Partidas</h2>
@@ -33,8 +30,9 @@
   } @else if (loadError()) {
     <p class="error" role="alert">{{ loadError() }}</p>
   } @else if (!matches().length) {
-    <p class="empty">Nenhuma partida gerada. Cada equipe enfrentará todas as outras uma vez.</p>
+    <p class="empty">Ainda não há partidas.</p>
     @if (tournament().status === 'Closed' && auth.canManageTournament(tournament().id)) {
+      <p>As inscrições terminaram. Gere os confrontos para começar o campeonato.</p>
       <button (click)="generate()" [disabled]="saving()">
         {{ saving() ? 'Gerando…' : 'Gerar confrontos' }}
       </button>
@@ -44,84 +42,82 @@
       </p>
     }
   } @else {
-    <div class="table-wrap">
-      <table aria-label="Partidas do campeonato">
-        <thead>
-          <tr>
-            <th>Confronto</th>
-            <th>Resultado oficial</th>
-            <th>Estado</th>
-            <th>Envios e ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (match of matches(); track match.id) {
-            <tr>
-              <td>{{ match.homeTeamName }} × {{ match.awayTeamName }}</td>
-              <td>{{ match.homeScore ?? '—' }} × {{ match.awayScore ?? '—' }}</td>
-              <td>{{ matchLabel(match) }}</td>
-              <td class="match-submissions">
-                <p class="muted">
-                  Envios na ordem {{ match.homeTeamName }} × {{ match.awayTeamName }}:
-                </p>
-                <p>
-                  {{ match.homeTeamName }}:
-                  @if (submission(match, match.homeTeamId); as score) {
-                    {{ score.homeScore }} × {{ score.awayScore }}
-                  } @else {
-                    Aguardando
-                  }
-                </p>
-                <p>
-                  {{ match.awayTeamName }}:
-                  @if (submission(match, match.awayTeamId); as score) {
-                    {{ score.homeScore }} × {{ score.awayScore }}
-                  } @else {
-                    Aguardando
-                  }
-                </p>
-                @if (match.status !== 'Finished' && manageableTeams(match).length) {
-                  <div class="actions">
-                    @for (team of manageableTeams(match); track team.id) {
-                      <button (click)="sendAs(match, team.id)" [disabled]="saving()">
-                        Enviar resultado como {{ team.name }}
-                      </button>
-                    }
-                  </div>
-                }
-                @if (
-                  match.dispute?.status === 'Open' && auth.canManageTournament(tournament().id)
-                ) {
-                  <p class="error">
-                    Disputa aberta. Uma correção de envio não encerra a disputa; o organizador deve
-                    decidir.
-                  </p>
-                  <button class="secondary" (click)="resolve(match)" [disabled]="saving()">
-                    Resolver disputa
-                  </button>
-                }
-                @if (match.dispute?.status === 'Resolved') {
-                  <p class="muted">Decisão: {{ match.dispute?.resolutionNote }}</p>
-                }
-                @if (auth.canManageTournament(tournament().id)) {
-                  <details class="admin-action">
-                    <summary>Ação administrativa</summary>
-                    <p class="muted">
-                      Define o resultado oficial diretamente e encerra uma eventual disputa aberta.
-                      A ação fica no histórico.
-                    </p>
-                    <button class="secondary" (click)="edit(match)" [disabled]="saving()">
-                      {{
-                        match.status === 'Finished' ? 'Corrigir resultado' : 'Registrar resultado'
-                      }}
-                    </button>
-                  </details>
-                }
-              </td>
-            </tr>
+    <div class="match-list" role="list" aria-label="Partidas do campeonato">
+      @for (match of matches(); track match.id) {
+        <article class="match-card" role="listitem">
+          <div class="match-card__scoreboard">
+            <span>{{ match.homeTeamName }}</span>
+            <strong
+              >{{ match.homeScore ?? '—' }} <span aria-hidden="true">×</span>
+              {{ match.awayScore ?? '—' }}</strong
+            >
+            <span>{{ match.awayTeamName }}</span>
+          </div>
+          <p
+            class="match-card__status"
+            [class.match-card__status--attention]="match.status === 'Disputed'"
+          >
+            {{ matchLabel(match) }}
+            @if (match.status === 'AwaitingConfirmation') {
+              · aguardando {{ waitingFor(match) }}
+            }
+          </p>
+          @if (match.status !== 'Finished' && manageableTeams(match).length) {
+            <div class="actions">
+              @for (team of manageableTeams(match); track team.id) {
+                <button (click)="sendAs(match, team.id)" [disabled]="saving()">
+                  {{ submissionActionLabel(match, team) }}
+                </button>
+              }
+            </div>
           }
-        </tbody>
-      </table>
+          @if (match.dispute?.status === 'Open' && auth.canManageTournament(tournament().id)) {
+            <button class="secondary" (click)="resolve(match)" [disabled]="saving()">
+              Resolver disputa
+            </button>
+          }
+          <details class="match-details">
+            <summary>Ver detalhes</summary>
+            <p class="muted">Envios na ordem {{ match.homeTeamName }} × {{ match.awayTeamName }}</p>
+            <p>
+              {{ match.homeTeamName }}:
+              @if (submission(match, match.homeTeamId); as score) {
+                {{ score.homeScore }} × {{ score.awayScore }}
+              } @else {
+                Aguardando
+              }
+            </p>
+            <p>
+              {{ match.awayTeamName }}:
+              @if (submission(match, match.awayTeamId); as score) {
+                {{ score.homeScore }} × {{ score.awayScore }}
+              } @else {
+                Aguardando
+              }
+            </p>
+            @if (match.dispute?.status === 'Open') {
+              <p class="error">
+                Os resultados enviados são diferentes. O organizador precisa decidir.
+              </p>
+            }
+            @if (match.dispute?.status === 'Resolved') {
+              <p class="muted">Decisão: {{ match.dispute?.resolutionNote }}</p>
+            }
+          </details>
+          @if (auth.canManageTournament(tournament().id)) {
+            <details class="admin-action">
+              <summary>Mais ações</summary>
+              <button class="secondary" (click)="edit(match)" [disabled]="saving()">
+                {{
+                  match.status === 'Finished'
+                    ? 'Corrigir resultado administrativamente'
+                    : 'Registrar resultado administrativamente'
+                }}
+              </button>
+            </details>
+          }
+        </article>
+      }
     </div>
   }
   @if (editing(); as match) {
@@ -197,8 +193,8 @@
     <p class="success" role="status">{{ message() }}</p>
   }
 </section>
-<section class="panel match-panel" aria-labelledby="classificacao">
-  <h2 id="classificacao">Classificação</h2>
+<section id="classificacao" class="panel match-panel" aria-labelledby="classificacao-title">
+  <h2 id="classificacao-title">Classificação</h2>
   <p class="muted">
     Vitória: 3 pontos. Empate: 1 ponto. Desempate por saldo, gols marcados e nome da equipe.
   </p>

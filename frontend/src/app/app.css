@@ -42,15 +42,70 @@ nav a.active {
   box-shadow: 0 3px var(--color-primary-legacy);
   font-weight: 600;
 }
-.user-chip {
-  max-width: 160px;
+.notification-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.notification-link svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+.notification-link__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  padding: 0.45rem 0.7rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-muted-brand);
-  color: var(--color-text-secondary-brand);
+  clip-path: inset(50%);
+}
+.account-menu {
+  position: relative;
+}
+.account-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 190px;
+}
+.account-menu__trigger span:first-child {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.account-menu__options {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  min-width: 190px;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-brand);
+  border-radius: var(--radius-surface);
+  background: var(--color-surface);
+  box-shadow: 0 14px 35px rgb(15 35 63 / 16%);
+}
+.account-menu__options a,
+.account-menu__options button {
+  width: 100%;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-surface) - 4px);
+  background: transparent;
+  color: var(--color-text-brand);
+  text-align: left;
+  text-decoration: none;
+}
+.account-menu__options a:hover,
+.account-menu__options button:hover,
+.account-menu__options a:focus-visible,
+.account-menu__options button:focus-visible {
+  background: var(--color-primary-soft-brand);
 }
 .menu-toggle {
   display: none;
@@ -114,8 +169,28 @@ main.shell:focus {
   nav button {
     width: 100%;
   }
-  .user-chip {
+  .notification-link {
+    justify-content: flex-start;
+    gap: var(--space-3);
+  }
+  .notification-link__label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+  .account-menu,
+  .account-menu__trigger {
+    width: 100%;
     max-width: none;
-    margin: var(--space-2) 0;
+  }
+  .account-menu__trigger {
+    justify-content: space-between;
+  }
+  .account-menu__options {
+    position: static;
+    margin-top: var(--space-2);
+    box-shadow: none;
   }
 }
