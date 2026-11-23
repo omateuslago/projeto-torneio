@@ -46,7 +46,13 @@
     } @else if (current.status === 'Closed') {
       <div class="tournament-next-step">
         <h2>Inscrições encerradas</h2>
-        <p>O próximo passo é gerar os confrontos.</p>
+        @if (current.format === 'RoundRobin') {
+          <p>O próximo passo é gerar os confrontos.</p>
+        } @else {
+          <p>
+            O gerenciamento automático de confrontos ainda não está disponível para este formato.
+          </p>
+        }
       </div>
     } @else if (current.status === 'InProgress') {
       <div class="tournament-next-step">
@@ -69,7 +75,7 @@
         <button class="secondary" (click)="confirmClose.set(true)" [disabled]="saving()">
           {{ saving() ? 'Encerrando…' : 'Encerrar inscrições' }}
         </button>
-      } @else if (current.status === 'Closed') {
+      } @else if (current.status === 'Closed' && current.format === 'RoundRobin') {
         <a class="button" href="#partidas">Gerar confrontos</a>
       } @else if (current.status === 'InProgress') {
         <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Ver agenda</a>
@@ -113,7 +119,7 @@
   } @else {
     <div id="inscricoes" class="detail-section"><app-registrations [tournament]="current" /></div>
   }
-  @if (current.status === 'Closed') {
+  @if (current.status === 'Closed' && current.format === 'RoundRobin') {
     <div class="agenda-callout">
       <div>
         <strong>Agenda</strong>
@@ -123,17 +129,13 @@
     </div>
   }
   @if (
-    current.status === 'Closed' || current.status === 'InProgress' || current.status === 'Finished'
+    current.format === 'RoundRobin' &&
+    (current.status === 'Closed' ||
+      current.status === 'InProgress' ||
+      current.status === 'Finished')
   ) {
     <div id="partidas" class="detail-section">
-      @if (current.format === 'RoundRobin') {
-        <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
-      } @else {
-        <p class="panel muted">
-          Partidas e classificação estão disponíveis apenas para campeonatos de pontos corridos
-          nesta etapa.
-        </p>
-      }
+      <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
     </div>
   }
   @if (confirmClose()) {

@@ -34,7 +34,6 @@
             #userMenuButton
             type="button"
             class="account-menu__trigger secondary"
-            aria-haspopup="menu"
             [attr.aria-expanded]="userMenuOpen()"
             aria-controls="account-menu-options"
             (click)="toggleUserMenu()"
@@ -43,9 +42,9 @@
             <span aria-hidden="true">⌄</span>
           </button>
           @if (userMenuOpen()) {
-            <div id="account-menu-options" class="account-menu__options" role="menu">
-              <a role="menuitem" routerLink="/minha-conta/notificacoes">Preferências</a>
-              <button type="button" role="menuitem" (click)="logout()">Sair</button>
+            <div id="account-menu-options" class="account-menu__options">
+              <a routerLink="/minha-conta/notificacoes">Preferências</a>
+              <button type="button" (click)="logout()">Sair</button>
             </div>
           }
         </div>

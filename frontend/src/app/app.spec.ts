@@ -68,6 +68,9 @@ describe('header autenticado', () => {
     fixture.detectChanges();
     expect(account.getAttribute('aria-expanded')).toBe('true');
     expect(fixture.nativeElement.textContent).toContain('Preferências');
+    expect(account.hasAttribute('aria-haspopup')).toBe(false);
+    expect(fixture.nativeElement.querySelector('[role="menu"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="menuitem"]')).toBeNull();
     fixture.componentInstance.logout();
     expect(auth.logout).toHaveBeenCalledOnce();
     expect(navigate).toHaveBeenCalledWith(['/campeonatos']);

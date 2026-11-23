@@ -5,6 +5,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { TournamentDetail } from './tournament-detail';
 import { Tournament, TournamentStatus } from '../../core/models';
+import { AuthService } from '../../core/auth.service';
 
 const tournament: Tournament = {
   id: 'cup',
@@ -70,5 +71,38 @@ describe('Atualizações do campeonato', () => {
     }
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(copy);
+  });
+
+  it('não oferece ações incompatíveis para SingleElimination fechado', () => {
+    TestBed.inject(AuthService).user.set({
+      authenticated: true,
+      id: 'organizer',
+      email: 'organizer@example.com',
+      displayName: 'Organizer',
+      isPlatformAdmin: true,
+      organizerTournamentIds: [],
+      managedTeamIds: [],
+    });
+    const fixture = TestBed.createComponent(TournamentDetail);
+    const legacy = {
+      ...tournament,
+      format: 'SingleElimination' as const,
+      status: 'Closed' as const,
+    };
+    http.expectOne('/api/tournaments/cup').flush(legacy);
+    fixture.detectChanges();
+    http
+      .expectOne('/api/tournaments/cup/organizers')
+      .flush({ members: [], pendingInvitations: [] });
+    http.expectOne('/api/tournaments/cup/registrations').flush([]);
+    http.expectOne('/api/teams').flush([]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'O gerenciamento automático de confrontos ainda não está disponível para este formato.',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain('Gerar confrontos');
+    expect(fixture.nativeElement.textContent).not.toContain('Abrir agenda');
+    http.expectNone('/api/tournaments/cup/matches');
   });
 });
