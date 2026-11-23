@@ -367,6 +367,65 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.BracketNode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BottomTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBye")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("NextNodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NextSlot")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RoundNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TopTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TournamentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BottomTeamId");
+
+                    b.HasIndex("MatchId")
+                        .IsUnique()
+                        .HasFilter("\"MatchId\" IS NOT NULL");
+
+                    b.HasIndex("NextNodeId");
+
+                    b.HasIndex("TopTeamId");
+
+                    b.HasIndex("TournamentId", "RoundNumber", "Position")
+                        .IsUnique();
+
+                    b.ToTable("BracketNodes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BracketNodes_Next", "(\"NextNodeId\" IS NULL) = (\"NextSlot\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_BracketNodes_Position", "\"RoundNumber\" > 0 AND \"Position\" > 0");
+
+                            t.HasCheckConstraint("CK_BracketNodes_Teams", "\"TopTeamId\" IS NULL OR \"BottomTeamId\" IS NULL OR \"TopTeamId\" <> \"BottomTeamId\"");
+                        });
+                });
+
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Dispute", b =>
                 {
                     b.Property<Guid>("Id")
@@ -945,6 +1004,35 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         .HasForeignKey("TournamentId", "TeamId")
                         .HasPrincipalKey("TournamentId", "TeamId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.BracketNode", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Team", null)
+                        .WithMany()
+                        .HasForeignKey("BottomTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.BracketNode", null)
+                        .WithMany()
+                        .HasForeignKey("NextNodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TopTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Projeto_Campeonato.Api.Domain.Tournament", null)
+                        .WithMany()
+                        .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Dispute", b =>

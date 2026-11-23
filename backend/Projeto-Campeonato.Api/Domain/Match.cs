@@ -53,6 +53,18 @@ public sealed class Match
         // A correction replaces the result; this timestamp represents the latest recording.
         FinishedAt = DateTime.UtcNow;
     }
+
+    public void ReplaceParticipant(Guid previousTeamId, Guid nextTeamId)
+    {
+        if (Status != MatchStatus.Pending || StartsAt is not null || PlayingAreaId is not null || RefereeId is not null)
+            throw new DomainConflictException("O confronto seguinte já possui atividade e não pode ser alterado.");
+        if (nextTeamId == Guid.Empty || (HomeTeamId != previousTeamId && AwayTeamId != previousTeamId))
+            throw new DomainConflictException("A equipe anterior não participa do confronto seguinte.");
+        var other = HomeTeamId == previousTeamId ? AwayTeamId : HomeTeamId;
+        if (other == nextTeamId) throw new DomainConflictException("Uma equipe não pode enfrentar a si mesma.");
+        HomeTeamId = nextTeamId.CompareTo(other) < 0 ? nextTeamId : other;
+        AwayTeamId = nextTeamId.CompareTo(other) < 0 ? other : nextTeamId;
+    }
 }
 
 public static class RoundRobin
