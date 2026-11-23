@@ -1,0 +1,110 @@
+<section id="chave" class="panel bracket-panel" aria-labelledby="bracket-title">
+  <div class="bracket-heading">
+    <div>
+      <p class="bracket-kicker">Mata-mata simples</p>
+      <h2 id="bracket-title">Chave eliminatória</h2>
+      <p>Acompanhe o caminho das equipes até a final.</p>
+    </div>
+    <button class="secondary" (click)="load()" [disabled]="loading() || saving()">
+      Atualizar chave
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p role="status">Carregando chave…</p>
+  } @else if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  } @else if (!data()?.rounds?.length) {
+    <div class="bracket-empty">
+      <h3>A chave ainda não foi gerada</h3>
+      <p>As equipes serão distribuídas de forma determinística, com folgas quando necessário.</p>
+      @if (tournament().status === 'Closed' && auth.canManageTournament(tournament().id)) {
+        <button (click)="generate()" [disabled]="saving()">
+          {{ saving() ? 'Gerando chave…' : 'Gerar chave' }}
+        </button>
+      }
+    </div>
+  } @else if (data(); as bracket) {
+    @if (bracket.champion; as champion) {
+      <div class="champion" role="status">
+        <span aria-hidden="true">★</span>
+        <div>
+          <small>Campeão</small><strong>{{ champion.name }}</strong>
+        </div>
+      </div>
+    }
+    <p class="bracket-scroll-hint">Deslize horizontalmente para acompanhar todas as fases.</p>
+    <div class="bracket-viewport" tabindex="0" aria-label="Fases da chave eliminatória">
+      <div class="bracket-grid" [style.--bracket-card-height.px]="cardHeight">
+        @for (round of bracket.rounds; track round.number; let last = $last) {
+          <section
+            class="bracket-round"
+            [class.bracket-round--last]="last"
+            [style.padding-top.px]="roundOffset(round.number)"
+            [style.--node-gap.px]="roundGap(round.number)"
+            [attr.aria-labelledby]="'round-' + round.number"
+          >
+            <h3 [id]="'round-' + round.number">{{ round.name }}</h3>
+            <ol>
+              @for (node of round.nodes; track node.id) {
+                <li class="bracket-node" [class.bracket-node--connected]="!last">
+                  <article class="bracket-card">
+                    <div
+                      class="bracket-team"
+                      [class.bracket-team--winner]="node.match?.winnerTeamId === node.topTeam?.id"
+                    >
+                      <span>{{ node.topTeam?.name ?? 'A definir' }}</span>
+                      <strong>{{ score(node, 'top') }}</strong>
+                      @if (teamState(node, node.topTeam?.id)) {
+                        <span class="sr-only">Vencedor</span>
+                      }
+                    </div>
+                    <div
+                      class="bracket-team"
+                      [class.bracket-team--winner]="
+                        node.match?.winnerTeamId === node.bottomTeam?.id
+                      "
+                    >
+                      <span>{{ node.bottomTeam?.name ?? 'A definir' }}</span>
+                      <strong>{{ score(node, 'bottom') }}</strong>
+                      @if (teamState(node, node.bottomTeam?.id)) {
+                        <span class="sr-only">Vencedor</span>
+                      }
+                    </div>
+                    <div class="bracket-card__footer">
+                      @if (node.isBye) {
+                        <p class="bracket-card__note">Avançou direto</p>
+                      } @else if (node.match?.status === 'Pending') {
+                        <a class="bracket-card__action" href="#resultados-mata-mata"
+                          >Gerenciar resultado</a
+                        >
+                      }
+                    </div>
+                  </article>
+                </li>
+              }
+            </ol>
+          </section>
+        }
+      </div>
+    </div>
+  }
+  @if (actionError()) {
+    <p class="error" role="alert">{{ actionError() }}</p>
+  }
+  @if (message()) {
+    <p class="success" role="status">{{ message() }}</p>
+  }
+</section>
+
+@if (tournament().status === 'InProgress' || tournament().status === 'Finished') {
+  <div id="resultados-mata-mata" class="bracket-results">
+    <app-matches
+      [tournament]="tournament()"
+      [showStandings]="false"
+      [showGeneration]="false"
+      (tournamentChanged)="onTournamentChanged($event)"
+      (matchesChanged)="load()"
+    />
+  </div>
+}

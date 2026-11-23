@@ -51,6 +51,13 @@ public sealed class Tournament
         Status = TournamentStatus.InProgress;
     }
 
+    public void StartSingleElimination()
+    {
+        if (Format != TournamentFormat.SingleElimination) throw new DomainConflictException("Tournament is not SingleElimination.");
+        if (Status != TournamentStatus.Closed) throw new DomainConflictException("Close registration before generating the bracket.");
+        Status = TournamentStatus.InProgress;
+    }
+
     public void FinishCompetition()
     {
         if (Status is not (TournamentStatus.InProgress or TournamentStatus.Finished))

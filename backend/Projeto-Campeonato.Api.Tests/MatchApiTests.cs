@@ -64,7 +64,6 @@ public sealed class MatchApiTests(ApiFactory factory) : IClassFixture<ApiFactory
     [Theory]
     [InlineData(2, false, "RoundRobin")]
     [InlineData(1, true, "RoundRobin")]
-    [InlineData(2, true, "SingleElimination")]
     public async Task InvalidGenerationReturnsConflictWithoutChangingTournament(int count, bool close, string format)
     {
         var id = await Tournament(count, close, format);
@@ -169,5 +168,6 @@ public sealed class MatchApiTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.True(paths.TryGetProperty("/api/tournaments/{tournamentId}/matches/generate", out _));
         Assert.True(paths.TryGetProperty("/api/matches/{matchId}/result", out _));
         Assert.True(paths.TryGetProperty("/api/tournaments/{tournamentId}/standings", out _));
+        Assert.True(paths.TryGetProperty("/api/tournaments/{tournamentId}/bracket", out _));
     }
 }

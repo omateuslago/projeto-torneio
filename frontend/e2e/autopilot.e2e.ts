@@ -55,12 +55,16 @@ async function seed(request: APIRequestContext, page: Page, unavailable = false)
 }
 async function generate(page: Page, id: string) {
   await page.goto(`/campeonatos/${id}/agenda`);
-  await page.getByRole('button', { name: 'Gerar agenda automaticamente', exact: true }).click();
-  await page.getByLabel('De', { exact: true }).fill('2026-11-14T18:00');
-  await page.getByLabel('Até', { exact: true }).fill('2026-11-15T02:00');
-  await page.getByText('Opções avançadas', { exact: true }).click();
-  await page.getByLabel('Árbitros').selectOption({ label: 'Exigir em todas as partidas' });
-  await page.getByRole('button', { name: 'Gerar agenda', exact: true }).click();
+  await page
+    .getByLabel('Ações da agenda')
+    .getByRole('button', { name: 'Gerar agenda automaticamente', exact: true })
+    .click();
+  const autopilot = page.locator('app-autopilot');
+  await autopilot.getByLabel('De', { exact: true }).fill('2026-11-14T18:00');
+  await autopilot.getByLabel('Até', { exact: true }).fill('2026-11-15T02:00');
+  await autopilot.getByText('Opções avançadas', { exact: true }).click();
+  await autopilot.getByLabel('Árbitros').selectOption({ label: 'Exigir em todas as partidas' });
+  await autopilot.getByRole('button', { name: 'Gerar agenda', exact: true }).click();
 }
 test('gera preview real, preserva reserva fixa e aplica todas as partidas', async ({
   page,
@@ -164,11 +168,16 @@ test('Self-Healing troca somente a área após aprovação humana', async ({ pag
     ).ok(),
   ).toBe(true);
   await page.goto(`/campeonatos/${s.t.id}/agenda`);
-  await page.getByRole('button', { name: 'Resolver imprevisto', exact: true }).click();
-  await page.getByLabel('Quadra', { exact: true }).selectOption(s.area.id);
-  await page.getByLabel('Indisponível de').fill('2026-11-14T18:00');
-  await page.getByLabel('Até', { exact: true }).fill('2026-11-14T19:00');
-  await page.getByRole('button', { name: 'Encontrar solução', exact: true }).click();
+  await page
+    .getByLabel('Ações da agenda')
+    .getByRole('button', { name: 'Resolver imprevisto', exact: true })
+    .click();
+  const repair = page.locator('app-repair');
+  await repair.getByRole('radio', { name: 'Uma quadra ficou indisponível' }).check();
+  await repair.locator('select[formcontrolname="resourceId"]').selectOption(s.area.id);
+  await repair.locator('input[formcontrolname="startsAt"]').fill('2026-11-14T18:00');
+  await repair.locator('input[formcontrolname="endsAt"]').fill('2026-11-14T19:00');
+  await repair.getByRole('button', { name: 'Encontrar solução', exact: true }).click();
   await expect(page.getByText(/1 partida precisa mudar/)).toBeVisible();
   await expect(page.getByText('Antes', { exact: true })).toBeVisible();
   await expect(page.getByText('Depois', { exact: true }).locator('..')).toContainText(

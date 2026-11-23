@@ -27,12 +27,17 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
     await expect(page.getByText(`${index + 1} de 2 vagas preenchidas`)).toBeVisible();
   }
   await page.getByRole('button', { name: 'Encerrar inscrições', exact: true }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Encerrar inscrições', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Gerar confrontos', exact: true }).click();
   await page
-    .getByRole('button', { name: `Enviar resultado como ${teams[0]}`, exact: true })
+    .getByRole('button', { name: `Informar resultado como ${teams[0]}`, exact: true })
     .click();
-  await page.getByLabel('Placar mandante').fill('3');
-  await page.getByLabel('Placar visitante').fill('1');
+  let resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+  await resultForm.locator('input[formcontrolname="homeScore"]').fill('3');
+  await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: '⚠ 1 partida precisa de atenção', exact: true }),
@@ -42,10 +47,11 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   ).toBeVisible();
   await page.reload();
   await page
-    .getByRole('button', { name: `Enviar resultado como ${teams[1]}`, exact: true })
+    .getByRole('button', { name: `Informar resultado como ${teams[1]}`, exact: true })
     .click();
-  await page.getByLabel('Placar mandante').fill('2');
-  await page.getByLabel('Placar visitante').fill('1');
+  resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+  await resultForm.locator('input[formcontrolname="homeScore"]').fill('2');
+  await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByRole('list', { name: 'Partidas do campeonato' })).toContainText(
     'Resultado contestado',
@@ -54,14 +60,16 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
   await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('0');
   await expect(page.getByText('Em andamento', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Resolver disputa', exact: true }).click();
-  await page.getByLabel('Placar mandante').fill('3');
-  await page.getByLabel('Placar visitante').fill('1');
-  await page.getByLabel('Motivo da decisão').fill('Placar confirmado pela súmula.');
+  resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+  await resultForm.locator('input[formcontrolname="homeScore"]').fill('3');
+  await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
+  await resultForm.locator('textarea').fill('Placar confirmado pela súmula.');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByText('precisa de atenção')).toHaveCount(0);
   await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
   await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
   await page.reload();
+  await page.getByText('Ver detalhes', { exact: true }).click();
   await expect(page.getByText('Decisão: Placar confirmado pela súmula.')).toBeVisible();
   await expect(page.getByRole('list', { name: 'Partidas do campeonato' })).toContainText(
     'Disputa resolvida',
@@ -110,9 +118,12 @@ test('envios concordantes confirmam automaticamente sem intervenção', async ({
   });
   await page.goto(`/campeonatos/${tournament.id}`);
   for (const team of ['Equipe A', 'Equipe B']) {
-    await page.getByRole('button', { name: `Enviar resultado como ${team}`, exact: true }).click();
-    await page.getByLabel('Placar mandante').fill('1');
-    await page.getByLabel('Placar visitante').fill('1');
+    await page
+      .getByRole('button', { name: `Informar resultado como ${team}`, exact: true })
+      .click();
+    const resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+    await resultForm.locator('input[formcontrolname="homeScore"]').fill('1');
+    await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
     await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
     await expect(page.getByRole('form', { name: 'Resultado da partida' })).toHaveCount(0);
   }

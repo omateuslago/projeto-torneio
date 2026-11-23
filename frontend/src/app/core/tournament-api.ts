@@ -11,6 +11,7 @@ import {
   TournamentStatus,
   ScoreSubmission,
   Dispute,
+  Bracket,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -56,6 +57,9 @@ export class TournamentApi {
   }
   standings(id: string) {
     return this.http.get<Standing[]>(`${this.base}/tournaments/${id}/standings`);
+  }
+  bracket(id: string) {
+    return this.http.get<Bracket>(`${this.base}/tournaments/${id}/bracket`);
   }
   submitScore(matchId: string, teamId: string, homeScore: number, awayScore: number) {
     return this.http.put<ScoreSubmission>(

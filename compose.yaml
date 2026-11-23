@@ -29,6 +29,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Scheduler__BaseUrl: http://scheduler:8000
       Scheduler__TimeoutSeconds: 10

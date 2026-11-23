@@ -53,11 +53,25 @@ public sealed class MatchesController(TournamentDbContext db, IAccessControl acc
         var tournament = await db.Tournaments.FromSqlInterpolated(
             $"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId} FOR UPDATE").SingleOrDefaultAsync(ct);
         if (tournament is null) return NotFound();
-        if (!await db.Matches.AnyAsync(x => x.TournamentId == tournamentId, ct))
+        var alreadyGenerated = tournament.Format == TournamentFormat.SingleElimination
+            ? await db.BracketNodes.AnyAsync(x => x.TournamentId == tournamentId, ct)
+            : await db.Matches.AnyAsync(x => x.TournamentId == tournamentId, ct);
+        if (!alreadyGenerated)
         {
-            tournament.StartCompetition();
-            var teams = await db.Registrations.Where(x => x.TournamentId == tournamentId).Select(x => x.TeamId).ToListAsync(ct);
-            db.Matches.AddRange(RoundRobin.Generate(tournamentId, teams));
+            var teams = await db.Registrations.Where(x => x.TournamentId == tournamentId)
+                .OrderBy(x => x.RegisteredAt).ThenBy(x => x.TeamId).Select(x => x.TeamId).ToListAsync(ct);
+            if (tournament.Format == TournamentFormat.SingleElimination)
+            {
+                tournament.StartSingleElimination();
+                var bracket = SingleEliminationBracket.Generate(tournamentId, teams);
+                db.BracketNodes.AddRange(bracket.Nodes);
+                db.Matches.AddRange(bracket.Matches);
+            }
+            else
+            {
+                tournament.StartCompetition();
+                db.Matches.AddRange(RoundRobin.Generate(tournamentId, teams));
+            }
             await db.SaveChangesAsync(ct);
         }
         var matches = await MatchQuery(tournamentId).ToListAsync(ct);

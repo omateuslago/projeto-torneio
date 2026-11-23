@@ -48,9 +48,11 @@ describe('Criação de campeonatos', () => {
     expect(fixture.nativeElement.textContent).toContain('deve ser inteiro');
   });
 
-  it('usa pontos corridos sem expor formato no fluxo principal e aceita esporte personalizado', () => {
+  it('oferece os dois formatos, mantém pontos corridos como padrão e aceita esporte personalizado', () => {
     const fixture = setup();
-    expect(fixture.nativeElement.textContent).not.toContain('Mata-mata simples');
+    expect(fixture.nativeElement.textContent).toContain('Pontos corridos');
+    expect(fixture.nativeElement.textContent).toContain('Mata-mata simples');
+    expect(fixture.componentInstance.form.controls.format.value).toBe('RoundRobin');
     fixture.componentInstance.chooseSport('Outro');
     fixture.componentInstance.form.patchValue({ name: 'Copa', sport: 'Beach tennis', maxTeams: 8 });
     fixture.componentInstance.create();
@@ -64,20 +66,32 @@ describe('Criação de campeonatos', () => {
     request.flush({ ...request.request.body, id: 'custom', status: 'Draft' });
   });
 
+  it('envia SingleElimination quando o usuário escolhe mata-mata', () => {
+    const fixture = setup();
+    fixture.componentInstance.form.patchValue({
+      name: 'Copa mata-mata',
+      sport: 'Futsal',
+      maxTeams: 16,
+      format: 'SingleElimination',
+    });
+    fixture.componentInstance.create();
+    const request = http.expectOne('/api/tournaments');
+    expect(request.request.body.format).toBe('SingleElimination');
+    request.flush({ ...request.request.body, id: 'knockout', status: 'Draft' });
+  });
+
   it('continua renderizando campeonato mata-mata existente sem expor o formato no card', () => {
     const fixture = TestBed.createComponent(Tournaments);
-    http
-      .expectOne('/api/tournaments')
-      .flush([
-        {
-          id: 'legacy',
-          name: 'Copa antiga',
-          sport: 'Futebol',
-          maxTeams: 8,
-          format: 'SingleElimination',
-          status: 'Draft',
-        },
-      ]);
+    http.expectOne('/api/tournaments').flush([
+      {
+        id: 'legacy',
+        name: 'Copa antiga',
+        sport: 'Futebol',
+        maxTeams: 8,
+        format: 'SingleElimination',
+        status: 'Draft',
+      },
+    ]);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Copa antiga');
     expect(fixture.nativeElement.textContent).not.toContain('Mata-mata simples');

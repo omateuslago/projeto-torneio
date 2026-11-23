@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, switchMap, tap } from 'rxjs';
@@ -10,10 +10,11 @@ import { apiError } from '../../core/api-error';
 import { AuthService } from '../../core/auth.service';
 import { AccessManagement } from '../access/access-management';
 import { ConfirmDialog } from '../../shared/confirm-dialog';
+import { Bracket } from '../bracket/bracket';
 
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink, Registrations, Matches, AccessManagement, ConfirmDialog],
+  imports: [RouterLink, Registrations, Matches, Bracket, AccessManagement, ConfirmDialog],
   templateUrl: './tournament-detail.html',
   styleUrl: './tournament-detail.css',
 })
@@ -30,6 +31,7 @@ export class TournamentDetail {
   readonly confirmClose = signal(false);
   readonly statusLabels = statusLabels;
   readonly formatLabels = formatLabels;
+  readonly bracket = viewChild(Bracket);
 
   constructor() {
     inject(ActivatedRoute)
@@ -87,5 +89,9 @@ export class TournamentDetail {
     const order: TournamentStatus[] = ['Draft', 'Open', 'Closed', 'InProgress', 'Finished'];
     if (order.indexOf(updated.status) < order.indexOf(current.status)) return;
     this.tournament.set(updated);
+  }
+
+  generateBracket() {
+    this.bracket()?.generate();
   }
 }

@@ -82,3 +82,36 @@ export interface Standing {
   goalDifference: number;
   points: number;
 }
+
+export interface BracketTeam {
+  id: string;
+  name: string;
+}
+export interface BracketMatch {
+  id: string;
+  status: Match['status'];
+  topScore: number | null;
+  bottomScore: number | null;
+  winnerTeamId: string | null;
+  startsAt: string | null;
+  playingAreaId: string | null;
+}
+export interface BracketNode {
+  id: string;
+  position: number;
+  topTeam: BracketTeam | null;
+  bottomTeam: BracketTeam | null;
+  isBye: boolean;
+  match: BracketMatch | null;
+}
+export interface BracketRound {
+  number: number;
+  name: string;
+  nodes: BracketNode[];
+}
+export interface Bracket {
+  tournamentId: string;
+  status: TournamentStatus;
+  rounds: BracketRound[];
+  champion: BracketTeam | null;
+}

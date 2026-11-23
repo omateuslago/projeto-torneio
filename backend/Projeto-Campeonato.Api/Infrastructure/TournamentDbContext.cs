@@ -13,6 +13,7 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
     public DbSet<Registration> Registrations => Set<Registration>();
 
     public DbSet<Match> Matches => Set<Match>();
+    public DbSet<BracketNode> BracketNodes => Set<BracketNode>();
     public DbSet<ScoreSubmission> ScoreSubmissions => Set<ScoreSubmission>();
     public DbSet<Dispute> Disputes => Set<Dispute>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -129,6 +130,24 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
             {
                 table.HasCheckConstraint("CK_Matches_Teams", "\"HomeTeamId\" < \"AwayTeamId\"");
                 table.HasCheckConstraint("CK_Matches_Result", "(\"Status\" IN ('Pending', 'AwaitingConfirmation', 'Disputed') AND \"HomeScore\" IS NULL AND \"AwayScore\" IS NULL AND \"FinishedAt\" IS NULL) OR (\"Status\" = 'Finished' AND \"HomeScore\" IS NOT NULL AND \"AwayScore\" IS NOT NULL AND \"HomeScore\" >= 0 AND \"AwayScore\" >= 0 AND \"FinishedAt\" IS NOT NULL)");
+            });
+        });
+        model.Entity<BracketNode>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NextSlot).HasConversion<string>().HasMaxLength(16);
+            entity.HasIndex(x => new { x.TournamentId, x.RoundNumber, x.Position }).IsUnique();
+            entity.HasIndex(x => x.MatchId).IsUnique().HasFilter("\"MatchId\" IS NOT NULL");
+            entity.HasOne<Tournament>().WithMany().HasForeignKey(x => x.TournamentId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.TopTeamId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Team>().WithMany().HasForeignKey(x => x.BottomTeamId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Match>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<BracketNode>().WithMany().HasForeignKey(x => x.NextNodeId).OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable("BracketNodes", table =>
+            {
+                table.HasCheckConstraint("CK_BracketNodes_Position", "\"RoundNumber\" > 0 AND \"Position\" > 0");
+                table.HasCheckConstraint("CK_BracketNodes_Teams", "\"TopTeamId\" IS NULL OR \"BottomTeamId\" IS NULL OR \"TopTeamId\" <> \"BottomTeamId\"");
+                table.HasCheckConstraint("CK_BracketNodes_Next", "(\"NextNodeId\" IS NULL) = (\"NextSlot\" IS NULL)");
             });
         });
         model.Entity<ScoreSubmission>(entity =>

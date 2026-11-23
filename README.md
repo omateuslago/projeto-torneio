@@ -6,7 +6,7 @@ Plataforma incremental para campeonatos amadores físicos e eSports. A base atua
 usa Angular 22, ASP.NET Core 10 LTS, EF Core 10 e PostgreSQL 17.
 
 A interface permite criar e listar campeonatos e equipes, consultar detalhes,
-abrir/fechar inscrições, gerenciar participantes, gerar confrontos de pontos corridos,
+abrir/fechar inscrições, gerenciar participantes, gerar pontos corridos ou uma chave mata-mata,
 enviar resultados por equipe, confirmar placares concordantes, resolver disputas,
 consultar pendências e classificação, além de corrigir resultados administrativamente. Os dados vêm da API real e
 persistem no PostgreSQL. O frontend Next.js anterior está preservado em
@@ -98,8 +98,9 @@ O proxy do `ng serve` é exclusivo do desenvolvimento.
 3. Recarregue a página: os detalhes continuam disponíveis, carregados pela API.
 4. Abra as inscrições, selecione a equipe e clique em **Inscrever equipe**.
 5. Inscreva pelo menos duas equipes e encerre as inscrições.
-6. Clique em **Gerar confrontos** (somente pontos corridos).
-7. Use **Enviar como** para simular cada equipe. Ambas informam o placar na ordem
+6. Em pontos corridos, clique em **Gerar confrontos**. No mata-mata, clique em
+   **Gerar chave** e acompanhe as fases até a final.
+7. Use **Informar resultado** para simular cada equipe. Ambas informam o placar na ordem
    mandante × visitante. Placares iguais confirmam o resultado e atualizam a classificação.
 8. Placares divergentes abrem uma disputa em **Pendências**. Use **Resolver disputa**,
    informe o placar oficial e o motivo. Recarregue para conferir a persistência.
@@ -129,15 +130,20 @@ docker compose exec db psql -U tournaments -d tournaments -c 'SELECT "Id", "Name
 | Resolver disputa | PUT `/api/disputes/{id}/resolve` |
 | Consultar histórico da partida | GET `/api/matches/{id}/audit-log` |
 | Consultar classificação | GET `/api/tournaments/{id}/standings` |
+| Consultar chave eliminatória | GET `/api/tournaments/{id}/bracket` |
 
 Torneios começam em `Draft`; as transições são `Draft → Open → Closed → InProgress → Finished`. Closed
 significa inscrições encerradas. Não é permitido reabrir um torneio fechado.
 Capacidade entre 2 e 128, com uma inscrição por equipe em cada campeonato.
-O cadastro aceita `SingleElimination` e `RoundRobin` por compatibilidade, mas
-somente `RoundRobin` gera partidas e classificação. A geração inicia o campeonato;
-a última partida finalizada o encerra. Vitória vale 3 pontos, empate 1 e derrota 0.
+O cadastro aceita `SingleElimination` e `RoundRobin`. Em pontos corridos, a geração
+cria todos os pares e mantém a classificação por pontos. No mata-mata, cria a chave
+com seeding determinístico, folgas explícitas e avanço do vencedor até a final;
+empates não são aceitos. A geração inicia o campeonato e a final eliminatória, ou
+a última partida de pontos corridos, o encerra. Vitória vale 3 pontos, empate 1 e
+derrota 0 somente na classificação de pontos corridos.
 As regras continuam no backend. Veja [o ciclo de vida](docs/tournament-lifecycle.md)
-e [resultados bilaterais e disputas](docs/bilateral-results.md).
+e [resultados bilaterais e disputas](docs/bilateral-results.md). A estrutura e as
+regras do mata-mata estão em [chave eliminatória](docs/single-elimination.md).
 
 O sistema usa ASP.NET Core Identity com cookie seguro e antiforgery. Organizadores
 administram somente os campeonatos vinculados, managers enviam placares apenas por
@@ -191,7 +197,7 @@ Os testes Angular cobrem autenticação, permissões, criação, validação, er
 após falha HTTP, partidas, classificação, submissões, disputas, pendências e respostas
 atrasadas de status, recursos, disponibilidade, agendamento e conflitos. Não dependem de backend em execução.
 
-Para os oito testes de navegador, mantenha API, scheduler e banco de desenvolvimento
+Para os testes de navegador, mantenha API, scheduler e banco de desenvolvimento
 iniciados e, dentro de `frontend`, execute:
 
 ```bash
@@ -208,6 +214,8 @@ confirmação bilateral, resolução de disputa, classificação atualizada, dis
 agendamento/reagendamento com conflito real e layout em tela pequena. Não há limpeza de registros
 por API, pois exclusão ainda não faz parte do produto. Screenshots e traces
 ficam em `frontend/test-results/` (ignorado pelo Git).
+O fluxo mata-mata cobre criação, quatro equipes, semifinais, final, campeão e
+revisão visual das chaves de 4, 8 e 16 equipes em desktop e 360 px.
 
 Testes Python (14 casos, sem PostgreSQL), dentro de `scheduler`:
 `.venv/bin/python -m pytest -q`. Lint: `.venv/bin/ruff check app tests`.
@@ -220,10 +228,13 @@ docker compose up --build -d
 
 O serviço `migrate` aplica migrations antes da API. As imagens usam .NET 10;
 as portas do banco e API ficam restritas a localhost.
-Neste ambiente cloud, o download da imagem oficial foi bloqueado por HTTP 403
-em `westcentralus.data.mcr.microsoft.com`. O PostgreSQL via Compose e a API pelo
-SDK foram validados; a execução completa da imagem API aguarda uma rede com
-acesso a esse domínio. Consulte [a migração .NET 10](docs/dotnet10-upgrade.md).
+O Compose local define a API como `Development`, permitindo cookies HTTP e
+antiforgery no proxy local. Fora desse fluxo, o ASP.NET Core continua em
+`Production` por padrão e preserva cookies seguros.
+Neste ambiente cloud, o registry da Microsoft respondeu HTTP 403 ao baixar as
+imagens oficiais .NET 10. O `docker compose config`, a migration e a API em
+`Development` foram validados; o build completo das imagens depende de uma rede
+com acesso aos blobs do MCR.
 
 O Compose também inicia `scheduler` com Python 3.12 e healthcheck. A API usa o
 hostname interno `http://scheduler:8000`, sem depender da saúde dele para iniciar.
@@ -240,8 +251,9 @@ Angular continua rodando via `npm start`. Para redes cloud com proxy TLS, veja o
 
 `GET/POST /campeonatos` permanece compatível com o protótipo antigo e continua
 em memória, independente da API persistida. O Angular usa somente `/api`.
-A aplicação atual é destinada a desenvolvimento local e ainda não tem autenticação.
-Não foram adicionados IA generativa, notificações, WhatsApp, autenticação, evidências ou pagamentos.
+A aplicação usa ASP.NET Core Identity, autorização por organizador/TeamManager,
+notificações internas e integração opcional com WhatsApp; pagamentos continuam
+fora do escopo atual.
 
 Documentação: [arquitetura inicial](docs/architecture.md),
 [recuperação do milestone 1](docs/recovery-milestone-1.md) e
