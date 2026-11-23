@@ -52,7 +52,7 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
     ).ok(),
   ).toBe(true);
   await page.goto(`/campeonatos/${t.id}`);
-  await page.getByRole('link', { name: 'Abrir agenda', exact: true }).click();
+  await page.getByRole('link', { name: 'Ver agenda', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Partidas aguardando agendamento (6)' }),
   ).toBeVisible();
@@ -74,6 +74,7 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
   await page.getByRole('button', { name: 'Cadastrar árbitro' }).click();
   await expect(page.getByLabel('Nome do árbitro')).toHaveValue('');
   await page.getByText('Disponibilidade', { exact: true }).click();
+  const availability = page.locator('details').filter({ hasText: 'Disponibilidade' });
   for (const [kind, names] of [
     ['teams', ['Time agenda 1', 'Time agenda 2', 'Time agenda 3', 'Time agenda 4']],
     ['playing-areas', ['Ginásio Central / Quadra 1']],
@@ -84,8 +85,8 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
       await page
         .getByRole('combobox', { name: 'Recurso', exact: true })
         .selectOption({ label: name });
-      await page.getByLabel('Das').fill('2026-11-14T08:00');
-      await page.getByLabel('Até', { exact: true }).fill('2026-11-14T22:00');
+      await availability.locator('input[formcontrolname="startsAt"]').fill('2026-11-14T08:00');
+      await availability.locator('input[formcontrolname="endsAt"]').fill('2026-11-14T22:00');
       await page.getByRole('button', { name: 'Adicionar disponibilidade', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Editar período', exact: true })).toHaveCount(
         1,
@@ -93,10 +94,15 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
     }
   }
   async function schedule(time: string) {
-    await page.getByLabel('Início da partida').fill(`2026-11-14T${time}`);
-    await page.getByLabel('Quadra', { exact: true }).selectOption({ label: 'Quadra 1' });
-    await page.getByLabel('Árbitro', { exact: true }).selectOption({ label: 'Carlos' });
-    await page.getByRole('button', { name: 'Salvar agendamento', exact: true }).click();
+    const scheduleForm = page.getByRole('form', { name: 'Agendamento da partida' });
+    await scheduleForm.locator('input[formcontrolname="startsAt"]').fill(`2026-11-14T${time}`);
+    await scheduleForm
+      .locator('select[formcontrolname="playingAreaId"]')
+      .selectOption({ label: 'Quadra 1' });
+    await scheduleForm
+      .locator('select[formcontrolname="refereeId"]')
+      .selectOption({ label: 'Carlos' });
+    await scheduleForm.getByRole('button', { name: 'Salvar agendamento', exact: true }).click();
   }
   await page.getByRole('button', { name: 'Agenda', exact: true }).click();
   await page.getByRole('button', { name: 'Agendar partida', exact: true }).first().click();

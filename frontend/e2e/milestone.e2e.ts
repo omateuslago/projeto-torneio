@@ -13,7 +13,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
     await page.getByLabel('Nome da equipe').fill(name);
     await page.getByRole('button', { name: 'Criar equipe', exact: true }).click();
     await expect(page.getByText(`Equipe ${name} cadastrada.`, { exact: true })).toBeVisible();
-    await expect(page.getByRole('listitem').filter({ hasText: name })).toBeVisible();
+    await expect(page.locator('.team-card').filter({ hasText: name })).toBeVisible();
   }
   await page.getByRole('link', { name: 'Campeonatos', exact: true }).click();
   await page.getByRole('button', { name: '+ Criar', exact: true }).click();
@@ -53,6 +53,10 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page.getByRole('button', { name: 'Inscrever equipe', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('campeonato está lotado');
   await page.getByRole('button', { name: 'Encerrar inscrições' }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Encerrar inscrições', exact: true })
+    .click();
   await expect(page.getByText('Inscrições encerradas.', { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByText('2 de 2 vagas preenchidas')).toBeVisible();
@@ -66,11 +70,12 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page
     .getByRole('button', { name: 'Registrar resultado administrativamente', exact: true })
     .click();
-  await page.getByLabel('Placar mandante').fill('-1');
+  let resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+  await resultForm.locator('input[formcontrolname="homeScore"]').fill('-1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Informe placares inteiros');
-  await page.getByLabel('Placar mandante').fill('3');
-  await page.getByLabel('Placar visitante').fill('1');
+  await resultForm.locator('input[formcontrolname="homeScore"]').fill('3');
+  await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
   const standings = page.getByRole('table', { name: 'Classificação do campeonato' });
@@ -79,8 +84,9 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page
     .getByRole('button', { name: 'Corrigir resultado administrativamente', exact: true })
     .click();
-  await page.getByLabel('Placar mandante').fill('1');
-  await page.getByLabel('Placar visitante').fill('1');
+  resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+  await resultForm.locator('input[formcontrolname="homeScore"]').fill('1');
+  await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
   await expect(standings.getByRole('row').nth(2).getByRole('cell').nth(1)).toHaveText('1');
