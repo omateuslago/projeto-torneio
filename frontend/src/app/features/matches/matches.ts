@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Observable, Subject, catchError, finalize, forkJoin, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
 import { Match, Standing, Tournament } from '../../core/models';
 import { apiError } from '../../core/api-error';
@@ -26,7 +26,10 @@ import { AuthService } from '../../core/auth.service';
 export class Matches {
   readonly auth = inject(AuthService);
   readonly tournament = input.required<Tournament>();
+  readonly showStandings = input(true);
+  readonly showGeneration = input(true);
   readonly tournamentChanged = output<Tournament>();
+  readonly matchesChanged = output<void>();
   private readonly tournamentId = computed(() => this.tournament().id);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -106,7 +109,7 @@ export class Matches {
           this.loadError.set('');
           return forkJoin({
             matches: this.api.listMatches(id),
-            standings: this.api.standings(id),
+            standings: this.showStandings() ? this.api.standings(id) : of([]),
             tournament: this.api.getTournament(id),
           }).pipe(
             catchError((error) => {
@@ -122,6 +125,7 @@ export class Matches {
         this.matches.set(data.matches);
         this.standings.set(data.standings);
         this.tournamentChanged.emit(data.tournament);
+        this.matchesChanged.emit();
       });
     effect(() => {
       this.editing.set(null);
@@ -204,7 +208,9 @@ export class Matches {
           this.message.set(
             this.mode() === 'submission'
               ? 'Envio salvo. Confira as confirmações abaixo.'
-              : 'Resultado salvo. Classificação atualizada.',
+              : this.tournament().format === 'SingleElimination'
+                ? 'Resultado salvo. Chave atualizada.'
+                : 'Resultado salvo. Classificação atualizada.',
           );
           this.load();
         },

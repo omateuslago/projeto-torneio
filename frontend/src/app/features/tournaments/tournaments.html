@@ -156,6 +156,19 @@
             required
           /><span class="hint">De 2 a 128 equipes.</span></label
         >
+        <fieldset class="format-choice">
+          <legend>Formato</legend>
+          <label>
+            <input type="radio" formControlName="format" value="RoundRobin" />
+            <span
+              ><strong>Pontos corridos</strong><small>Todas as equipes se enfrentam.</small></span
+            >
+          </label>
+          <label>
+            <input type="radio" formControlName="format" value="SingleElimination" />
+            <span><strong>Mata-mata simples</strong><small>Quem perde é eliminado.</small></span>
+          </label>
+        </fieldset>
         @if (form.touched && form.invalid) {
           <p class="error" role="alert">
             Preencha nome e esporte. O número de equipes deve ser inteiro, entre 2 e 128.

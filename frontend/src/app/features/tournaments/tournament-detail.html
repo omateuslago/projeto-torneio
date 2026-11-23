@@ -49,20 +49,30 @@
         @if (current.format === 'RoundRobin') {
           <p>O próximo passo é gerar os confrontos.</p>
         } @else {
-          <p>
-            O gerenciamento automático de confrontos ainda não está disponível para este formato.
-          </p>
+          <p>Gere a chave eliminatória para definir o caminho das equipes até a final.</p>
         }
       </div>
     } @else if (current.status === 'InProgress') {
       <div class="tournament-next-step">
         <h2>Campeonato em andamento</h2>
-        <p>Acompanhe a agenda, as pendências e os resultados.</p>
+        <p>
+          {{
+            current.format === 'RoundRobin'
+              ? 'Acompanhe a agenda, as pendências e os resultados.'
+              : 'Acompanhe a chave, as pendências e quem avança em cada fase.'
+          }}
+        </p>
       </div>
     } @else {
       <div class="tournament-next-step">
         <h2>Campeonato encerrado</h2>
-        <p>Consulte a classificação final e os resultados.</p>
+        <p>
+          {{
+            current.format === 'RoundRobin'
+              ? 'Consulte a classificação final e os resultados.'
+              : 'Consulte a chave final e o caminho do campeão.'
+          }}
+        </p>
       </div>
     }
     <div class="tournament-primary-actions">
@@ -77,11 +87,26 @@
         </button>
       } @else if (current.status === 'Closed' && current.format === 'RoundRobin') {
         <a class="button" href="#partidas">Gerar confrontos</a>
+      } @else if (
+        auth.canManageTournament(current.id) &&
+        current.status === 'Closed' &&
+        current.format === 'SingleElimination'
+      ) {
+        <button (click)="generateBracket()">Gerar chave</button>
       } @else if (current.status === 'InProgress') {
-        <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Ver agenda</a>
-        <a class="button secondary" href="#partidas">Ver resultados</a>
+        @if (current.format === 'RoundRobin') {
+          <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Ver agenda</a>
+          <a class="button secondary" href="#partidas">Ver resultados</a>
+        } @else {
+          <a class="button" href="#chave">Ver chave</a>
+          <a class="button secondary" href="#resultados-mata-mata">Ver resultados</a>
+        }
       } @else if (current.status === 'Finished') {
-        <a class="button" href="#classificacao">Ver classificação final</a>
+        @if (current.format === 'RoundRobin') {
+          <a class="button" href="#classificacao">Ver classificação final</a>
+        } @else {
+          <a class="button" href="#chave">Ver chave final</a>
+        }
       }
     </div>
     @if (actionError()) {
@@ -136,6 +161,16 @@
   ) {
     <div id="partidas" class="detail-section">
       <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
+    </div>
+  }
+  @if (
+    current.format === 'SingleElimination' &&
+    (current.status === 'Closed' ||
+      current.status === 'InProgress' ||
+      current.status === 'Finished')
+  ) {
+    <div class="detail-section">
+      <app-bracket [tournament]="current" (tournamentChanged)="updateTournament($event)" />
     </div>
   }
   @if (confirmClose()) {

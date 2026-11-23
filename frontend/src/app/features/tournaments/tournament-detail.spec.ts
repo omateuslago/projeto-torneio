@@ -73,7 +73,7 @@ describe('Atualizações do campeonato', () => {
     expect(fixture.nativeElement.textContent).toContain(copy);
   });
 
-  it('não oferece ações incompatíveis para SingleElimination fechado', () => {
+  it('oferece geração da chave sem destacar agenda ou classificação para mata-mata fechado', () => {
     TestBed.inject(AuthService).user.set({
       authenticated: true,
       id: 'organizer',
@@ -96,13 +96,15 @@ describe('Atualizações do campeonato', () => {
       .flush({ members: [], pendingInvitations: [] });
     http.expectOne('/api/tournaments/cup/registrations').flush([]);
     http.expectOne('/api/teams').flush([]);
+    http
+      .expectOne('/api/tournaments/cup/bracket')
+      .flush({ tournamentId: 'cup', status: 'Closed', rounds: [], champion: null });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      'O gerenciamento automático de confrontos ainda não está disponível para este formato.',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Gerar chave');
     expect(fixture.nativeElement.textContent).not.toContain('Gerar confrontos');
     expect(fixture.nativeElement.textContent).not.toContain('Abrir agenda');
+    expect(fixture.nativeElement.textContent).not.toContain('Ver classificação final');
     http.expectNone('/api/tournaments/cup/matches');
   });
 });
