@@ -31,6 +31,7 @@ export class TournamentDetail {
   readonly confirmClose = signal(false);
   readonly statusLabels = statusLabels;
   readonly formatLabels = formatLabels;
+  readonly progressSteps = ['Preparação', 'Equipes', 'Jogos', 'Em andamento', 'Finalizado'];
   readonly bracket = viewChild(Bracket);
 
   constructor() {
@@ -93,5 +94,9 @@ export class TournamentDetail {
 
   generateBracket() {
     this.bracket()?.generate();
+  }
+
+  progressIndex(status: TournamentStatus) {
+    return ['Draft', 'Open', 'Closed', 'InProgress', 'Finished'].indexOf(status);
   }
 }

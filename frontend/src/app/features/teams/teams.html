@@ -3,7 +3,13 @@
     <h1>Equipes</h1>
     <p class="intro">Cadastre equipes e organize quem pode administrá-las.</p>
   </div>
+  @if (auth.isAuthenticated()) {
+    <button #createButton type="button" (click)="openCreateModal($event)">+ Criar equipe</button>
+  }
 </header>
+@if (message()) {
+  <p class="success" role="status">{{ message() }}</p>
+}
 <div class="workspace">
   <section class="panel" aria-labelledby="equipes-cadastradas">
     <div class="section-heading">
@@ -33,6 +39,11 @@
         </div>
         <h3>Nenhuma equipe por aqui</h3>
         <p>Quando você criar uma equipe, ela aparecerá aqui.</p>
+        @if (auth.isAuthenticated()) {
+          <button type="button" class="secondary" (click)="openCreateModal($event)">
+            Criar primeira equipe
+          </button>
+        }
       </div>
     } @else {
       <div class="team-grid">
@@ -71,12 +82,39 @@
       </div>
     }
   </section>
-  @if (auth.isAuthenticated()) {
-    <section class="panel" aria-labelledby="nova-equipe">
-      <h2 id="nova-equipe">Nova equipe</h2>
+</div>
+
+@if (isCreateModalOpen() && auth.isAuthenticated()) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <section
+      #dialog
+      class="team-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nova-equipe"
+      (click)="$event.stopPropagation()"
+      (keydown)="onDialogKeydown($event)"
+    >
+      <div class="team-modal__heading">
+        <h2 id="nova-equipe">Nova equipe</h2>
+        <button
+          type="button"
+          class="team-modal__close"
+          aria-label="Fechar"
+          [disabled]="saving()"
+          (click)="closeCreateModal()"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
       <form [formGroup]="form" (ngSubmit)="create()">
         <label
-          >Nome da equipe<input formControlName="name" maxlength="120" autocomplete="off" required
+          >Nome da equipe<input
+            #nameInput
+            formControlName="name"
+            maxlength="120"
+            autocomplete="off"
+            required
         /></label>
         @if (form.touched && form.invalid) {
           <p class="error" role="alert">Informe um nome de até 120 caracteres.</p>
@@ -84,13 +122,20 @@
         @if (saveError()) {
           <p class="error" role="alert">{{ saveError() }}</p>
         }
-        <button type="submit" [disabled]="saving()">
-          {{ saving() ? 'Cadastrando…' : 'Criar equipe' }}
-        </button>
+        <div class="team-modal__actions">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="saving()"
+            (click)="closeCreateModal()"
+          >
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="saving()">
+            {{ saving() ? 'Cadastrando…' : 'Criar equipe' }}
+          </button>
+        </div>
       </form>
-      @if (message()) {
-        <p class="success" role="status">{{ message() }}</p>
-      }
     </section>
-  }
-</div>
+  </div>
+}
