@@ -113,18 +113,19 @@ test('percorre semifinais e final, rejeita empate e destaca o campeão', async (
   await expect(page.getByText('Campeão', { exact: true })).toBeVisible();
 });
 
-test('renderiza chaves de 4, 8 e 16 equipes sem overflow da página', async ({
+test('renderiza chaves com e sem byes sem overflow da página', async ({
   page,
   request,
 }, testInfo) => {
   const token = await registerOrganizer(request, page);
-  for (const teamCount of [4, 8, 16]) {
+  for (const teamCount of [4, 5, 8, 16]) {
     const tournament = await createBracket(request, token, teamCount);
+    const roundCount = Math.ceil(Math.log2(teamCount));
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(`/campeonatos/${tournament.id}`);
-    await expect(page.locator('.bracket-round')).toHaveCount(Math.log2(teamCount));
+    await expect(page.locator('.bracket-round')).toHaveCount(roundCount);
     await expect(page.locator('.bracket-round').first().locator('.bracket-node')).toHaveCount(
-      teamCount / 2,
+      2 ** (roundCount - 1),
     );
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),

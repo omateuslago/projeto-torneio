@@ -23,6 +23,8 @@ import { Matches } from '../matches/matches';
   styleUrl: './bracket.css',
 })
 export class Bracket {
+  readonly cardHeight = 118;
+  private readonly nodeStep = 142;
   readonly auth = inject(AuthService);
   readonly tournament = input.required<Tournament>();
   readonly tournamentChanged = output<Tournament>();
@@ -95,10 +97,10 @@ export class Bracket {
   }
 
   roundGap(round: number) {
-    return 2 ** (round - 1) * 116 - 92;
+    return 2 ** (round - 1) * this.nodeStep - this.cardHeight;
   }
 
   roundOffset(round: number) {
-    return (2 ** (round - 1) - 1) * 58;
+    return ((2 ** (round - 1) - 1) * this.nodeStep) / 2;
   }
 }

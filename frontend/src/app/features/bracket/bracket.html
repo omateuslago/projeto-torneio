@@ -35,7 +35,7 @@
     }
     <p class="bracket-scroll-hint">Deslize horizontalmente para acompanhar todas as fases.</p>
     <div class="bracket-viewport" tabindex="0" aria-label="Fases da chave eliminatória">
-      <div class="bracket-grid">
+      <div class="bracket-grid" [style.--bracket-card-height.px]="cardHeight">
         @for (round of bracket.rounds; track round.number; let last = $last) {
           <section
             class="bracket-round"
@@ -71,13 +71,15 @@
                         <span class="sr-only">Vencedor</span>
                       }
                     </div>
-                    @if (node.isBye) {
-                      <p class="bracket-card__note">Avançou direto</p>
-                    } @else if (node.match?.status === 'Pending') {
-                      <a class="bracket-card__action" href="#resultados-mata-mata"
-                        >Gerenciar resultado</a
-                      >
-                    }
+                    <div class="bracket-card__footer">
+                      @if (node.isBye) {
+                        <p class="bracket-card__note">Avançou direto</p>
+                      } @else if (node.match?.status === 'Pending') {
+                        <a class="bracket-card__action" href="#resultados-mata-mata"
+                          >Gerenciar resultado</a
+                        >
+                      }
+                    </div>
                   </article>
                 </li>
               }
