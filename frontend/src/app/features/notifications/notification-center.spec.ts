@@ -27,6 +27,10 @@ describe('NotificationCenter', () => {
     );
     const fixture = TestBed.createComponent(NotificationCenter);
     fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Acompanhe atualizações importantes dos seus campeonatos.',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain('convites');
     expect(fixture.nativeElement.textContent).toContain('Partida agendada');
     expect(fixture.nativeElement.textContent).toContain('Enviado pelo WhatsApp');
   });
@@ -36,8 +40,8 @@ describe('NotificationCenter', () => {
       of([
         {
           id: 'notification',
-          type: 'Invite',
-          title: 'Convite',
+          type: 'MatchScheduled',
+          title: 'Partida agendada',
           summary: 'Equipe Azul',
           createdAt: '2026-11-13T19:30:00Z',
           whatsAppStatus: 'Skipped',
@@ -46,7 +50,7 @@ describe('NotificationCenter', () => {
     );
     const fixture = TestBed.createComponent(NotificationCenter);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Convite');
+    expect(fixture.nativeElement.textContent).toContain('Partida agendada');
     expect(fixture.nativeElement.textContent).not.toContain('Não habilitado');
     expect(fixture.nativeElement.textContent).not.toContain('WhatsApp:');
   });

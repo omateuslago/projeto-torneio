@@ -85,7 +85,11 @@
         <button class="secondary" (click)="confirmClose.set(true)" [disabled]="saving()">
           {{ saving() ? 'Encerrando…' : 'Encerrar inscrições' }}
         </button>
-      } @else if (current.status === 'Closed' && current.format === 'RoundRobin') {
+      } @else if (
+        auth.canManageTournament(current.id) &&
+        current.status === 'Closed' &&
+        current.format === 'RoundRobin'
+      ) {
         <a class="button" href="#partidas">Gerar confrontos</a>
       } @else if (
         auth.canManageTournament(current.id) &&

@@ -161,7 +161,7 @@ describe('Criação de campeonatos', () => {
     expect(
       fixture.nativeElement.querySelector('.tournaments-state--error img')?.getAttribute('src'),
     ).toBe('assests/brakvyo-trofeu-outline.svg');
-    expect(fixture.nativeElement.textContent).toContain('Falha temporária.');
+    expect(fixture.nativeElement.textContent).not.toContain('Falha temporária.');
     expect(fixture.nativeElement.textContent).not.toContain('Nenhum campeonato por aqui');
 
     fixture.componentInstance.load();

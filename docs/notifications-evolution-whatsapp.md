@@ -70,6 +70,21 @@ valida o segredo e aceita callbacks; não interpreta mensagens nem comandos inbo
 Um usuário que gerencia as duas equipes recebe somente uma delivery por evento. A chave
 de deduplicação impede recriar a mesma notificação.
 
+Horários continuam armazenados em UTC. O payload novo inclui o `TimeZoneId` persistido
+no campeonato, e o renderer converte apenas a apresentação da notificação interna e da
+mensagem WhatsApp. Payloads antigos sem esse campo usam UTC como fallback.
+
+## Validação automatizada e teste real
+
+A suíte automatizada valida com provider HTTP falso o endpoint `sendText`, header
+`apikey`, normalização do telefone, texto, ID opaco do provider, deduplicação, retry,
+limite de tentativas, falhas permanentes e concorrência da outbox. Ela não comprova que
+uma mensagem chegou a um celular.
+
+O teste real exige uma instância Evolution separada, número exclusivo de testes e a
+configuração manual descrita acima. API key, token, número, segredo, QR code e sessão
+WhatsApp nunca devem ser versionados.
+
 ## Privacidade e segurança
 
 Cada usuário consulta e altera apenas as próprias preferências e deliveries. Telefones
