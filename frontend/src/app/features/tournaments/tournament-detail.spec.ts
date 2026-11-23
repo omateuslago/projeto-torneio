@@ -71,6 +71,9 @@ describe('Atualizações do campeonato', () => {
     }
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(copy);
+    if (status === 'Closed') {
+      expect(fixture.nativeElement.textContent).not.toContain('Gerar confrontos');
+    }
   });
 
   it('oferece geração da chave sem destacar agenda ou classificação para mata-mata fechado', () => {

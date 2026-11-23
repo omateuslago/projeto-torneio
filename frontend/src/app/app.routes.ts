@@ -32,23 +32,23 @@ export const routes: Routes = [
   { path: '', redirectTo: 'campeonatos', pathMatch: 'full' },
   {
     path: 'campeonatos',
-    title: 'Campeonatos | Torneio',
+    title: 'Campeonatos | Brakvyo',
     loadComponent: () => import('./features/tournaments/tournaments').then((m) => m.Tournaments),
   },
   {
     path: 'campeonatos/:id/agenda',
-    title: 'Agenda do campeonato | Torneio',
+    title: 'Agenda do campeonato | Brakvyo',
     loadComponent: () => import('./features/scheduling/scheduling').then((m) => m.Scheduling),
   },
   {
     path: 'campeonatos/:id',
-    title: 'Detalhes do campeonato | Torneio',
+    title: 'Detalhes do campeonato | Brakvyo',
     loadComponent: () =>
       import('./features/tournaments/tournament-detail').then((m) => m.TournamentDetail),
   },
   {
     path: 'equipes',
-    title: 'Equipes | Torneio',
+    title: 'Equipes | Brakvyo',
     loadComponent: () => import('./features/teams/teams').then((m) => m.Teams),
   },
   { path: '**', redirectTo: 'campeonatos' },

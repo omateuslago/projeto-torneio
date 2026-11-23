@@ -249,10 +249,6 @@
 .tournaments-state--error p {
   color: var(--color-text-muted-brand);
 }
-.tournaments-state__technical-error {
-  max-width: 60ch;
-  font-size: 0.85rem;
-}
 .tournaments-state--empty {
   flex-direction: column;
   text-align: center;
