@@ -1,16 +1,23 @@
-# Projeto Torneio
+# Brakvyo
 
 [![CI](https://github.com/omateuslago/projeto-torneio/actions/workflows/ci.yml/badge.svg)](https://github.com/omateuslago/projeto-torneio/actions/workflows/ci.yml)
 
-Plataforma incremental para campeonatos amadores físicos e eSports. A base atual
-usa Angular 22, ASP.NET Core 10 LTS, EF Core 10 e PostgreSQL 17.
+Plataforma web para organizar campeonatos amadores físicos e eSports. O Brakvyo
+reúne inscrições, resultados, agenda, permissões e notificações em um único fluxo.
 
-A interface permite criar e listar campeonatos e equipes, consultar detalhes,
-abrir/fechar inscrições, gerenciar participantes, gerar pontos corridos ou uma chave mata-mata,
-enviar resultados por equipe, confirmar placares concordantes, resolver disputas,
-consultar pendências e classificação, além de corrigir resultados administrativamente. Os dados vêm da API real e
-persistem no PostgreSQL. O frontend Next.js anterior está preservado em
-`frontend-legacy/`; os 39 arquivos originais foram mantidos sem alterações.
+## Principais diferenciais
+
+- pontos corridos com classificação e mata-mata simples com chave visual e byes;
+- resultados bilaterais, contestação, resolução administrativa e auditoria;
+- agenda com locais, quadras, árbitros, disponibilidade e validação de conflitos;
+- Autopilot CP-SAT com preview, Fairness, Resilience e Self-Healing supervisionado;
+- autenticação e autorização para organizadores, managers e administradores;
+- Notification Center e envio opcional de avisos pelo WhatsApp via Evolution API;
+- interface responsiva validada em desktop e dispositivos móveis.
+
+Os dados vêm da API real e persistem no PostgreSQL. As regras de negócio e de
+autorização permanecem no backend; esconder ações no Angular não substitui essas
+validações.
 
 Em **Agenda e disponibilidade**, cada campeonato permite cadastrar locais, áreas
 de jogo e árbitros, informar disponibilidade por data e agendar/reagendar partidas.
@@ -34,6 +41,8 @@ Veja [Autopilot v1](docs/tournament-autopilot.md).
 Depois de criar o `.env`, suba rapidamente o ambiente completo com:
 
 ```bash
+cp .env.example .env
+# Defina uma senha local em POSTGRES_PASSWORD.
 bash iniciar.sh
 ```
 
@@ -153,6 +162,8 @@ Organizers e managers podem compartilhar a administração por links com validad
 veja [convites e gestão de acesso](docs/access-invitations.md).
 Notificações internas e o envio opcional por WhatsApp estão documentados em
 [Notification Center e Evolution API](docs/notifications-evolution-whatsapp.md).
+A suíte usa um provider HTTP falso para validar contrato, retry e persistência;
+o envio para um celular real exige uma instância Evolution e teste manual separado.
 
 Erros usam ProblemDetails: 400 para validação, 403 para equipe externa à partida,
 404 para recurso inexistente e 409
@@ -215,9 +226,9 @@ agendamento/reagendamento com conflito real e layout em tela pequena. Não há l
 por API, pois exclusão ainda não faz parte do produto. Screenshots e traces
 ficam em `frontend/test-results/` (ignorado pelo Git).
 O fluxo mata-mata cobre criação, quatro equipes, semifinais, final, campeão e
-revisão visual das chaves de 4, 8 e 16 equipes em desktop e 360 px.
+revisão visual das chaves de 4, 5, 8 e 16 equipes em desktop e 360 px.
 
-Testes Python (14 casos, sem PostgreSQL), dentro de `scheduler`:
+Testes Python (71 casos, sem PostgreSQL), dentro de `scheduler`:
 `.venv/bin/python -m pytest -q`. Lint: `.venv/bin/ruff check app tests`.
 
 ## API inteira via Docker Compose
@@ -231,10 +242,6 @@ as portas do banco e API ficam restritas a localhost.
 O Compose local define a API como `Development`, permitindo cookies HTTP e
 antiforgery no proxy local. Fora desse fluxo, o ASP.NET Core continua em
 `Production` por padrão e preserva cookies seguros.
-Neste ambiente cloud, o registry da Microsoft respondeu HTTP 403 ao baixar as
-imagens oficiais .NET 10. O `docker compose config`, a migration e a API em
-`Development` foram validados; o build completo das imagens depende de uma rede
-com acesso aos blobs do MCR.
 
 O Compose também inicia `scheduler` com Python 3.12 e healthcheck. A API usa o
 hostname interno `http://scheduler:8000`, sem depender da saúde dele para iniciar.
@@ -244,10 +251,12 @@ Angular continua rodando via `npm start`. Para redes cloud com proxy TLS, veja o
 
 ## Escopo e arquitetura
 
-- `backend/`: API com domínio, features, infraestrutura e testes.
-- `frontend/`: Angular standalone, signals, Reactive Forms e rotas por feature.
-- `frontend-legacy/`: Next.js preservado como referência.
-- `docs/`: decisões e histórico dos milestones.
+- `backend/`: ASP.NET Core 10, EF Core, Identity, PostgreSQL, domínio, features e testes.
+- `frontend/`: Angular 22 standalone, signals, Reactive Forms e rotas por feature.
+- `scheduler/`: FastAPI, OR-Tools CP-SAT, Fairness, Resilience e reparo de agenda.
+- `compose.yaml`: PostgreSQL, migrations, API e scheduler para desenvolvimento local.
+- `frontend-legacy/`: protótipo Next.js preservado como referência histórica.
+- `docs/`: arquitetura, decisões, limitações e [checklist de demonstração](docs/demo-checklist.md).
 
 `GET/POST /campeonatos` permanece compatível com o protótipo antigo e continua
 em memória, independente da API persistida. O Angular usa somente `/api`.
@@ -255,6 +264,15 @@ A aplicação usa ASP.NET Core Identity, autorização por organizador/TeamManag
 notificações internas e integração opcional com WhatsApp; pagamentos continuam
 fora do escopo atual.
 
-Documentação: [arquitetura inicial](docs/architecture.md),
-[recuperação do milestone 1](docs/recovery-milestone-1.md) e
-[base Angular](docs/angular-foundation.md) e [milestone 4](docs/bilateral-results.md).
+## Próximas evoluções
+
+Não fazem parte desta versão entregue: jogadores e elenco, recuperação de senha,
+confirmação de email, inscrição pública, exportação, evidências em disputas,
+WhatsApp inbound ou verificação automática do número, double elimination,
+terceiro lugar e pagamentos.
+
+Documentação complementar: [arquitetura](docs/architecture.md),
+[autenticação e autorização](docs/authentication-authorization.md),
+[resultados bilaterais](docs/bilateral-results.md),
+[agenda inteligente](docs/tournament-autopilot.md) e
+[mata-mata](docs/single-elimination.md).

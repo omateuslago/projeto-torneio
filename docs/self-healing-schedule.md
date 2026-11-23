@@ -105,4 +105,5 @@ operacionais mínimas que ainda dependem de aprovação humana.
 - Um worker, seed zero e IDs ordenados favorecem determinismo; o limite de tempo
   pode variar o resultado entre máquinas. `feasible` não garante mínimo provado.
 - Ocupações externas são aquelas relevantes fornecidas pelo snapshot atual.
-- O MVP mantém suas limitações de autenticação existentes.
+- Geração e aplicação exigem autenticação e permissão de organizer ou PlatformAdmin
+  no campeonato; a API continua sendo a autoridade dessa verificação.
