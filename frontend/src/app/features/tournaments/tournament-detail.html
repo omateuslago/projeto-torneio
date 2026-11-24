@@ -33,6 +33,25 @@
         statusLabels[current.status]
       }}</span>
     </div>
+    <div class="tournament-progress">
+      <ol aria-label="Progresso do campeonato">
+        @for (step of progressSteps; track step; let index = $index) {
+          <li
+            [class.tournament-progress__step--complete]="index < progressIndex(current.status)"
+            [class.tournament-progress__step--current]="index === progressIndex(current.status)"
+            [attr.aria-current]="index === progressIndex(current.status) ? 'step' : null"
+          >
+            <span class="tournament-progress__marker" aria-hidden="true">
+              {{ index < progressIndex(current.status) ? '✓' : index + 1 }}
+            </span>
+            <span>{{ step }}</span>
+            @if (index === progressIndex(current.status)) {
+              <span class="sr-only">— etapa atual</span>
+            }
+          </li>
+        }
+      </ol>
+    </div>
     @if (current.status === 'Draft') {
       <div class="tournament-next-step">
         <h2>Prepare seu campeonato</h2>

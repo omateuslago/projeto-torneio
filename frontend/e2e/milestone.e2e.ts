@@ -10,6 +10,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   const names = [`Azul ${suffix}`, `Verde ${suffix}`, `Laranja ${suffix}`];
   await page.goto('/equipes');
   for (const name of names) {
+    await page.getByRole('button', { name: '+ Criar equipe', exact: true }).click();
     await page.getByLabel('Nome da equipe').fill(name);
     await page.getByRole('button', { name: 'Criar equipe', exact: true }).click();
     await expect(page.getByText(`Equipe ${name} cadastrada.`, { exact: true })).toBeVisible();
@@ -65,7 +66,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await expect(
     page.getByRole('list', { name: 'Partidas do campeonato' }).getByRole('listitem'),
   ).toHaveCount(1);
-  await expect(page.getByText('Em andamento', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Em andamento');
   await page.getByText('Mais ações', { exact: true }).click();
   await page
     .getByRole('button', { name: 'Registrar resultado administrativamente', exact: true })
@@ -77,7 +78,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await resultForm.locator('input[formcontrolname="homeScore"]').fill('3');
   await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Finalizado');
   const standings = page.getByRole('table', { name: 'Classificação do campeonato' });
   await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
   await page.getByText('Mais ações', { exact: true }).click();
@@ -91,7 +92,7 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
   await expect(standings.getByRole('row').nth(2).getByRole('cell').nth(1)).toHaveText('1');
   await page.reload();
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Finalizado');
   await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });

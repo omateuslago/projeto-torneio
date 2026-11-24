@@ -107,7 +107,7 @@ test('percorre semifinais e final, rejeita empate e destaca o campeão', async (
   await page.getByLabel('Placar visitante').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
 
-  await expect(page.getByText('Finalizado', { exact: true })).toBeVisible();
+  await expect(page.locator('.badge')).toHaveText('Finalizado');
   await expect(page.getByText('Campeão', { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByText('Campeão', { exact: true })).toBeVisible();

@@ -52,29 +52,39 @@ describe('Atualizações do campeonato', () => {
   });
 
   it.each([
-    ['Draft', 'Prepare seu campeonato'],
-    ['Open', 'Inscrições abertas'],
-    ['Closed', 'O próximo passo é gerar os confrontos'],
-    ['InProgress', 'Campeonato em andamento'],
-    ['Finished', 'Campeonato encerrado'],
-  ] as [TournamentStatus, string][])('prioriza a etapa %s na apresentação', (status, copy) => {
-    const fixture = TestBed.createComponent(TournamentDetail);
-    const current = { ...tournament, status };
-    http.expectOne('/api/tournaments/cup').flush(current);
-    fixture.detectChanges();
-    http.expectOne('/api/tournaments/cup/registrations').flush([]);
-    http.expectOne('/api/teams').flush([]);
-    if (status === 'Closed' || status === 'InProgress' || status === 'Finished') {
-      http.expectOne('/api/tournaments/cup/matches').flush([]);
-      http.expectOne('/api/tournaments/cup/standings').flush([]);
+    ['Draft', 'Prepare seu campeonato', 'Preparação', 0],
+    ['Open', 'Inscrições abertas', 'Equipes', 1],
+    ['Closed', 'O próximo passo é gerar os confrontos', 'Jogos', 2],
+    ['InProgress', 'Campeonato em andamento', 'Em andamento', 3],
+    ['Finished', 'Campeonato encerrado', 'Finalizado', 4],
+  ] as [TournamentStatus, string, string, number][])(
+    'prioriza a etapa %s na apresentação',
+    (status, copy, step, completed) => {
+      const fixture = TestBed.createComponent(TournamentDetail);
+      const current = { ...tournament, status };
       http.expectOne('/api/tournaments/cup').flush(current);
-    }
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain(copy);
-    if (status === 'Closed') {
-      expect(fixture.nativeElement.textContent).not.toContain('Gerar confrontos');
-    }
-  });
+      fixture.detectChanges();
+      http.expectOne('/api/tournaments/cup/registrations').flush([]);
+      http.expectOne('/api/teams').flush([]);
+      if (status === 'Closed' || status === 'InProgress' || status === 'Finished') {
+        http.expectOne('/api/tournaments/cup/matches').flush([]);
+        http.expectOne('/api/tournaments/cup/standings').flush([]);
+        http.expectOne('/api/tournaments/cup').flush(current);
+      }
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain(copy);
+      const progress = fixture.nativeElement.querySelector(
+        '[aria-label="Progresso do campeonato"]',
+      );
+      expect(progress.querySelector('[aria-current="step"]')?.textContent).toContain(step);
+      expect(progress.querySelectorAll('.tournament-progress__step--complete')).toHaveLength(
+        completed,
+      );
+      if (status === 'Closed') {
+        expect(fixture.nativeElement.textContent).not.toContain('Gerar confrontos');
+      }
+    },
+  );
 
   it('oferece geração da chave sem destacar agenda ou classificação para mata-mata fechado', () => {
     TestBed.inject(AuthService).user.set({

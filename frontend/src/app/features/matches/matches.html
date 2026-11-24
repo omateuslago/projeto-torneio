@@ -4,15 +4,24 @@
       ⚠ {{ pending().length }}
       {{ pending().length === 1 ? 'partida precisa' : 'partidas precisam' }} de atenção
     </h2>
-    <ul class="participants">
+    <ul class="participants pending-list">
       @for (match of pending(); track match.id) {
         <li>
-          {{ match.homeTeamName }} × {{ match.awayTeamName }} —
-          @if (match.dispute?.status === 'Open') {
-            Resultado contestado.
-          } @else {
-            Aguardando resultado de {{ waitingFor(match) }}.
-          }
+          <div>
+            <strong>⚠ {{ match.homeTeamName }} × {{ match.awayTeamName }}</strong>
+            <span>
+              @if (match.dispute?.status === 'Open') {
+                Resultados divergentes{{
+                  auth.canManageTournament(tournament().id) ? ' — você pode resolver' : ''
+                }}.
+              } @else {
+                Aguardando resultado de {{ waitingFor(match) }}.
+              }
+            </span>
+          </div>
+          <a class="button secondary pending-list__link" [href]="'#match-' + match.id">
+            Ver partida
+          </a>
         </li>
       }
     </ul>
@@ -48,7 +57,7 @@
   } @else {
     <div class="match-list" role="list" aria-label="Partidas do campeonato">
       @for (match of matches(); track match.id) {
-        <article class="match-card" role="listitem">
+        <article class="match-card" role="listitem" [id]="'match-' + match.id" tabindex="-1">
           <div class="match-card__scoreboard">
             <span>{{ match.homeTeamName }}</span>
             <strong

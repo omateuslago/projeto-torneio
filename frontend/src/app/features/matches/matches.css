@@ -4,6 +4,19 @@
 .pending-panel {
   border-left: 4px solid var(--color-warning-text);
 }
+.pending-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.pending-list li > div {
+  display: grid;
+  gap: var(--space-1);
+}
+.pending-list__link {
+  flex: 0 0 auto;
+}
 .match-list {
   display: grid;
   gap: var(--space-4);
@@ -15,6 +28,12 @@
   border: 1px solid var(--color-border-brand);
   border-radius: var(--radius-surface);
   background: var(--color-surface);
+  scroll-margin-top: 120px;
+}
+.match-card:target,
+.match-card:focus-visible {
+  outline: 3px solid var(--color-primary-brand);
+  outline-offset: 3px;
 }
 .match-card__scoreboard {
   display: grid;
@@ -55,6 +74,13 @@
   gap: 18px;
 }
 @media (max-width: 600px) {
+  .pending-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .pending-list__link {
+    width: 100%;
+  }
   .match-card {
     padding: var(--space-4);
   }

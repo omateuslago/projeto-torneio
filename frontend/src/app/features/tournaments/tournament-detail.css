@@ -38,6 +38,70 @@
   margin-top: var(--space-2);
   color: var(--color-text-muted-brand);
 }
+.tournament-progress {
+  margin-top: var(--space-6);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.tournament-progress ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(96px, 1fr));
+  min-width: 540px;
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  list-style: none;
+}
+.tournament-progress li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-2);
+  color: var(--color-text-muted-brand);
+  font-size: 0.82rem;
+  text-align: center;
+}
+.tournament-progress li:not(:last-child)::after {
+  position: absolute;
+  z-index: 0;
+  top: 15px;
+  left: calc(50% + 20px);
+  width: calc(100% - 40px);
+  height: 2px;
+  background: var(--color-border-brand);
+  content: '';
+}
+.tournament-progress__marker {
+  z-index: 1;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 2px solid var(--color-border-brand);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text-muted-brand);
+  font-weight: 800;
+}
+.tournament-progress .tournament-progress__step--complete {
+  color: var(--color-text-secondary-brand);
+}
+.tournament-progress__step--complete .tournament-progress__marker {
+  border-color: var(--color-primary-brand);
+  color: var(--color-primary-brand);
+}
+.tournament-progress .tournament-progress__step--complete:not(:last-child)::after {
+  background: var(--color-primary-brand);
+}
+.tournament-progress .tournament-progress__step--current {
+  color: var(--color-text-brand);
+  font-weight: 700;
+}
+.tournament-progress__step--current .tournament-progress__marker {
+  border-color: var(--color-primary-brand);
+  background: var(--color-primary-brand);
+  color: var(--color-on-primary);
+}
 .tournament-next-step {
   max-width: 660px;
   margin-top: var(--space-6);
@@ -102,5 +166,9 @@
   .tournament-primary-actions .button,
   .tournament-primary-actions button {
     width: 100%;
+  }
+  .tournament-progress {
+    margin-inline: calc(var(--space-5) * -1);
+    padding-inline: var(--space-5);
   }
 }

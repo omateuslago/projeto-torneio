@@ -113,6 +113,9 @@ describe('Chave eliminatória', () => {
     expect(fixture.nativeElement.querySelector('.bracket-team--winner')?.textContent).toContain(
       'Azul',
     );
+    expect(fixture.nativeElement.querySelector('.bracket-card__action')?.getAttribute('href')).toBe(
+      '#match-match-2',
+    );
   });
 
   it('gera a chave fechada e mantém a operação idempotente no mesmo endpoint', () => {
