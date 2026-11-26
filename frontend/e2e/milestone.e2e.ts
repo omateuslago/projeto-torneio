@@ -16,6 +16,12 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
     await expect(page.getByText(`Equipe ${name} cadastrada.`, { exact: true })).toBeVisible();
     await expect(page.locator('.team-card').filter({ hasText: name })).toBeVisible();
   }
+  const teamCard = page.locator('.team-card').filter({ hasText: names[0] });
+  await teamCard.getByRole('button', { name: 'Gerenciar acesso', exact: true }).click();
+  await expect(teamCard.getByText('Managers', { exact: true })).toBeVisible();
+  await teamCard.getByRole('button', { name: 'Fechar gestão de acesso' }).click();
+  await expect(teamCard.getByText('Managers', { exact: true })).toHaveCount(0);
+  await expect(teamCard.getByRole('heading', { name: names[0] })).toBeVisible();
   await page.getByRole('link', { name: 'Campeonatos', exact: true }).click();
   await page.getByRole('button', { name: '+ Criar', exact: true }).click();
   await page.getByLabel('Nome do campeonato').fill(`Copa ${suffix}`);
@@ -80,7 +86,20 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.locator('.badge')).toHaveText('Finalizado');
   const standings = page.getByRole('table', { name: 'Classificação do campeonato' });
-  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
+  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(2)).toHaveText('3');
+  await page.getByRole('link', { name: 'Ver classificação final' }).click();
+  await expect(page).toHaveURL(detailUrl + '#classificacao');
+  await expect(page.getByRole('heading', { name: 'Classificação final' })).toBeInViewport();
+  await page.reload();
+  await expect(standings.getByRole('row').filter({ hasText: names[0] })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Classificação final' })).toBeInViewport();
+  await page.goBack();
+  await expect(page).toHaveURL(detailUrl);
+  await page.goForward();
+  await expect(page).toHaveURL(detailUrl + '#classificacao');
+  await expect(page.getByRole('heading', { name: 'Classificação final' })).toBeInViewport();
+  await page.goBack();
+  await expect(page).toHaveURL(detailUrl);
   await page.getByText('Mais ações', { exact: true }).click();
   await page
     .getByRole('button', { name: 'Corrigir resultado administrativamente', exact: true })
@@ -89,11 +108,11 @@ test('cria equipes e campeonato, persiste após recarregar e gerencia inscriçõ
   await resultForm.locator('input[formcontrolname="homeScore"]').fill('1');
   await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
-  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
-  await expect(standings.getByRole('row').nth(2).getByRole('cell').nth(1)).toHaveText('1');
+  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(2)).toHaveText('1');
+  await expect(standings.getByRole('row').nth(2).getByRole('cell').nth(2)).toHaveText('1');
   await page.reload();
   await expect(page.locator('.badge')).toHaveText('Finalizado');
-  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('1');
+  await expect(standings.getByRole('row').nth(1).getByRole('cell').nth(2)).toHaveText('1');
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });

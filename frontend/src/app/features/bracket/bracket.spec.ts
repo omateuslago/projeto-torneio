@@ -113,9 +113,9 @@ describe('Chave eliminatória', () => {
     expect(fixture.nativeElement.querySelector('.bracket-team--winner')?.textContent).toContain(
       'Azul',
     );
-    expect(fixture.nativeElement.querySelector('.bracket-card__action')?.getAttribute('href')).toBe(
-      '#match-match-2',
-    );
+    expect(
+      fixture.nativeElement.querySelector('.bracket-card__action')?.getAttribute('href'),
+    ).toMatch(/#match-match-2$/);
   });
 
   it('gera a chave fechada e mantém a operação idempotente no mesmo endpoint', () => {
@@ -165,6 +165,11 @@ describe('Chave eliminatória', () => {
       .expectOne('/api/tournaments/cup/bracket')
       .flush({ ...generatedBracket, status: 'Finished', champion: { id: 'a', name: 'Azul' } });
     fixture.detectChanges();
+    http.expectOne('/api/tournaments/cup/matches').flush([]);
+    http.expectOne('/api/tournaments/cup').flush({ ...tournament, status: 'Finished' });
+    http.expectNone('/api/tournaments/cup/bracket');
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('app-matches .section-heading button').click();
     http.expectOne('/api/tournaments/cup/matches').flush([]);
     http.expectOne('/api/tournaments/cup').flush({ ...tournament, status: 'Finished' });
     http.expectOne('/api/tournaments/cup/bracket').flush({

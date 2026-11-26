@@ -12,9 +12,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { AuthService } from './core/auth.service';
 
+import { PageFragment } from './shared/page-fragment';
+
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, PageFragment],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -35,6 +37,7 @@ export class App {
         this.menuOpen.set(false);
         this.userMenuOpen.set(false);
         setTimeout(() => {
+          if (window.location.hash) return;
           document.querySelector<HTMLElement>('#conteudo')?.focus({ preventScroll: true });
           window.scrollTo({ top: 0 });
         });

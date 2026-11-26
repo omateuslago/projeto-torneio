@@ -19,7 +19,7 @@
               }
             </span>
           </div>
-          <a class="button secondary pending-list__link" [href]="'#match-' + match.id">
+          <a class="button secondary pending-list__link" [pageFragment]="'match-' + match.id">
             Ver partida
           </a>
         </li>
@@ -27,9 +27,9 @@
     </ul>
   </section>
 }
-<section class="panel match-panel" aria-labelledby="partidas">
+<section class="panel match-panel" aria-labelledby="partidas-title">
   <div class="section-heading">
-    <h2 id="partidas">Partidas</h2>
+    <h2 id="partidas-title">Partidas</h2>
     <button class="secondary" (click)="load()" [disabled]="loading() || saving()">
       Atualizar partidas
     </button>
@@ -57,7 +57,13 @@
   } @else {
     <div class="match-list" role="list" aria-label="Partidas do campeonato">
       @for (match of matches(); track match.id) {
-        <article class="match-card" role="listitem" [id]="'match-' + match.id" tabindex="-1">
+        <article
+          class="match-card"
+          role="listitem"
+          [id]="'match-' + match.id"
+          [restoreFragment]="true"
+          tabindex="-1"
+        >
           <div class="match-card__scoreboard">
             <span>{{ match.homeTeamName }}</span>
             <strong
@@ -89,7 +95,7 @@
               Resolver disputa
             </button>
           }
-          <details class="match-details">
+          <details class="match-details" [open]="match.dispute?.status === 'Open'">
             <summary>Ver detalhes</summary>
             <p class="muted">Envios na ordem {{ match.homeTeamName }} × {{ match.awayTeamName }}</p>
             <p>
@@ -113,10 +119,10 @@
                 Os resultados enviados são diferentes. O organizador precisa decidir.
               </p>
             }
-            @if (match.dispute?.status === 'Resolved') {
-              <p class="muted">Decisão: {{ match.dispute?.resolutionNote }}</p>
-            }
           </details>
+          @if (match.dispute?.status === 'Resolved') {
+            <p class="muted">Decisão: {{ match.dispute?.resolutionNote }}</p>
+          }
           @if (auth.canManageTournament(tournament().id)) {
             <details class="admin-action">
               <summary>Mais ações</summary>
@@ -129,89 +135,115 @@
               </button>
             </details>
           }
+          @if (editing()?.id === match.id) {
+            <form
+              class="result-form"
+              [formGroup]="form"
+              (ngSubmit)="saveResult()"
+              aria-label="Resultado da partida"
+            >
+              <h3 #resultHeading tabindex="-1">
+                {{ mode() === 'resolution' ? 'Resolver contestação' : 'Editar placar' }}
+              </h3>
+              @if (mode() === 'submission') {
+                <p>
+                  Enviando como
+                  {{
+                    submittingTeam() === match.homeTeamId ? match.homeTeamName : match.awayTeamName
+                  }}. Use sempre a ordem mandante × visitante indicada abaixo.
+                </p>
+              } @else if (mode() === 'resolution') {
+                <p>Resolução pelo organizador: informe o placar oficial e o motivo da decisão.</p>
+              } @else {
+                <p>Alteração administrativa do resultado oficial.</p>
+              }
+              @if (tournament().format === 'SingleElimination') {
+                <p class="muted">
+                  O mata-mata precisa de um vencedor; placares empatados não são aceitos.
+                </p>
+              }
+              <div class="score-fields">
+                <label
+                  >Placar mandante — {{ match.homeTeamName
+                  }}<input
+                    type="number"
+                    formControlName="homeScore"
+                    min="0"
+                    max="2147483647"
+                    step="1"
+                    required
+                /></label>
+                <label
+                  >Placar visitante — {{ match.awayTeamName
+                  }}<input
+                    type="number"
+                    formControlName="awayScore"
+                    min="0"
+                    max="2147483647"
+                    step="1"
+                    required
+                /></label>
+              </div>
+              @if (form.touched && form.invalid) {
+                <p class="error" role="alert">Informe placares inteiros de 0 a 2147483647.</p>
+              }
+              @if (mode() === 'resolution') {
+                <label
+                  >Motivo da decisão<textarea
+                    [formControl]="resolutionNote"
+                    maxlength="2000"
+                    rows="3"
+                    required
+                  ></textarea>
+                </label>
+                @if (resolutionNote.touched && resolutionNote.invalid) {
+                  <p role="alert" class="error">
+                    Informe o motivo da decisão em até 2000 caracteres.
+                  </p>
+                }
+              }
+              <div class="actions">
+                <button type="submit" [disabled]="saving()">
+                  {{ saving() ? 'Salvando…' : 'Salvar resultado' }}</button
+                ><button
+                  type="button"
+                  class="secondary"
+                  (click)="editing.set(null)"
+                  [disabled]="saving()"
+                >
+                  Cancelar edição
+                </button>
+              </div>
+            </form>
+          }
+          @if (feedbackMatchId() === match.id && actionError()) {
+            <p class="error" role="alert">{{ actionError() }}</p>
+          }
+          @if (feedbackMatchId() === match.id && message()) {
+            <p class="success" role="status">{{ message() }}</p>
+          }
         </article>
       }
     </div>
   }
-  @if (editing(); as match) {
-    <form
-      class="result-form"
-      [formGroup]="form"
-      (ngSubmit)="saveResult()"
-      aria-label="Resultado da partida"
-    >
-      <h3>{{ match.homeTeamName }} × {{ match.awayTeamName }}</h3>
-      @if (mode() === 'submission') {
-        <p>
-          Enviando como
-          {{ submittingTeam() === match.homeTeamId ? match.homeTeamName : match.awayTeamName }}. Use
-          sempre a ordem mandante × visitante indicada abaixo.
-        </p>
-      } @else if (mode() === 'resolution') {
-        <p>Resolução pelo organizador: informe o placar oficial e o motivo da decisão.</p>
-      } @else {
-        <p>Alteração administrativa do resultado oficial.</p>
-      }
-      @if (tournament().format === 'SingleElimination') {
-        <p class="muted">O mata-mata precisa de um vencedor; placares empatados não são aceitos.</p>
-      }
-      <div class="score-fields">
-        <label
-          >Placar mandante — {{ match.homeTeamName
-          }}<input
-            type="number"
-            formControlName="homeScore"
-            min="0"
-            max="2147483647"
-            step="1"
-            required
-        /></label>
-        <label
-          >Placar visitante — {{ match.awayTeamName
-          }}<input
-            type="number"
-            formControlName="awayScore"
-            min="0"
-            max="2147483647"
-            step="1"
-            required
-        /></label>
-      </div>
-      @if (form.touched && form.invalid) {
-        <p class="error" role="alert">Informe placares inteiros de 0 a 2147483647.</p>
-      }
-      @if (mode() === 'resolution') {
-        <label
-          >Motivo da decisão<textarea
-            [formControl]="resolutionNote"
-            maxlength="2000"
-            rows="3"
-            required
-          ></textarea>
-        </label>
-        @if (resolutionNote.touched && resolutionNote.invalid) {
-          <p role="alert" class="error">Informe o motivo da decisão em até 2000 caracteres.</p>
-        }
-      }
-      <div class="actions">
-        <button type="submit" [disabled]="saving()">
-          {{ saving() ? 'Salvando…' : 'Salvar resultado' }}</button
-        ><button type="button" class="secondary" (click)="editing.set(null)" [disabled]="saving()">
-          Cancelar edição
-        </button>
-      </div>
-    </form>
-  }
-  @if (actionError()) {
+  @if (!feedbackMatchId() && actionError()) {
     <p class="error" role="alert">{{ actionError() }}</p>
   }
-  @if (message()) {
+  @if (!feedbackMatchId() && message()) {
     <p class="success" role="status">{{ message() }}</p>
   }
 </section>
 @if (showStandings()) {
-  <section id="classificacao" class="panel match-panel" aria-labelledby="classificacao-title">
-    <h2 id="classificacao-title">Classificação</h2>
+  <section
+    id="classificacao"
+    class="panel match-panel"
+    tabindex="-1"
+    [restoreFragment]="!loading()"
+    aria-labelledby="classificacao-title"
+  >
+    <h2 id="classificacao-title">
+      {{ tournament().status === 'Finished' ? 'Classificação final' : 'Classificação' }}
+    </h2>
     <p class="muted">
       Vitória: 3 pontos. Empate: 1 ponto. Desempate por saldo, gols marcados e nome da equipe.
     </p>
@@ -226,6 +258,7 @@
         <table aria-label="Classificação do campeonato">
           <thead>
             <tr>
+              <th scope="col">Posição</th>
               <th>Equipe</th>
               <th>Pontos</th>
               <th><abbr title="Jogos">J</abbr></th>
@@ -238,8 +271,9 @@
             </tr>
           </thead>
           <tbody>
-            @for (row of standings(); track row.teamId) {
+            @for (row of standings(); track row.teamId; let position = $index) {
               <tr>
+                <td>{{ position + 1 }}º</td>
                 <td>{{ row.teamName }}</td>
                 <td>
                   <strong>{{ row.points }}</strong>

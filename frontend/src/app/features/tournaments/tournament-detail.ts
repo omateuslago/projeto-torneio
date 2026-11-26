@@ -12,9 +12,20 @@ import { AccessManagement } from '../access/access-management';
 import { ConfirmDialog } from '../../shared/confirm-dialog';
 import { Bracket } from '../bracket/bracket';
 
+import { PageFragment, RestoreFragment } from '../../shared/page-fragment';
+
 @Component({
   selector: 'app-tournament-detail',
-  imports: [RouterLink, Registrations, Matches, Bracket, AccessManagement, ConfirmDialog],
+  imports: [
+    RouterLink,
+    Registrations,
+    Matches,
+    Bracket,
+    AccessManagement,
+    ConfirmDialog,
+    PageFragment,
+    RestoreFragment,
+  ],
   templateUrl: './tournament-detail.html',
   styleUrl: './tournament-detail.css',
 })

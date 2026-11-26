@@ -96,6 +96,20 @@ test('percorre semifinais e final, rejeita empate e destaca o campeão', async (
   await expect(page.getByRole('table', { name: 'Classificação do campeonato' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Ver agenda' })).toHaveCount(0);
 
+  const detailUrl = page.url();
+  const matchLink = page.getByRole('link', { name: 'Gerenciar resultado' }).first();
+  const matchHref = (await matchLink.getAttribute('href'))!;
+  const targetCard = page.locator(new URL(matchHref, detailUrl).hash);
+  await matchLink.click();
+  await expect(page).toHaveURL(new URL(matchHref, detailUrl).href);
+  await expect(targetCard).toBeInViewport();
+  await page.goBack();
+  await expect(page).toHaveURL(detailUrl);
+  await page.goForward();
+  await expect(targetCard).toBeInViewport();
+  await page.reload();
+  await expect(targetCard).toBeInViewport();
+
   await recordNextPending(page, '2', '0');
   await expect(page.getByText('Resultado salvo. Chave atualizada.')).toBeVisible();
   await recordNextPending(page, '1', '0');
@@ -109,7 +123,10 @@ test('percorre semifinais e final, rejeita empate e destaca o campeão', async (
 
   await expect(page.locator('.badge')).toHaveText('Finalizado');
   await expect(page.getByText('Campeão', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Ver chave final' }).click();
+  await expect(page).toHaveURL(detailUrl + '#chave');
   await page.reload();
+  await expect(page.getByRole('heading', { name: 'Chave eliminatória' })).toBeInViewport();
   await expect(page.getByText('Campeão', { exact: true })).toBeVisible();
 });
 
@@ -129,6 +146,16 @@ test('renderiza chaves com e sem byes sem overflow da página', async ({
     );
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    expect(
+      await page
+        .locator('.bracket-team')
+        .evaluateAll((rows) =>
+          rows.every(
+            (row) =>
+              row.getBoundingClientRect().right <= row.parentElement!.getBoundingClientRect().right,
+          ),
+        ),
     ).toBe(true);
     await page.screenshot({
       path: testInfo.outputPath(`bracket-${teamCount}-desktop.png`),

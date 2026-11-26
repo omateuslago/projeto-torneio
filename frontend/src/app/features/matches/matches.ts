@@ -1,12 +1,15 @@
 import {
   Component,
   DestroyRef,
+  ElementRef,
+  afterRenderEffect,
   computed,
   effect,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,9 +20,11 @@ import { apiError } from '../../core/api-error';
 import { trimmedRequired } from '../../shared/trimmed-required';
 import { AuthService } from '../../core/auth.service';
 
+import { PageFragment, RestoreFragment } from '../../shared/page-fragment';
+
 @Component({
   selector: 'app-matches',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PageFragment, RestoreFragment],
   templateUrl: './matches.html',
   styleUrl: './matches.css',
 })
@@ -33,7 +38,7 @@ export class Matches {
   private readonly tournamentId = computed(() => this.tournament().id);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly reload = new Subject<string>();
+  private readonly reload = new Subject<{ id: string; notifyMatchesChanged: boolean }>();
   readonly matches = signal<Match[]>([]);
   readonly standings = signal<Standing[]>([]);
   readonly loading = signal(true);
@@ -41,6 +46,8 @@ export class Matches {
   readonly loadError = signal('');
   readonly actionError = signal('');
   readonly message = signal('');
+  readonly feedbackMatchId = signal<string | null>(null);
+  private readonly resultHeading = viewChild<ElementRef<HTMLHeadingElement>>('resultHeading');
   readonly editing = signal<Match | null>(null);
   readonly mode = signal<'submission' | 'resolution' | 'manual'>('manual');
   readonly submittingTeam = signal('');
@@ -102,15 +109,21 @@ export class Matches {
   });
 
   constructor() {
+    afterRenderEffect(() => {
+      const heading = this.resultHeading()?.nativeElement;
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView?.({ block: 'start' });
+    });
     this.reload
       .pipe(
-        switchMap((id) => {
+        switchMap(({ id, notifyMatchesChanged }) => {
           this.loading.set(true);
           this.loadError.set('');
           return forkJoin({
             matches: this.api.listMatches(id),
             standings: this.showStandings() ? this.api.standings(id) : of([]),
             tournament: this.api.getTournament(id),
+            notifyMatchesChanged: of(notifyMatchesChanged),
           }).pipe(
             catchError((error) => {
               this.loadError.set(apiError(error));
@@ -125,18 +138,20 @@ export class Matches {
         this.matches.set(data.matches);
         this.standings.set(data.standings);
         this.tournamentChanged.emit(data.tournament);
-        this.matchesChanged.emit();
+        if (data.notifyMatchesChanged) this.matchesChanged.emit();
       });
     effect(() => {
       this.editing.set(null);
-      this.load(this.tournamentId());
+      this.feedbackMatchId.set(null);
+      this.load(this.tournamentId(), false);
     });
   }
-  load(id = this.tournamentId()) {
-    this.reload.next(id);
+  load(id = this.tournamentId(), notifyMatchesChanged = true) {
+    this.reload.next({ id, notifyMatchesChanged });
   }
   generate() {
     if (this.saving()) return;
+    this.feedbackMatchId.set(null);
     this.saving.set(true);
     this.actionError.set('');
     this.message.set('');
@@ -157,6 +172,7 @@ export class Matches {
   edit(match: Match) {
     this.mode.set('manual');
     this.editing.set(match);
+    this.feedbackMatchId.set(match.id);
     this.actionError.set('');
     this.message.set('');
     this.form.reset({ homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 });
@@ -207,10 +223,12 @@ export class Matches {
           this.editing.set(null);
           this.message.set(
             this.mode() === 'submission'
-              ? 'Envio salvo. Confira as confirmações abaixo.'
-              : this.tournament().format === 'SingleElimination'
-                ? 'Resultado salvo. Chave atualizada.'
-                : 'Resultado salvo. Classificação atualizada.',
+              ? 'Placar enviado.'
+              : this.mode() === 'resolution'
+                ? 'Disputa resolvida. Placar oficial atualizado.'
+                : this.tournament().format === 'SingleElimination'
+                  ? 'Resultado salvo. Chave atualizada.'
+                  : 'Resultado salvo. Classificação atualizada.',
           );
           this.load();
         },

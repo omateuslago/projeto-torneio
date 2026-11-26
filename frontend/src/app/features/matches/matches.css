@@ -1,6 +1,18 @@
 .table-wrap {
   overflow-x: auto;
 }
+#classificacao {
+  scroll-margin-top: 120px;
+}
+.match-card .result-form {
+  margin-top: 0;
+}
+.match-card .result-form h3 {
+  scroll-margin-top: 120px;
+}
+.match-card__scoreboard > span {
+  overflow-wrap: anywhere;
+}
 .pending-panel {
   border-left: 4px solid var(--color-warning-text);
 }
@@ -94,8 +106,8 @@
   .score-fields {
     grid-template-columns: 1fr;
   }
-  .table-wrap th:nth-child(n + 4):nth-child(-n + 8),
-  .table-wrap td:nth-child(n + 4):nth-child(-n + 8) {
+  .table-wrap th:nth-child(n + 5):nth-child(-n + 9),
+  .table-wrap td:nth-child(n + 5):nth-child(-n + 9) {
     display: none;
   }
 }

@@ -68,7 +68,12 @@
           {{ p.status === 'optimal' ? 'Agenda otimizada' : 'Agenda válida' }}
         </span>
         <h3>Agenda pronta ✓</h3>
-        <p>{{ p.metrics.scheduledCount }} partidas · {{ p.metrics.playingAreasUsed }} quadras</p>
+        <p>
+          {{ p.metrics.scheduledCount }}
+          {{ p.metrics.scheduledCount === 1 ? 'partida' : 'partidas' }} ·
+          {{ p.metrics.playingAreasUsed }}
+          {{ p.metrics.playingAreasUsed === 1 ? 'quadra' : 'quadras' }}
+        </p>
         @if (p.status === 'feasible') {
           <p class="muted">
             Encontramos uma solução válida. O sistema não conseguiu provar que era a melhor possível

@@ -174,8 +174,8 @@ describe('Partidas e classificação', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('1 partida precisa de atenção');
     expect(fixture.nativeElement.textContent).toContain('Aguardando resultado de Verde');
-    expect(fixture.nativeElement.querySelector('.pending-list__link').getAttribute('href')).toBe(
-      '#match-game',
+    expect(fixture.nativeElement.querySelector('.pending-list__link').getAttribute('href')).toMatch(
+      /#match-game$/,
     );
     expect(fixture.nativeElement.querySelector('#match-game')?.getAttribute('tabindex')).toBe('-1');
     expect(fixture.componentInstance.matches()[0].homeScore).toBeNull();

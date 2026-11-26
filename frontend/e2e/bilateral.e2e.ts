@@ -58,20 +58,33 @@ test('campeonato completo com envios divergentes, resolução e persistência', 
     'Resultado contestado',
   );
   const table = page.getByRole('table', { name: 'Classificação do campeonato' });
-  await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('0');
+  await expect(table.getByRole('row').nth(1).getByRole('cell').nth(2)).toHaveText('0');
   await expect(page.locator('.badge')).toHaveText('Em andamento');
-  await page.getByRole('button', { name: 'Resolver disputa', exact: true }).click();
-  resultForm = page.getByRole('form', { name: 'Resultado da partida' });
+  const disputedCard = page.locator('.match-card').filter({ hasText: 'Resultado contestado' });
+  const detailsPath = new URL(page.url()).pathname;
+  const disputedId = await disputedCard.getAttribute('id');
+  await page.getByRole('link', { name: 'Ver partida', exact: true }).click();
+  await expect(page).toHaveURL(new URL(detailsPath + '#' + disputedId, page.url()).href);
+  await expect(disputedCard).toBeInViewport();
+  await expect(
+    disputedCard.getByText('Os resultados enviados são diferentes.', { exact: false }),
+  ).toBeVisible();
+  await disputedCard.getByRole('button', { name: 'Resolver disputa', exact: true }).click();
+  resultForm = disputedCard.getByRole('form', { name: 'Resultado da partida' });
+  await expect(resultForm).toBeInViewport();
+  await expect(resultForm.getByLabel('Motivo da decisão')).toBeInViewport();
+  await page.screenshot({ path: testInfo.outputPath('dispute-form-desktop.png') });
   await resultForm.locator('input[formcontrolname="homeScore"]').fill('3');
   await resultForm.locator('input[formcontrolname="awayScore"]').fill('1');
   await resultForm.locator('textarea').fill('Placar confirmado pela súmula.');
   await page.getByRole('button', { name: 'Salvar resultado', exact: true }).click();
   await expect(page.getByText('precisa de atenção')).toHaveCount(0);
   await expect(page.locator('.badge')).toHaveText('Finalizado');
-  await expect(table.getByRole('row').nth(1).getByRole('cell').nth(1)).toHaveText('3');
+  await expect(table.getByRole('row').nth(1).getByRole('cell').nth(2)).toHaveText('3');
   await page.reload();
-  await page.getByText('Ver detalhes', { exact: true }).click();
-  await expect(page.getByText('Decisão: Placar confirmado pela súmula.')).toBeVisible();
+  await expect(
+    page.locator('.match-card').getByText('Decisão: Placar confirmado pela súmula.'),
+  ).toBeVisible();
   await expect(page.getByRole('list', { name: 'Partidas do campeonato' })).toContainText(
     'Disputa resolvida',
   );

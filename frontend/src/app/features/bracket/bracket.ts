@@ -16,9 +16,11 @@ import { apiError } from '../../core/api-error';
 import { AuthService } from '../../core/auth.service';
 import { Matches } from '../matches/matches';
 
+import { PageFragment, RestoreFragment } from '../../shared/page-fragment';
+
 @Component({
   selector: 'app-bracket',
-  imports: [Matches],
+  imports: [Matches, PageFragment, RestoreFragment],
   templateUrl: './bracket.html',
   styleUrl: './bracket.css',
 })

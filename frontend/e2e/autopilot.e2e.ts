@@ -78,7 +78,7 @@ test('gera preview real, preserva reserva fixa e aplica todas as partidas', asyn
   expect(fixed.ok()).toBe(true);
   await generate(page, s.t.id);
   await expect(page.getByRole('heading', { name: 'Agenda pronta ✓', exact: true })).toBeVisible();
-  await expect(page.getByText('5 partidas · 1 quadras')).toBeVisible();
+  await expect(page.getByText('5 partidas · 1 quadra', { exact: true })).toBeVisible();
   await expect(page.getByText(/Qualidade da agenda\d+ \/ 100/)).toBeVisible();
   await page.getByText('Ver detalhes', { exact: true }).click();
   await expect(page.getByText(/Descanso: \d+\/100/, { exact: true })).toBeVisible();
@@ -87,6 +87,10 @@ test('gera preview real, preserva reserva fixa e aplica todas as partidas', asyn
   await expect(page.getByText(/Resistência a imprevistos: \d+\/100/)).toBeVisible();
   const before = await (await request.get(`${api}/tournaments/${s.t.id}/schedule`)).json();
   expect(before.filter((m: { startsAt: string | null }) => m.startsAt)).toHaveLength(1);
+  await page.screenshot({
+    path: testInfo.outputPath('autopilot-preview-desktop.png'),
+    fullPage: true,
+  });
   await page.getByRole('button', { name: 'Aplicar agenda', exact: true }).click();
   await expect(page.getByText('Agenda aplicada.', { exact: true })).toBeVisible();
   await page.reload();
@@ -139,7 +143,10 @@ test('mudança entre preview e aplicação rejeita proposta antiga', async ({ pa
   expect(rows.every((m: { startsAt: string | null }) => m.startsAt === null)).toBe(true);
 });
 
-test('Self-Healing troca somente a área após aprovação humana', async ({ page, request }) => {
+test('Self-Healing troca somente a área após aprovação humana', async ({
+  page,
+  request,
+}, testInfo) => {
   const s = await seed(request, page);
   const venues = await (await request.get(`${api}/tournaments/${s.t.id}/venues`)).json();
   const alternate = await (
@@ -187,7 +194,12 @@ test('Self-Healing troca somente a área após aprovação humana', async ({ pag
   expect(before.find((m: { matchId: string }) => m.matchId === s.matches[0].id).playingAreaId).toBe(
     s.area.id,
   );
+  await page.screenshot({
+    path: testInfo.outputPath('self-healing-preview-desktop.png'),
+    fullPage: true,
+  });
   await page.getByRole('button', { name: 'Aplicar solução', exact: true }).click();
+  await expect(page.getByText('Solução aplicada.', { exact: true })).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Encontramos uma solução ✓', exact: true }),
   ).toHaveCount(0);

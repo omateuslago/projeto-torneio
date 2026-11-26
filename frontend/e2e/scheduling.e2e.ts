@@ -53,6 +53,11 @@ test('configura recursos e disponibilidade, rejeita conflito e reagenda com pers
   ).toBe(true);
   await page.goto(`/campeonatos/${t.id}`);
   await page.getByRole('link', { name: 'Ver agenda', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/campeonatos/${t.id}/agenda$`));
+  await page.getByRole('link', { name: 'Voltar ao campeonato' }).click();
+  await expect(page).toHaveURL(new RegExp(`/campeonatos/${t.id}$`));
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`/campeonatos/${t.id}/agenda$`));
   await expect(
     page.getByRole('heading', { name: 'Partidas aguardando agendamento (6)' }),
   ).toBeVisible();

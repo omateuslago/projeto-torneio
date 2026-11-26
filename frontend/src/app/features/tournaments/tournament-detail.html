@@ -100,7 +100,7 @@
           {{ saving() ? 'Abrindo…' : 'Abrir inscrições' }}
         </button>
       } @else if (auth.canManageTournament(current.id) && current.status === 'Open') {
-        <a class="button" href="#inscricoes">Inscrever equipe</a>
+        <a class="button" pageFragment="inscricoes">Inscrever equipe</a>
         <button class="secondary" (click)="confirmClose.set(true)" [disabled]="saving()">
           {{ saving() ? 'Encerrando…' : 'Encerrar inscrições' }}
         </button>
@@ -109,7 +109,7 @@
         current.status === 'Closed' &&
         current.format === 'RoundRobin'
       ) {
-        <a class="button" href="#partidas">Gerar confrontos</a>
+        <a class="button" pageFragment="partidas">Gerar confrontos</a>
       } @else if (
         auth.canManageTournament(current.id) &&
         current.status === 'Closed' &&
@@ -119,16 +119,16 @@
       } @else if (current.status === 'InProgress') {
         @if (current.format === 'RoundRobin') {
           <a class="button" [routerLink]="['/campeonatos', current.id, 'agenda']">Ver agenda</a>
-          <a class="button secondary" href="#partidas">Ver resultados</a>
+          <a class="button secondary" pageFragment="partidas">Ver resultados</a>
         } @else {
-          <a class="button" href="#chave">Ver chave</a>
-          <a class="button secondary" href="#resultados-mata-mata">Ver resultados</a>
+          <a class="button" pageFragment="chave">Ver chave</a>
+          <a class="button secondary" pageFragment="resultados-mata-mata">Ver resultados</a>
         }
       } @else if (current.status === 'Finished') {
         @if (current.format === 'RoundRobin') {
-          <a class="button" href="#classificacao">Ver classificação final</a>
+          <a class="button" pageFragment="classificacao">Ver classificação final</a>
         } @else {
-          <a class="button" href="#chave">Ver chave final</a>
+          <a class="button" pageFragment="chave">Ver chave final</a>
         }
       }
     </div>
@@ -160,12 +160,18 @@
     </details>
   }
   @if (current.status === 'InProgress' || current.status === 'Finished') {
-    <details id="inscricoes" class="panel tournament-settings detail-section">
+    <details
+      id="inscricoes"
+      class="panel tournament-settings detail-section"
+      [restoreFragment]="true"
+    >
       <summary>Equipes inscritas</summary>
       <app-registrations [tournament]="current" />
     </details>
   } @else {
-    <div id="inscricoes" class="detail-section"><app-registrations [tournament]="current" /></div>
+    <div id="inscricoes" class="detail-section" [restoreFragment]="true">
+      <app-registrations [tournament]="current" />
+    </div>
   }
   @if (current.status === 'Closed' && current.format === 'RoundRobin') {
     <div class="agenda-callout">
@@ -182,7 +188,7 @@
       current.status === 'InProgress' ||
       current.status === 'Finished')
   ) {
-    <div id="partidas" class="detail-section">
+    <div id="partidas" class="detail-section" [restoreFragment]="true">
       <app-matches [tournament]="current" (tournamentChanged)="updateTournament($event)" />
     </div>
   }
@@ -192,7 +198,7 @@
       current.status === 'InProgress' ||
       current.status === 'Finished')
   ) {
-    <div class="detail-section">
+    <div id="chave" class="detail-section" [restoreFragment]="true">
       <app-bracket [tournament]="current" (tournamentChanged)="updateTournament($event)" />
     </div>
   }

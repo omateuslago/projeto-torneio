@@ -1,4 +1,4 @@
-<section id="chave" class="panel bracket-panel" aria-labelledby="bracket-title">
+<section class="panel bracket-panel" aria-labelledby="bracket-title">
   <div class="bracket-heading">
     <div>
       <p class="bracket-kicker">Mata-mata simples</p>
@@ -75,7 +75,7 @@
                       @if (node.isBye) {
                         <p class="bracket-card__note">Avançou direto</p>
                       } @else if (node.match?.status === 'Pending') {
-                        <a class="bracket-card__action" [href]="'#match-' + node.match!.id"
+                        <a class="bracket-card__action" [pageFragment]="'match-' + node.match!.id"
                           >Gerenciar resultado</a
                         >
                       }
@@ -98,7 +98,7 @@
 </section>
 
 @if (tournament().status === 'InProgress' || tournament().status === 'Finished') {
-  <div id="resultados-mata-mata" class="bracket-results">
+  <div id="resultados-mata-mata" class="bracket-results" [restoreFragment]="!loading()">
     <app-matches
       [tournament]="tournament()"
       [showStandings]="false"
