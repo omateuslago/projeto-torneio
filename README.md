@@ -222,8 +222,8 @@ Esses testes usam a API real, criam dados identificados por timestamp no banco d
 desenvolvimento e verificam persistência após recarregar, duplicidade, lotação,
 fechamento concorrente, geração de confrontos, registro/correção de placares,
 confirmação bilateral, resolução de disputa, classificação atualizada, disponibilidade,
-agendamento/reagendamento com conflito real e layout em tela pequena. Não há limpeza de registros
-por API, pois exclusão ainda não faz parte do produto. Screenshots e traces
+agendamento/reagendamento com conflito real e layout em tela pequena. Use um banco
+isolado para rodar os E2E. Screenshots e traces
 ficam em `frontend/test-results/` (ignorado pelo Git).
 O fluxo mata-mata cobre criação, quatro equipes, semifinais, final, campeão e
 revisão visual das chaves de 4, 5, 8 e 16 equipes em desktop e 360 px.

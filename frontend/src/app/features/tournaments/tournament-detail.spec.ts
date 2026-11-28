@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { TournamentDetail } from './tournament-detail';
 import { Tournament, TournamentStatus } from '../../core/models';
@@ -24,6 +24,7 @@ describe('Atualizações do campeonato', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
         {
           provide: ActivatedRoute,
           useValue: { paramMap: of(convertToParamMap({ id: 'cup' })) },
@@ -33,6 +34,39 @@ describe('Atualizações do campeonato', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+
+  it('exige confirmação, bloqueia duplicação e mantém o diálogo com o erro da API', () => {
+    const component = TestBed.createComponent(TournamentDetail).componentInstance;
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    http.expectOne('/api/tournaments/cup').flush({ ...tournament, canDelete: true });
+    component.openDeleteDialog();
+    component.cancelDelete();
+    component.deleteTournament();
+    http.expectNone((request) => request.method === 'DELETE');
+
+    component.openDeleteDialog();
+    component.deleteTournament();
+    component.deleteTournament();
+    component.cancelDelete();
+    expect(component.confirmDelete()).toBe(true);
+    expect(component.deleting()).toBe(true);
+    http
+      .expectOne({ method: 'DELETE', url: '/api/tournaments/cup' })
+      .flush({ detail: 'Tente novamente.' }, { status: 409, statusText: 'Conflict' });
+    expect(component.confirmDelete()).toBe(true);
+    expect(component.deleting()).toBe(false);
+    expect(component.deleteError()).toBe('Tente novamente.');
+    expect(navigate).not.toHaveBeenCalled();
+
+    component.deleteTournament();
+    http
+      .expectOne({ method: 'DELETE', url: '/api/tournaments/cup' })
+      .flush(null, { status: 204, statusText: 'No Content' });
+    expect(navigate).toHaveBeenCalledWith(['/campeonatos'], {
+      replaceUrl: true,
+      info: 'tournament-deleted',
+    });
+  });
 
   it('ignora refresh atrasado após abrir inscrições', () => {
     const component = TestBed.createComponent(TournamentDetail).componentInstance;

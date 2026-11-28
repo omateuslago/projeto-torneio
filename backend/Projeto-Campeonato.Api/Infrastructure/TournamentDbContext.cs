@@ -104,6 +104,7 @@ public sealed class TournamentDbContext(DbContextOptions<TournamentDbContext> op
         model.Entity<Tournament>(entity =>
         {
             entity.HasKey(x => x.Id);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.SetNull);
             entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Sport).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Format).HasConversion<string>().HasMaxLength(32);

@@ -13,6 +13,7 @@ public sealed record CreateTeamRequest([Required, StringLength(120)] string Name
 public sealed record RegisterTeamRequest(Guid TeamId);
 public sealed record TournamentResponse(Guid Id, string Name, string Sport, int MaxTeams, TournamentFormat Format, TournamentStatus Status)
 {
+    public bool CanDelete { get; init; }
     public static TournamentResponse From(Tournament value) => new(value.Id, value.Name, value.Sport, value.MaxTeams, value.Format, value.Status);
 }
 public sealed record TeamResponse(Guid Id, string Name);

@@ -7,7 +7,7 @@ public sealed class Tournament
 {
     private Tournament() { }
 
-    public Tournament(string name, string sport, int maxTeams, TournamentFormat format)
+    public Tournament(string name, string sport, int maxTeams, TournamentFormat format, Guid? ownerUserId = null)
     {
         Name = DomainRules.Name(name, 120, nameof(name));
         Sport = DomainRules.Name(sport, 80, nameof(sport));
@@ -15,9 +15,11 @@ public sealed class Tournament
         if (!Enum.IsDefined(format)) throw new ArgumentException("Unsupported format.");
         MaxTeams = maxTeams;
         Format = format;
+        OwnerUserId = ownerUserId;
     }
 
     public Guid Id { get; private set; } = Guid.NewGuid();
+    public Guid? OwnerUserId { get; private set; }
     public string Name { get; private set; } = "";
     public string Sport { get; private set; } = "";
     public int MaxTeams { get; private set; }

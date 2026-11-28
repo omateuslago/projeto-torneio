@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal, viewChild } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
@@ -33,6 +33,7 @@ export class TournamentDetail {
   readonly auth = inject(AuthService);
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   readonly tournament = signal<Tournament | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -40,6 +41,9 @@ export class TournamentDetail {
   readonly actionError = signal('');
   readonly message = signal('');
   readonly confirmClose = signal(false);
+  readonly confirmDelete = signal(false);
+  readonly deleting = signal(false);
+  readonly deleteError = signal('');
   readonly statusLabels = statusLabels;
   readonly formatLabels = formatLabels;
   readonly progressSteps = ['Preparação', 'Equipes', 'Jogos', 'Em andamento', 'Finalizado'];
@@ -53,6 +57,8 @@ export class TournamentDetail {
           this.loadError.set('');
           this.actionError.set('');
           this.message.set('');
+          this.confirmDelete.set(false);
+          this.deleteError.set('');
           this.tournament.set(null);
         }),
         switchMap((params) =>
@@ -105,6 +111,42 @@ export class TournamentDetail {
 
   generateBracket() {
     this.bracket()?.generate();
+  }
+
+  openDeleteDialog() {
+    this.deleteError.set('');
+    this.confirmDelete.set(true);
+  }
+
+  cancelDelete() {
+    if (!this.deleting()) this.confirmDelete.set(false);
+  }
+
+  deleteTournament() {
+    const tournament = this.tournament();
+    if (!tournament?.canDelete || !this.confirmDelete() || this.deleting()) return;
+    this.deleting.set(true);
+    this.deleteError.set('');
+    this.api
+      .deleteTournament(tournament.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.deleting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.confirmDelete.set(false);
+          void this.router.navigate(['/campeonatos'], {
+            replaceUrl: true,
+            info: 'tournament-deleted',
+          });
+        },
+        error: (error) => {
+          this.deleteError.set(
+            error.status === 401 ? 'Sua sessão expirou. Entre novamente.' : apiError(error),
+          );
+        },
+      });
   }
 
   progressIndex(status: TournamentStatus) {

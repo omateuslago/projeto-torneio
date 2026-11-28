@@ -25,7 +25,8 @@ public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessCo
         if (tournamentId is null) return NotFound();
         if (!await access.CanManageTeam(User, teamId, ct)) return Forbid();
         await using var tx = await db.Database.BeginTransactionAsync(ct);
-        var tournament = await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId.Value} FOR UPDATE").SingleAsync(ct);
+        var tournament = await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId.Value} FOR UPDATE").SingleOrDefaultAsync(ct);
+        if (tournament is null) return NotFound();
         var match = await db.Matches.SingleAsync(x => x.Id == matchId, ct);
         if (teamId != match.HomeTeamId && teamId != match.AwayTeamId) return Problem(statusCode: 403, detail: "Only a participating team can submit a score.");
         if (match.Status == MatchStatus.Finished) return Problem(statusCode: 409, detail: "Official result is already final.");
@@ -66,7 +67,8 @@ public sealed class ScoreSubmissionsController(TournamentDbContext db, IAccessCo
         if (target is null) return NotFound();
         if (!await access.CanManageTournament(User, target.TournamentId, ct)) return Forbid();
         await using var tx = await db.Database.BeginTransactionAsync(ct);
-        var tournament = await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {target.TournamentId} FOR UPDATE").SingleAsync(ct);
+        var tournament = await db.Tournaments.FromSqlInterpolated($"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {target.TournamentId} FOR UPDATE").SingleOrDefaultAsync(ct);
+        if (tournament is null) return NotFound();
         var dispute = await db.Disputes.SingleAsync(x => x.Id == disputeId, ct);
         if (dispute.Status != DisputeStatus.Open) return Problem(statusCode: 409, detail: "Dispute is already resolved.");
         var match = await db.Matches.SingleAsync(x => x.Id == target.Id, ct);

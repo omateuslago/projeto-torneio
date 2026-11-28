@@ -139,7 +139,7 @@
       <p class="success" role="status">{{ message() }}</p>
     }
   </section>
-  @if (auth.canManageTournament(current.id)) {
+  @if (auth.canManageTournament(current.id) || current.canDelete) {
     <details id="acessos" class="panel tournament-settings detail-section">
       <summary>Configurações e acessos</summary>
       <dl class="detail-grid">
@@ -152,11 +152,26 @@
           <dd>{{ current.maxTeams }} equipes</dd>
         </div>
       </dl>
-      <app-access-management
-        kind="tournament"
-        [targetId]="current.id"
-        title="Gerenciar organizadores"
-      />
+      @if (auth.canManageTournament(current.id)) {
+        <app-access-management
+          kind="tournament"
+          [targetId]="current.id"
+          title="Gerenciar organizadores"
+        />
+      }
+      @if (current.canDelete) {
+        <section class="danger-zone" aria-labelledby="danger-zone-title">
+          <h3 id="danger-zone-title">Zona de perigo</h3>
+          <button
+            type="button"
+            class="button-danger"
+            [disabled]="saving() || deleting()"
+            (click)="openDeleteDialog()"
+          >
+            Excluir campeonato
+          </button>
+        </section>
+      }
     </details>
   }
   @if (current.status === 'InProgress' || current.status === 'Finished') {
@@ -202,7 +217,17 @@
       <app-bracket [tournament]="current" (tournamentChanged)="updateTournament($event)" />
     </div>
   }
-  @if (confirmClose()) {
+  @if (confirmDelete()) {
+    <app-confirm-dialog
+      title="Excluir campeonato?"
+      description="Esta ação excluirá permanentemente o campeonato, suas partidas, resultados e configurações de agenda. As equipes cadastradas na plataforma serão preservadas. Esta ação não poderá ser desfeita."
+      confirmLabel="Excluir campeonato"
+      [busy]="deleting()"
+      [error]="deleteError()"
+      (confirmed)="deleteTournament()"
+      (cancelled)="cancelDelete()"
+    />
+  } @else if (confirmClose()) {
     <app-confirm-dialog
       title="Encerrar inscrições?"
       description="Novas equipes não poderão se inscrever nesta etapa e as inscrições não poderão ser reabertas."
