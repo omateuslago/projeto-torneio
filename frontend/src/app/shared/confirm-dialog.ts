@@ -9,6 +9,7 @@ export class ConfirmDialog {
   readonly description = input.required<string>();
   readonly confirmLabel = input('Confirmar');
   readonly busy = input(false);
+  readonly error = input('');
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();
   private readonly cancelButton = viewChild<ElementRef<HTMLButtonElement>>('cancelButton');

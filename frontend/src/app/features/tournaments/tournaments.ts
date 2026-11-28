@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { TournamentApi } from '../../core/tournament-api';
@@ -27,6 +27,8 @@ import { AuthService } from '../../core/auth.service';
 })
 export class Tournaments {
   readonly auth = inject(AuthService);
+  readonly tournamentDeleted =
+    inject(Router).currentNavigation()?.extras.info === 'tournament-deleted';
   private readonly api = inject(TournamentApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly renderer = inject(Renderer2);

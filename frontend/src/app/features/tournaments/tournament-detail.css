@@ -133,6 +133,11 @@
 .detail-section {
   scroll-margin-top: 120px;
 }
+.danger-zone {
+  border-top: 1px solid var(--color-border-brand);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+}
 .detail-section + .detail-section {
   margin-top: var(--space-5);
 }

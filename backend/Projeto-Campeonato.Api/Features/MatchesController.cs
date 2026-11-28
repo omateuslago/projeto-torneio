@@ -88,7 +88,8 @@ public sealed class MatchesController(TournamentDbContext db, IAccessControl acc
         if (!await access.CanManageTournament(User, tournamentId.Value, ct)) return Forbid();
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         var tournament = await db.Tournaments.FromSqlInterpolated(
-            $"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId.Value} FOR UPDATE").SingleAsync(ct);
+            $"SELECT * FROM \"Tournaments\" WHERE \"Id\" = {tournamentId.Value} FOR UPDATE").SingleOrDefaultAsync(ct);
+        if (tournament is null) return NotFound();
         var match = await db.Matches.SingleAsync(x => x.Id == matchId, ct);
         await new ResultWorkflow(db).ApplyOfficial(match, tournament, request.HomeScore!.Value, request.AwayScore!.Value,
             "Manual", "Resultado definido por override administrativo.", ct);

@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { KEEP_PAGE_ON_UNAUTHORIZED } from './auth.interceptor';
 import { environment } from '../../environments/environment';
 import {
   CreateTournament,
@@ -27,6 +28,11 @@ export class TournamentApi {
   }
   createTournament(request: CreateTournament) {
     return this.http.post<Tournament>(`${this.base}/tournaments`, request);
+  }
+  deleteTournament(id: string) {
+    return this.http.delete<void>(`${this.base}/tournaments/${id}`, {
+      context: new HttpContext().set(KEEP_PAGE_ON_UNAUTHORIZED, true),
+    });
   }
   changeStatus(id: string, status: TournamentStatus) {
     return this.http.put<Tournament>(`${this.base}/tournaments/${id}/status`, { status });

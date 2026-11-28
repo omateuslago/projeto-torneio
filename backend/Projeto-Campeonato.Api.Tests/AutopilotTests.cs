@@ -49,6 +49,20 @@ public sealed partial class AutopilotTests(ApiFactory factory) : IClassFixture<A
     private async Task<ScheduleDto[]> Agenda(HttpClient c, Guid id) => await Read<ScheduleDto[]>(await c.GetAsync($"/api/tournaments/{id}/schedule"));
 
     [Fact]
+    public async Task DeletionRemovesAppliedAgendaAndInvalidatesExistingProposal()
+    {
+        using var client = Client(new Stub());
+        var tournament = await Setup(client);
+        var proposal = await Read<ScheduleProposal>(await Generate(client, tournament.Id));
+        Assert.NotNull(proposal.ProposalToken);
+        (await Apply(client, tournament.Id, proposal.ProposalToken!)).EnsureSuccessStatusCode();
+        Assert.NotNull(Assert.Single(await Agenda(client, tournament.Id)).StartsAt);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/tournaments/{tournament.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await Apply(client, tournament.Id, proposal.ProposalToken!)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/tournaments/{tournament.Id}/schedule")).StatusCode);
+    }
+
+    [Fact]
     public async Task ProposalDoesNotPersistAndApplyIsAtomicAndOneTime()
     {
         var stub = new Stub(); using var c = Client(stub); var t = await Setup(c, 3);

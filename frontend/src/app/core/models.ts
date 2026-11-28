@@ -7,6 +7,7 @@ export interface Tournament {
   maxTeams: number;
   format: TournamentFormat;
   status: TournamentStatus;
+  canDelete?: boolean;
 }
 export type CreateTournament = Pick<Tournament, 'name' | 'sport' | 'maxTeams' | 'format'>;
 export interface Team {

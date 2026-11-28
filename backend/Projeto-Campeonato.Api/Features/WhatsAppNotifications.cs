@@ -110,12 +110,24 @@ public sealed class NotificationDeliveryProcessor(TournamentDbContext db, IWhats
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
+        // Reacquire the delivery after claiming it. A tournament deletion may have
+        // removed it between transactions. Once locked, it cannot disappear mid-send.
+        await using var sendTransaction = await db.Database.BeginTransactionAsync(ct);
+        var claimed = await db.NotificationDeliveries.FromSqlInterpolated($"""
+            SELECT * FROM "NotificationDeliveries"
+            WHERE "Id" = {delivery.Id} AND "Status" = 'Processing' AND "AttemptCount" = {delivery.AttemptCount}
+            FOR UPDATE
+            """).AsNoTracking().SingleOrDefaultAsync(ct);
+        if (claimed is null)
+            return true;
+
         var preference = await db.UserNotificationPreferences.AsNoTracking()
             .SingleOrDefaultAsync(x => x.UserId == delivery.UserId, ct);
         if (preference is null || !preference.WhatsAppEnabled || preference.WhatsAppPhoneNumber is null)
         {
             delivery.Skip();
             await db.SaveChangesAsync(ct);
+            await sendTransaction.CommitAsync(ct);
             return true;
         }
         var notification = await db.Notifications.AsNoTracking()
@@ -133,6 +145,7 @@ public sealed class NotificationDeliveryProcessor(TournamentDbContext db, IWhats
             delivery.Fail(ex.Message, ex.Permanent, timeProvider.GetUtcNow(), Backoff[index]);
         }
         await db.SaveChangesAsync(ct);
+        await sendTransaction.CommitAsync(ct);
         return true;
     }
 }

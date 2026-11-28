@@ -801,6 +801,9 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Sport")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -819,6 +822,8 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         .HasDefaultValue("UTC");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerUserId");
 
                     b.ToTable("Tournaments", null, t =>
                         {
@@ -1174,6 +1179,14 @@ namespace Projeto_Campeonato.Api.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Projeto_Campeonato.Api.Domain.Tournament", b =>
+                {
+                    b.HasOne("Projeto_Campeonato.Api.Domain.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Projeto_Campeonato.Api.Domain.TournamentOrganizer", b =>

@@ -10,6 +10,9 @@
   >
     <h2 id="confirm-title">{{ title() }}</h2>
     <p id="confirm-description">{{ description() }}</p>
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
     <div class="dialog-card__actions">
       <button
         #cancelButton
